@@ -51,7 +51,7 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
-                    <warName>htrc-mashup.war</warName>
+                    <warName>htrc-mashup</warName>
                 </configuration>
             </plugin>
             <plugin>
@@ -67,7 +67,6 @@
                         <configuration>
                             <url>http://data.analytics.hathitrust.org/extracted-features/listing/full-listing.txt</url>
                             <outputFileName>htrc-ef-all-files.txt</outputFileName>
-                            <!-- default target location, just to demonstrate the parameter -->
                             <outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
                         </configuration>
                     </execution>
