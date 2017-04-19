@@ -36,6 +36,10 @@
   <servlet>
     <servlet-name>HTRC Volume Check</servlet-name>
     <servlet-class>org.hathitrust.extractedfeatures.VolumeCheck</servlet-class>
+    <init-param>
+      <param-name>pairtreeRoot</param-name>
+      <param-value>/data/features/ef-full</param-value>
+    </init-param>
   </servlet>
   <servlet-mapping>
     <servlet-name>HTRC Volume Check</servlet-name>
