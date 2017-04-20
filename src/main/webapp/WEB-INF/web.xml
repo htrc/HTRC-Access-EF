@@ -43,7 +43,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>HTRC Volume Check</servlet-name>
-    <url-pattern>/VolumeCheck</url-pattern>
+    <url-pattern>/get</url-pattern>
   </servlet-mapping>
   
 	
