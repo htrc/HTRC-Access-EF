@@ -3,7 +3,7 @@
 // @author      David Bainbridge
 // @namespace   org.hathitrust.researchcenter.mashup
 // @description Hybrid interface between Hathitrust and HTRC
-// @version     1.0
+// @version     1.1
 // @grant       GM_xmlhttpRequest
 // @require     http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js
 // @match       https://www.hathitrust.org/*
