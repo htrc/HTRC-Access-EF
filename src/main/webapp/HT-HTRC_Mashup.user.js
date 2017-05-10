@@ -13,7 +13,7 @@
 // ==/UserScript==
 
 
-var https_servlet_url="https://bedrock.resnet.cms.waikato.ac.nz/vol-checker/";
+var https_servlet_url="https://data.analytics.hathitrust.org/features/";
 
 function mashupInit() {
 
@@ -179,9 +179,9 @@ function mashupAugmentResults()
 	//console.log("*** ids= " + JSON.stringify(ids));
 	//console.log("*** ids_str = " + ids_str);
 
-	console.log("**** Away to request: " + https_servlet_url + "VolumeCheck?ids=" + encodeURIComponent(ids_str));
+	console.log("**** Away to request: " + https_servlet_url + "get?ids=" + encodeURIComponent(ids_str));
 
-	var check_ids_url = https_servlet_url + "VolumeCheck";
+	var check_ids_url = https_servlet_url + "get";
 	//var check_data = { "ids": encodeURIComponent(ids_str) };
 	var check_data = { "ids": ids_str };
 
@@ -203,7 +203,7 @@ function mashupAugmentResults()
 
 		        if (ids_exist[k]) {
 			    var encoded_id=encodeURIComponent(k);
-			    var ef_url = https_servlet_url + "VolumeCheck?download-id=" + encoded_id;
+			    var ef_url = https_servlet_url + "get?download-id=" + encoded_id;
 			    var atag = "<a href=\""+ ef_url +"\"><span class=\"icomoon icomoon-download\"></span>Download Extracted Features</a>";
 
 			    $id_div.find("ul").append("<li title=\""+k+"\" style=\"color: #924a0b;\">"+atag+"</li>"); // ✓
@@ -240,7 +240,7 @@ function mashupAugmentResults()
         var action = $download_form.attr("action");
         //var action_url = action;
 
-	    var action_url = https_servlet_url + "VolumeCheck";
+	    var action_url = https_servlet_url + "get";
 
         // Extract hidden elems from, e.g. 
 	    //   <input type="hidden" name="c" value="464226859" />
