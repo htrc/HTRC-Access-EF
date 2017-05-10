@@ -26,126 +26,6 @@
 
   </head>
   <body>
-        <nav class="navbar navbar-default navbar-fixed-top navbar-htrc" role="navigation">
-            <div class="container">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="/"><img src="/assets/images/hathi.jpg"
-                    width="36" height="32" style="padding-right : 5 px ; margin-top : - 1 px ;" alt=" ">
-                        HTRC Portal
-                    </a>
-                </div>
-
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        <li><a href="/">Home</a></li>
-                        </li>
-
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                Worksets <b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                                
-                                    <li><a href="#" onclick="loggingRequiredWarning('/listuserworksets')" >View my worksets</a></li>
-                                
-                                <li class="divider"></li>
-                                
-                                    <li><a href="#" onclick="loggingRequiredWarning('/listallworksets')">View all worksets</a></li>
-                                
-                                <li class="divider"></li>
-                                
-                                    <li><a href="#" onclick="loggingRequiredWarning('/uploadworkset')">Upload workset</a></li>
-                                
-                                <li class="divider"></li>
-                                <li>
-                                    <a href="#" onclick="blacklightLoggingWarning ( '      https://analytics.hathitrust.org/blacklight ')">
-                                        Create workset</a>
-                                </li>
-                            </ul>
-                        </li>
-                        
-                            <li><a href="#" onclick="loggingRequiredWarning('/listalgorithms')" >Algorithms</a></li>
-                        
-                        
-                            <li><a href="#" onclick="loggingRequiredWarning('/listjobs')">Results</a></li>
-                        
-                        
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                    Capsule<b class="caret"></b></a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="https://wiki.htrc.illinois.edu/display/COM/HTRC+Data+Capsule">
-                                        Documentation</a>
-                                    </li>
-                                    <li class="divider"></li>
-                                    
-                                        <li><a href="#" onclick="loggingRequiredWarning('/listvms')" >
-                                            Show Capsules</a></li>
-                                    
-                                    <li class="divider"></li>
-                                    
-                                        <li><a href="#" onclick="loggingRequiredWarning('/createvms')" >
-                                            Create Capsule</a></li>
-                                    
-                                </ul>
-                            </li>
-                        
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                Data<b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="/features">
-                                    Extracted Features Dataset</a>
-                                </li>
-                                <li><a href="/genre">
-                                    Word Frequencies in English-Language Literature, 1700-1922</a>
-                                </li>
-                            </ul>
-                        </li>
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                Help<b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="https://wiki.htrc.illinois.edu/display/COM/HTRC+User+Getting+Started+FAQ">
-                                    Knowledge Base</a>
-                                </li>
-                                <li class="divider"></li>
-                                <li><a href="mailto:htrc-help@hathitrust.org?Subject=Contact">
-                                    Contact</a>
-                                </li>
-                            </ul>
-                        </li>
-                        <li><a href="/about">About</a>
-                    </ul>
-                    
-                        <ul class="nav pull-right navbar-nav">
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                    Sign In<b class="caret"></b></a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="/login">Sign In</a></li>
-                                    <li class="divider"></li>
-                                    <li><a href="/passwordresetmail">
-                                        Forgot Password?</a></li>
-                                </ul>
-                            </li>
-
-
-                            <li><a href="/signup"><span>Sign Up</span></a></li>
-                        </ul>
-                    
-                </div>
-                    <!--/.nav-collapse -->
-            </div>
-        </nav>
-        
-        
-
     <div class="container container-panel" style="padding-top: 15px; padding-bottom: 15px;">
         <div class="row">
             <div class="col-md-2 col-sm-2 hidden-xs">
@@ -184,25 +64,24 @@
 	 with the terms you have just entered.
        </li>
        <li><b>Extracted Features Integration.</b> Along side
-	 links for 
-         <a class="cataloglinkhref icomoon-info-circle">Catalog Record</a>
+	 links for Catalog Record
 	 and
-         <a class="fulltext icomoon-document-2">Full view</a>
+         Full view
 	 for volumes/documents in the interface, there will additional be links for
-	 <a class="cataloglinkhref">Download Extracted Features</a>.
+	 download Extracted Features.
 	 You find these links appearing in search result sets, and when
-	 browsing the items that make up publically available collections.
+	 browsing the items that make up publicly available collections.
 	 While most HT volumes have an extracted feature counterpart
 	 in HTRC, due to the on-going expansion of the content of the
 	 HathiTrust, not all of them do.  In such circumstances the
 	 Mashup software marks these entries
-	 as <a style"color:red">HTRC Unfriendly</a>.
+	 as HTRC Unfriendly.
 
        </li>
 
-       <li><b>HT Collection to HTRC Workset.</b>In the collectcions
-	 area of the HathiTrust it is possible to <a>Download metadata</a>
-	 for the currently selected collectcion.  Now an additional download
+       <li><b>HT Collection to HTRC Workset.</b>In the collections
+	 area of the HathiTrust it is possible to download metadata
+	 for the currently selected collection.  Now an additional download
 	 button is available&mdash;Collection to Workset&mdash;that 
 	 downloads the same metadata, but filtered to those that are 
 	 available as extracted features in the HTRC.
@@ -210,7 +89,7 @@
 
      <p>
        Some PowerPoint slides emphasizing where the mashup changes occur 
-       can be accessed <a href="https://bedrock.resnet.cms.waikato.ac.nz/vol-checker/htrc-mashup.pptx">here</a>
+       can be accessed <a href="https://data.analytics.hathitrust.org/features/htrc-mashup.pptx">here</a>
      </p>
       <h2>Installation</h2>
 
@@ -244,8 +123,8 @@
 	    <ul>
 	      <a name="download"/>
 	      <li>
-		<a href="https://bedrock.resnet.cms.waikato.ac.nz/vol-checker/HT-HTRC_Mashup.user.js">
-		  Mashup Version 1.0
+		<a href="https://data.analytics.hathitrust.org/features/HT-HTRC_Mashup.user.js">
+		  Mashup Version 1.1
 		</a>
 	      </li>
 	    </ul>
