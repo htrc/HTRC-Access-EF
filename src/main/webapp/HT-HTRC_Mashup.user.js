@@ -3,11 +3,12 @@
 // @author      David Bainbridge
 // @namespace   org.hathitrust.researchcenter.mashup
 // @description Hybrid interface between Hathitrust and HTRC
-// @version     1.1
+// @version     1.2
 // @grant       GM_xmlhttpRequest
 // @require     http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js
 // @match       https://www.hathitrust.org/*
 // @match       https://babel.hathitrust.org/cgi/ls*
+// @match       https://catalog.hathitrust.org/Record/*
 // @match       https://babel.hathitrust.org/cgi/mb*
 // @match       https://catalog.hathitrust.org/Search/Home*
 // ==/UserScript==
@@ -109,6 +110,14 @@ function mashupAugmentResults()
          result_access_link_class = ".AccessLink";
     }
 
+    if (!results_a_exists) {
+	 // Perhaps a record page
+         $results_a = $('#accessLinks');
+         results_a_exists = $results_a.length;
+         result_class = "li";
+         result_access_link_class = false;
+    }
+
     if (results_a_exists) {
 	//console.log("*** results_a = " + $results_a.html());
 
@@ -119,16 +128,26 @@ function mashupAugmentResults()
 	//            var $result_access_link = $(this).find('.result-access-link');
 
 	$results_a.find(result_class).each(function() {
-	                var $result_access_link = $(this).find(result_access_link_class);
-
+        var $result_access_link, a_path;
+        if (result_access_link_class) {
+	        $result_access_link = $(this).find(result_access_link_class);
+            a_path = "ul>li>a";
+        } else {
+            $result_access_link = $(this);
+            a_path = "a";
+        }
 	                //console.log("*** result access link = " + $result_access_link.html());
-
-	                var $id_link = $result_access_link.find('ul>li>a').first();
+	                var $id_link = $result_access_link.find(a_path).first();
 	                //console.log("*** id_link = " + $id_link.html());
 	                var data_clicklog = $id_link.attr("data_clicklog");
-                if (!data_clicklog) {
+                if (!data_clicklog && !result_access_link_class) {
+                    // Likely Record page, where id is in data-hdl.
+                    id = $id_link.attr("data-hdl");
+                    data_clicklog = "{\"id\":\"" + id + "\"}";
+                }
+                else if (!data_clicklog) {
                     // fake one from the second <a> href (if present)
-                    $id_link2 = $result_access_link.find('ul>li>a:eq(1)');
+                    $id_link2 = $result_access_link.find(a_path+':eq(1)');
                     if ($id_link2.length>0) {
                         //console.log("*** id_link2 = " + $id_link2.html());
                         var id2_href = $id_link2.attr("href");
@@ -152,7 +171,7 @@ function mashupAugmentResults()
 			        //console.log("*** (catalog extracted) id= '" + id + "'");
 			            }
 	                else {
-			        var $second_id_link = $result_access_link.find('ul>li>a').eq(1);
+			        var $second_id_link = $result_access_link.find(a_path).eq(1);
 			        //console.log("*** 2nd link len = " + $second_id_link);
 			        var id_href = $second_id_link.attr("href");
 			        //console.log("*** id href = " + id_href);
@@ -179,7 +198,7 @@ function mashupAugmentResults()
 	//console.log("*** ids= " + JSON.stringify(ids));
 	//console.log("*** ids_str = " + ids_str);
 
-	console.log("**** Away to request: " + https_servlet_url + "get?ids=" + encodeURIComponent(ids_str));
+	//console.log("**** Away to request: " + https_servlet_url + "get?ids=" + encodeURIComponent(ids_str));
 
 	var check_ids_url = https_servlet_url + "get";
 	//var check_data = { "ids": encodeURIComponent(ids_str) };
@@ -187,10 +206,10 @@ function mashupAugmentResults()
 
 	$.post(check_ids_url,check_data)
 	    .done(function(data,textStatus,response) {
-		console.log("Adding in HTRC cross-checks");
+		//console.log("Adding in HTRC cross-checks");
 		var ids_exist = data;
 		for (var k in ids_exist) {
-		        //console.log("*** k = '" + k + "'");
+		        console.log("*** k = '" + k + "'");
 
 		        //var id_str = '#htrc-mashup-'+k;
 		        //console.log("*** id str = " + id_str);
@@ -200,17 +219,23 @@ function mashupAugmentResults()
 		        var id_div = document.getElementById('htrc-mashup-'+k);
 		        //console.log("*** id_div = " + id_div);
 		        var $id_div = $(id_div);
+                var $append_div;
+                if ($(id_div).is("li")) {
+                    $append_div = $id_div;
+                } else {
+                    $append_div = $id_div.find("ul");
+                }
 
 		        if (ids_exist[k]) {
 			    var encoded_id=encodeURIComponent(k);
 			    var ef_url = https_servlet_url + "get?download-id=" + encoded_id;
 			    var atag = "<a href=\""+ ef_url +"\"><span class=\"icomoon icomoon-download\"></span>Download Extracted Features</a>";
 
-			    $id_div.find("ul").append("<li title=\""+k+"\" style=\"color: #924a0b;\">"+atag+"</li>"); // ✓
+			    $append_div.append("<li title=\""+k+"\" style=\"color: #924a0b;\">"+atag+"</li>"); // ✓
 			        }
 		        else {
 			    // ✗, ✘
-			    $id_div.find("ul").append("<li title=\""+k+"\" style=\"color: red;\">HTRC unfriendly ✘</li>");
+			    $append_div.append("<li title=\""+k+"\" style=\"color: red;\">HTRC unfriendly ✘</li>");
 			        }
 
 		        //console.log("*** id div len = " + $id_div.length);
@@ -284,4 +309,3 @@ function mashupAugmentResults()
 mashupInit();
 
 mashupAugmentResults();
-
