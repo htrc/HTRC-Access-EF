@@ -15,11 +15,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,6 +43,8 @@ public class VolumeCheck extends HttpServlet {
   protected static File tmpDir;
   protected static File pairtreeRoot;
 
+  protected final int BUFFER_SIZE = 1024;
+    
   public VolumeCheck() {
   }
 
@@ -120,7 +127,7 @@ public class VolumeCheck extends HttpServlet {
     }
 
   }
-
+    
   /**
    * @see Servlet#init(ServletConfig)
    */
@@ -259,6 +266,24 @@ public class VolumeCheck extends HttpServlet {
 
   }
 
+  protected File json_pairtree_as_local_file(String full_json_filename)
+  {
+    File file = null;
+    if (pairtreeRoot != null) {
+      // Access the file locally
+      file = new File(pairtreeRoot, full_json_filename);
+    } else {
+      // Work through the rsync server
+      try {
+	file = doRsyncDownload(full_json_filename);
+      } catch (Exception e) {
+	e.printStackTrace();
+      }
+    }
+
+    return file;
+  }
+	  
   /**
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
    */
@@ -267,7 +292,22 @@ public class VolumeCheck extends HttpServlet {
     String cgi_ids = request.getParameter("ids");
     String cgi_id = request.getParameter("id");
     String cgi_download_id = request.getParameter("download-id");
+    String cgi_download_ids = request.getParameter("download-ids");
     String cgi_convert_col = request.getParameter("convert-col");
+
+    // if cgi_id in play then upgrade to cgi_ids (one item in it) to simplify later code
+    if (cgi_ids == null) {
+      if (cgi_id != null) {
+	cgi_ids = cgi_id;
+      }
+    }
+
+    // if cgi_id in play then upgrade to cgi_ids (one item in it) to simplify later code
+    if (cgi_download_ids == null) {
+      if (cgi_download_id != null) {
+	cgi_download_ids = cgi_download_id;
+      }
+    }
 
     if (cgi_ids != null) {
       response.setContentType("application/json");
@@ -290,65 +330,107 @@ public class VolumeCheck extends HttpServlet {
       }
       pw.append("}");
 
-    } else if (cgi_id != null) {
+    }
+    /*
+    else if (cgi_id != null) {
       response.setContentType("application/json");
       PrintWriter pw = response.getWriter();
 
       String id = cgi_id;
       boolean exists = id_check_.containsKey(id);
       pw.append("{'" + id + "':" + exists + "}");
-    } else if (cgi_download_id != null) {
-      String download_id = cgi_download_id;
-      boolean exists = id_check_.containsKey(download_id);
-      if (!exists) {
-        // Error
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-            "The requested volume id does not exist.");
-      } else {
-        // rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
-        String full_json_filename = id_to_pairtree_filename(download_id);
-        File file = null;
-        if (pairtreeRoot != null) {
-          file = new File(pairtreeRoot, full_json_filename);
-        } else {
-          try {
-            file = doRsyncDownload(full_json_filename);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-        if (file == null) {
-          response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
-        } else {
-          FileInputStream fis = new FileInputStream(file);
-          BufferedInputStream bis = new BufferedInputStream(fis);
-          String json_filename_tail = full_filename_to_tail(full_json_filename);
+      } */
+    else if (cgi_download_ids != null) {
+      
+      String[] download_ids = cgi_download_ids.split(",");
+      int download_ids_len = download_ids.length;
 
-          response.setContentType("application/x-bzip2");
-          response.setHeader("Content-Disposition",
-              "attachment; filename=\"" + json_filename_tail + "\"");
+      ZipOutputStream zbros = null;
+      OutputStream download_os = null;
 
-          OutputStream os = response.getOutputStream();
-          BufferedOutputStream bos = new BufferedOutputStream(os);
+      boolean output_as_zip = (download_ids_len > 1);
+      
+      if (output_as_zip) {
+	// Output needs to be zipped up
+	response.setContentType("application/zip");
+	response.setHeader("Content-Disposition","attachment; filename=htrc-ef-export.zip");
 
-          byte[] buf = new byte[1024];
+	OutputStream ros = response.getOutputStream();
+	BufferedOutputStream bros = new BufferedOutputStream(ros);
+	zbros = new ZipOutputStream(bros);
 
-          while (true) {
-            int num_bytes = bis.read(buf);
-            if (num_bytes == -1) {
-              break;
-            }
-            bos.write(buf, 0, num_bytes);
-            //total_num_bytes += num_bytes;
-          }
+	download_os = zbros;
+      }
+      
+      for (int i=0; i<download_ids_len; i++) {
+      
+	String download_id = download_ids[i];
+	boolean exists = id_check_.containsKey(download_id);
+	if (!exists) {
+	  // Error
+	  response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+			     "The requested volume id does not exist.");
+	  break;	  
+	}
+	else {
+	  
+	  // rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
+	  String full_json_filename = id_to_pairtree_filename(download_id);
+	  File file = json_pairtree_as_local_file(full_json_filename);
+	  
+	  if (file == null) {
+	    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
+	    break;
+	  }
+	  else {
+	    FileInputStream fis = new FileInputStream(file);
+	    BufferedInputStream bis = new BufferedInputStream(fis);
+	    String json_filename_tail = full_filename_to_tail(full_json_filename);
 
-          bis.close();
-          bos.close();
+	    if (output_as_zip) {
+	      ZipEntry zipentry = zipentry = new ZipEntry(json_filename_tail);
+	      zbros.putNextEntry(zipentry);
+	    }
+	    else {
+	      response.setContentType("application/x-bzip2");
+	      response.setHeader("Content-Disposition",
+				 "attachment; filename=\"" + json_filename_tail + "\"");
+	      
+	      OutputStream ros = response.getOutputStream();
+	      download_os = new BufferedOutputStream(ros);
+	    }		
 
-          if (pairtreeRoot == null)
-            file.delete();
+	    
+	    byte[] buf = new byte[1024];
+	    
+	    while (true) {
+	      int num_bytes = bis.read(buf);
+	      if (num_bytes == -1) {
+		break;
+	      }
+	      download_os.write(buf, 0, num_bytes);
+	    }
+
+	    bis.close();	    
+	    if (output_as_zip) {
+		zbros.closeEntry();
+	    }
+	    else {
+	      download_os.close();
+	    }
+
+	    if (pairtreeRoot == null) {
+	      // remove file retrieved over rsync
+	      file.delete();
+	    }
+	  }
         }
       }
+
+      if (output_as_zip) {
+	download_os.close();
+      }
+
     } else if (cgi_convert_col != null) {
 
       String cgi_col_title = request.getParameter("col-title");
