@@ -25,7 +25,7 @@ public class VolumeUtils
 		return id;
 	}
 
-	public static String id_to_pairtree_filename(String id) {
+	public static String idToPairtreeFilename(String id) {
 		// Example :-
 		//   id: miun.adx6300.0001.001
 		//   pairtree filename: miun/pairtree_root/ad/x6/30/0,/00/01/,0/01/adx6300,0001,001/miun.adx6300,0001,001.json.bz2

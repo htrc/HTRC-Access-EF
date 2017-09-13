@@ -34,12 +34,10 @@ public class AccessServlet extends HttpServlet
 	private static final long serialVersionUID = 1L;
 	protected static final String ht_col_url = "https://babel.hathitrust.org/cgi/mb";
 
-	protected static VolumeExists vol_exists_ = null;
-
-	protected static File tmpDir;
-	protected static File localPairtreeRoot;
-
-	protected final int BUFFER_SIZE = 1024;
+	protected static VolumeCheck vol_check_ = null;
+	protected static JSONFileManager json_file_manager_ = null;
+	
+	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
 
 	public AccessServlet() {
 	}
@@ -51,54 +49,18 @@ public class AccessServlet extends HttpServlet
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 
-		if (vol_exists_ == null) {
-			String htrc_list_file = "htrc-ef-all-files.txt";
+		if (vol_check_ == null) {
 			ServletContext servletContext = getServletContext();
-			System.err.println(servletContext);
-			InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_file);
-
-			vol_exists_ = new VolumeExists(htrc_list_file, is);
+			vol_check_ = new VolumeCheck(servletContext);
 		}
-
-		if (tmpDir == null) {
-			try {
-				tmpDir = Files.createTempDirectory("rsync").toFile();
-			} catch (IOException e) {
-				throw new ServletException("Could not create temp folder", e);
-			}
-
+		
+		if (json_file_manager_ == null) {
+			json_file_manager_ = new JSONFileManager(config);
 		}
-
-		String ptRoot = config.getInitParameter("pairtreeRoot");
-		if (ptRoot != null) {
-			localPairtreeRoot = new File(ptRoot);
-			if (!localPairtreeRoot.exists()) {
-				throw new ServletException(localPairtreeRoot + " does not exist!");
-			}
-		}
+		
+		
 	}
-
-	protected File doRsyncDownload(String full_json_filename) throws IOException {
-		String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-
-		Runtime runtime = Runtime.getRuntime();
-		String[] rsync_command = {"rsync", "-av",
-				"data.analytics.hathitrust.org::features/" + full_json_filename, tmpDir.getPath()};
-
-		try {
-			Process proc = runtime.exec(rsync_command);
-			int retCode = proc.waitFor();
-
-			if (retCode != 0) {
-				throw new Exception("rsync command failed with code " + retCode);
-			}
-
-			return new File(tmpDir, json_filename_tail);
-		} catch (Exception e) {
-			throw new IOException(e);
-		}
-	}
-
+	
 	protected void doCollectionToWorkset(HttpServletResponse response, String col_title,
 			String c, String a, String format) throws IOException {
 		String post_url_params = "c=" + c + "&a=" + a + "&format=" + format;
@@ -139,7 +101,7 @@ public class AccessServlet extends HttpServlet
 					int first_tab_pos = line.indexOf("\t");
 					String id = (first_tab_pos > 0) ? line.substring(0, first_tab_pos) : line;
 
-					if (vol_exists_.exists(id)) {
+					if (vol_check_.exists(id)) {
 						workset_friendly_sb.append(line + "\n");
 					} else {
 						workset_unfriendly_sb.append("#" + line + "\n");
@@ -170,25 +132,7 @@ public class AccessServlet extends HttpServlet
 		}
 
 	}
-
-	protected File json_pairtree_as_local_file(String full_json_filename)
-	{
-		File file = null;
-		if (localPairtreeRoot != null) {
-			// Access the file locally
-			file = new File(localPairtreeRoot, full_json_filename);
-		} else {
-			// Work through the rsync server
-			try {
-				file = doRsyncDownload(full_json_filename);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		return file;
-	}
-
+	
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
@@ -215,119 +159,17 @@ public class AccessServlet extends HttpServlet
 		}
 
 		if (cgi_ids != null) {
-			response.setContentType("application/json");
-			PrintWriter pw = response.getWriter();
-
 			String[] ids = cgi_ids.split(",");
-			int ids_len = ids.length;
-
-			pw.append("{");
-
-			for (int i = 0; i < ids_len; i++) {
-				String id = ids[i];
-
-				boolean exists = vol_exists_.exists(id);
-
-				if (i > 0) {
-					pw.append(",");
-				}
-				pw.append("\"" + id + "\":" + exists);
-			}
-			pw.append("}");
-
+			vol_check_.outputJSON(response,ids);
 		}
 		else if (cgi_download_ids != null) {
-
 			String[] download_ids = cgi_download_ids.split(",");
-			int download_ids_len = download_ids.length;
-
-			ZipOutputStream zbros = null;
-			OutputStream download_os = null;
-
-			boolean output_as_zip = (download_ids_len > 1);
-
-			if (output_as_zip) {
-				// Output needs to be zipped up
-				response.setContentType("application/zip");
-				response.setHeader("Content-Disposition","attachment; filename=htrc-ef-export.zip");
-
-				OutputStream ros = response.getOutputStream();
-				BufferedOutputStream bros = new BufferedOutputStream(ros);
-				zbros = new ZipOutputStream(bros);
-
-				download_os = zbros;
+			
+			if (vol_check_.validityCheckIDs(response, download_ids)) {
+				json_file_manager_.outputVolumes(response,download_ids);
 			}
-
-			for (int i=0; i<download_ids_len; i++) {
-
-				String download_id = download_ids[i];
-				boolean exists = vol_exists_.exists(download_id);
-				if (!exists) {
-					// Error
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-							"The requested volume id does not exist.");
-					break;	  
-				}
-				else {
-
-					// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
-					String full_json_filename = VolumeUtils.id_to_pairtree_filename(download_id);
-					File file = json_pairtree_as_local_file(full_json_filename);
-
-					if (file == null) {
-						response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
-						break;
-					}
-					else {
-						FileInputStream fis = new FileInputStream(file);
-						BufferedInputStream bis = new BufferedInputStream(fis);
-						String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-
-						if (output_as_zip) {
-							ZipEntry zipentry = new ZipEntry(json_filename_tail);
-							zbros.putNextEntry(zipentry);
-						}
-						else {
-							response.setContentType("application/x-bzip2");
-							response.setHeader("Content-Disposition",
-									"attachment; filename=\"" + json_filename_tail + "\"");
-
-							OutputStream ros = response.getOutputStream();
-							download_os = new BufferedOutputStream(ros);
-						}		
-
-
-						byte[] buf = new byte[1024];
-
-						while (true) {
-							int num_bytes = bis.read(buf);
-							if (num_bytes == -1) {
-								break;
-							}
-							download_os.write(buf, 0, num_bytes);
-						}
-
-						bis.close();	    
-						if (output_as_zip) {
-							zbros.closeEntry();
-						}
-						else {
-							download_os.close();
-						}
-
-						if (localPairtreeRoot == null) {
-							// remove file retrieved over rsync
-							file.delete();
-						}
-					}
-				}
-			}
-
-			if (output_as_zip) {
-				download_os.close();
-			}
-
-		} else if (cgi_convert_col != null) {
+		} 
+		else if (cgi_convert_col != null) {
 
 			String cgi_col_title = request.getParameter("col-title");
 			String cgi_a = request.getParameter("a");
@@ -344,10 +186,11 @@ public class AccessServlet extends HttpServlet
 				doCollectionToWorkset(response, cgi_col_title, cgi_convert_col, cgi_a, cgi_format);
 			}
 
-		} else {
+		} 
+		else {
 			PrintWriter pw = response.getWriter();
 
-			pw.append("General Info: Number of HTRC Volumes in check-list = " + vol_exists_.size());
+			pw.append("General Info: Number of HTRC Volumes in check-list = " + vol_check_.size());
 
 		}
 		//pw.close();
