@@ -15,16 +15,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -388,7 +385,7 @@ public class VolumeCheck extends HttpServlet {
 	    String json_filename_tail = full_filename_to_tail(full_json_filename);
 
 	    if (output_as_zip) {
-	      ZipEntry zipentry = zipentry = new ZipEntry(json_filename_tail);
+	      ZipEntry zipentry = new ZipEntry(json_filename_tail);
 	      zbros.putNextEntry(zipentry);
 	    }
 	    else {
