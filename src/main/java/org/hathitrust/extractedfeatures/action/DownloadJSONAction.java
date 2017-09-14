@@ -61,9 +61,9 @@ public class DownloadJSONAction
 		else {
 			String json_content = json_file_manager_.readCompressedTextFile(file);
 			
-			String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
+			//String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
 			response.setContentType("application/json");
-			response.setHeader("Content-Disposition","attachment; filename=\"" + json_filename_tail + "\"");
+			//response.setHeader("Content-Disposition","attachment; filename=\"" + json_filename_tail + "\"");
 			
 			PrintWriter pw = response.getWriter();
 			pw.append(json_content);
