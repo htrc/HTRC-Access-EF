@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -14,6 +15,9 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.jcs.JCS;
 import org.apache.commons.jcs.access.exception.CacheException;
 import org.hathitrust.extractedfeatures.VolumeUtils;
@@ -55,11 +59,16 @@ public class DownloadJSONAction
 			}
 		}
 		else {
-			FileInputStream fis = new FileInputStream(file);
-			BufferedInputStream bis = new BufferedInputStream(fis);
+			String json_content = json_file_manager_.readCompressedTextFile(file);
+			
 			String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-
-
+			response.setContentType("application/json");
+			response.setHeader("Content-Disposition","attachment; filename=\"" + json_filename_tail + "\"");
+			
+			PrintWriter pw = response.getWriter();
+			pw.append(json_content);
+			/*
+			
 			response.setContentType("application/x-bzip2");
 			response.setHeader("Content-Disposition",
 					"attachment; filename=\"" + json_filename_tail + "\"");
@@ -81,7 +90,8 @@ public class DownloadJSONAction
 			bis.close();	    
 
 			download_os.close();
-
+*/
+			
 			if (json_file_manager_.usingRsync()) {
 				// remove file retrieved over rsync
 				file.delete();
@@ -90,7 +100,7 @@ public class DownloadJSONAction
 
 	}
 	
-	public void outputCompressedVolumes(HttpServletResponse response, String[] download_ids) 
+	public void outputZippedVolumes(HttpServletResponse response, String[] download_ids) 
 			throws ServletException, IOException
 	{
 		int download_ids_len = download_ids.length;

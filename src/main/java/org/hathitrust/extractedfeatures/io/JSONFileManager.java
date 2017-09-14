@@ -75,7 +75,7 @@ public class JSONFileManager
 		}
 	}
 
-	public BufferedReader getBufferedReaderForCompressedFile(BufferedInputStream bis) 
+	protected BufferedReader getBufferedReaderForCompressedFile(BufferedInputStream bis) 
 			throws IOException, CompressorException 
 	{
 	    //BufferedInputStream bis = getBufferedInputStream(fileIn);
@@ -84,6 +84,29 @@ public class JSONFileManager
 	    return br;
 	}
 
+	public String readCompressedTextFile(File file)
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		try {	
+			FileInputStream fis = new FileInputStream(file);
+			BufferedInputStream bis = new BufferedInputStream(fis);
+			
+			BufferedReader br = getBufferedReaderForCompressedFile(bis);
+
+			int cp;
+			while ((cp = br.read()) != -1) {
+			    sb.append((char) cp);
+			}
+	
+	        br.close();
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return sb.toString();
+	}
 	
 	public static JSONFileManager getInstance(ServletConfig config)
 	{

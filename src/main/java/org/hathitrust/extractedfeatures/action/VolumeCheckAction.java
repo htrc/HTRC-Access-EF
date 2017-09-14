@@ -85,6 +85,17 @@ public class VolumeCheckAction
 		return id_check_.size();
 	}
 	
+	public boolean validityCheckID(HttpServletResponse response, String id) throws IOException
+	{
+	
+		boolean exists = exists(id);
+		if (!exists) {
+			// Error
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested volume id '" + id + "' does not exist.");
+		}
+		
+		return exists;
+	}
 	public boolean validityCheckIDs(HttpServletResponse response, String[] ids) throws IOException
 	{
 		int ids_len = ids.length;
@@ -93,13 +104,10 @@ public class VolumeCheckAction
 		
 		for (int i=0; i<ids_len; i++) {
 
-			String download_id = ids[i];
-			boolean exists = exists(download_id);
-			if (!exists) {
-				// Error
+			String id = ids[i];
+			if (!validityCheckID(response,id)) {
 				check = false;
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested volume id does not exist.");
-				break;	  
+				break;
 			}
 		}
 		

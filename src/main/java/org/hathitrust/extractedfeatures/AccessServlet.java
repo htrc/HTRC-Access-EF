@@ -56,8 +56,14 @@ public class AccessServlet extends HttpServlet
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		String cgi_ids = request.getParameter("ids");
-		String cgi_id = request.getParameter("id");
+		String cgi_ids = request.getParameter("check-ids");
+		if (cgi_ids == null) {
+			cgi_ids = request.getParameter("ids");
+		}
+		String cgi_id = request.getParameter("check-id");
+		if (cgi_id == null) {
+			cgi_id = request.getParameter("id");
+		}
 		String cgi_download_id = request.getParameter("download-id");
 		String cgi_download_ids = request.getParameter("download-ids");
 		String cgi_convert_col = request.getParameter("convert-col");
@@ -69,22 +75,30 @@ public class AccessServlet extends HttpServlet
 			}
 		}
 
+		/*
 		// if cgi_id in play then upgrade to cgi_ids (one item in it) to simplify later code
 		if (cgi_download_ids == null) {
 			if (cgi_download_id != null) {
 				cgi_download_ids = cgi_download_id;
 			}
 		}
-
+*/
+		
 		if (cgi_ids != null) {
 			String[] ids = cgi_ids.split(",");
 			vol_check_.outputJSON(response,ids);
 		}
+		else if (cgi_download_id != null) {
+			
+			if (vol_check_.validityCheckID(response, cgi_download_id)) {
+				download_json_.outputVolume(response,cgi_download_id);
+			}
+		} 
 		else if (cgi_download_ids != null) {
 			String[] download_ids = cgi_download_ids.split(",");
 			
 			if (vol_check_.validityCheckIDs(response, download_ids)) {
-				download_json_.outputCompressedVolumes(response,download_ids);
+				download_json_.outputZippedVolumes(response,download_ids);
 			}
 		} 
 		else if (cgi_convert_col != null) {
