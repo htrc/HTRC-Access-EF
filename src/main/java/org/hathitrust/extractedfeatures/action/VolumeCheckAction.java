@@ -1,4 +1,4 @@
-package org.hathitrust.extractedfeatures;
+package org.hathitrust.extractedfeatures.action;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,16 +10,16 @@ import java.util.HashMap;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
+import org.hathitrust.extractedfeatures.VolumeUtils;
 
-
-public class VolumeCheck 
+public class VolumeCheckAction 
 {
-	private static final long serialVersionUID = 1L;
+	//private static final long serialVersionUID = 1L;
 
 	protected static int HASHMAP_INIT_SIZE = 13800000;
 	protected HashMap<String, Boolean> id_check_ = null;
 
-	public VolumeCheck(ServletContext servletContext ) 
+	public VolumeCheckAction(ServletContext servletContext ) 
 	{
 		//System.err.println(servletContext);
 	
@@ -27,7 +27,7 @@ public class VolumeCheck
 		InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_fname);
 
 		id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
-
+		
 		try {
 			System.err.println("INFO: Loading in volume IDS: " + htrc_list_fname);
 
@@ -44,7 +44,8 @@ public class VolumeCheck
 	protected void storeIDs(BufferedReader br) {
 		long line_num = 1;
 		String line;
-
+		
+		//final int test_limit = 10000;
 		try {
 
 			System.err.print("Loading hashmap: ");
@@ -60,7 +61,13 @@ public class VolumeCheck
 					System.err.print(".");
 				}
 				line_num++;
-
+				
+				/*if (line_num>test_limit)
+				{ 
+					System.err.println("TEST MODE: Loading of IDs capped to " + test_limit);
+					break;
+				
+				}*/
 			}
 			System.err.println(" => done.");
 		} catch (Exception e) {
