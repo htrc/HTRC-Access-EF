@@ -21,44 +21,56 @@ public class VolumeCheckAction
 {
 	//private static final long serialVersionUID = 1L;
 
-	MongoClient mongo_client_  = null;
-	MongoDatabase mongo_db_    = null;
-	MongoCollection<Document> mongo_col_ = null;
+	enum OperationMode { OnlyHashmap, HashmapTransition, MongoDB };
+	
+	protected OperationMode mode_ = OperationMode.OnlyHashmap;
+	//protected OperationMode mode_ = OperationMode.MongoDB;
+	
 	
 	protected static int HASHMAP_INIT_SIZE = 13800000;
 	protected HashMap<String, Boolean> id_check_ = null;
 
+	protected static int TEST_LIMIT = 100000;
+	protected static boolean APPLY_TEST_LIMIT = false;
+	
+	protected MongoClient mongo_client_  = null;
+	protected MongoDatabase mongo_db_    = null;
+	protected MongoCollection<Document> mongo_col_ = null;
+	
 	public VolumeCheckAction(ServletContext servletContext ) 
 	{
-		String htrc_list_fname = "htrc-ef-all-files.txt";
-		InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_fname);
-
-		mongo_client_ = new MongoClient("localhost",27017);
-		mongo_db_     = mongo_client_.getDatabase("solrEF");
-		mongo_col_    = mongo_db_.getCollection("idExists");
+		if ((mode_ == OperationMode.HashmapTransition) || (mode_ == OperationMode.MongoDB)) {
+			mongo_client_ = new MongoClient("localhost",27017);
+			mongo_db_     = mongo_client_.getDatabase("solrEF");
+			mongo_col_    = mongo_db_.getCollection("idExists");
+		}
 		
-		id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
+		if (mode_ == OperationMode.OnlyHashmap || mode_ == OperationMode.HashmapTransition) {
+			id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
 		
-		try {
-			System.err.println("INFO: Loading in volume IDS: " + htrc_list_fname);
+			String htrc_list_fname = "htrc-ef-all-files.txt";
+			InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_fname);
+		
+			try {
+				System.err.println("INFO: Loading in volume IDS: " + htrc_list_fname);
 
-			InputStreamReader isr = new InputStreamReader(is, "UTF-8");
-			BufferedReader br = new BufferedReader(isr);
+				InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+				BufferedReader br = new BufferedReader(isr);
 
-			storeIDs(br);
-			br.close();
-		} catch (Exception e) {
-			e.printStackTrace();
+				storeIDs(br);
+				br.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	protected void storeIDs(BufferedReader br) {
-		long line_num = 1;
-		String line;
-		
-		//final int test_limit = 10000;
+	
 		try {
-
+			long line_num = 1;
+			String line;
+			
 			System.err.print("Loading hashmap: ");
 			while ((line = br.readLine()) != null) {
 
@@ -68,23 +80,25 @@ public class VolumeCheckAction
 
 				id_check_.put(id, true);
 
-				Document doc = new Document("_id", id);
-				mongo_col_.insertOne(doc);
-				    
+				if (mode_ == OperationMode.HashmapTransition) {
+					Document doc = new Document("_id", id);
+					mongo_col_.insertOne(doc);
+				}
+				
 				if ((line_num % 100000) == 0) {
 					System.err.print(".");
 				}
 				line_num++;
 				
-				/*if (line_num>test_limit)
+				if ((APPLY_TEST_LIMIT) && (line_num > TEST_LIMIT))
 				{ 
-					System.err.println("TEST MODE: Loading of IDs capped to " + test_limit);
+					System.err.println("TEST MODE: Loading of IDs capped to " + TEST_LIMIT);
 					break;
-				
-				}*/
+				}
 			}
 			System.err.println(" => done.");
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 
@@ -115,6 +129,16 @@ public class VolumeCheckAction
 		int ids_len = ids.length;
 	
 		boolean check = true;
+		/*
+		MongoCursor<Document> cursor = collection.find().iterator();
+		try {
+		    while (cursor.hasNext()) {
+		        System.out.println(cursor.next().toJson());
+		    }
+		} finally {
+		    cursor.close();
+		}
+		*/
 		
 		for (int i=0; i<ids_len; i++) {
 
