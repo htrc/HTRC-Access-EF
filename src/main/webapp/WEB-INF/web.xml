@@ -51,10 +51,10 @@
 		<servlet-name>Extracted Features Access API</servlet-name>
 		<servlet-class>org.hathitrust.extractedfeatures.AccessServlet</servlet-class>
 <!--
-		<init-param>
-			<param-name>pairtreeRoot</param-name>
-			<param-value>/data/features/ef-full</param-value>
-		</init-param>
+			<init-param>
+				<param-name>pairtreeRoot</param-name>
+				<param-value>/data/features/ef-full</param-value>
+			</init-param>
 -->
 	</servlet>
 
