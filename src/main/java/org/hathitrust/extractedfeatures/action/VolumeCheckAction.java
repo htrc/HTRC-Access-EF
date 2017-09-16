@@ -33,7 +33,7 @@ public class VolumeCheckAction
 		String htrc_list_fname = "htrc-ef-all-files.txt";
 		InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_fname);
 
-		mongo_client_ = new MongoClient( "localhost",27017);
+		mongo_client_ = new MongoClient("localhost",27017);
 		mongo_db_     = mongo_client_.getDatabase("solrEF");
 		mongo_col_    = mongo_db_.getCollection("idExists");
 		
@@ -68,7 +68,7 @@ public class VolumeCheckAction
 
 				id_check_.put(id, true);
 
-				Document doc = new Document("id", true);
+				Document doc = new Document("_id", id);
 				mongo_col_.insertOne(doc);
 				    
 				if ((line_num % 100000) == 0) {
