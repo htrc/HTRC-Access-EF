@@ -33,7 +33,7 @@ public class VolumeCheckAction
 	protected HashMap<String, Boolean> id_check_ = null;
 
 	protected static int TEST_LIMIT = 100000;
-	protected static boolean APPLY_TEST_LIMIT = true;
+	protected static boolean APPLY_TEST_LIMIT = false;
 	
 	protected MongoClient mongo_client_  = null;
 	protected MongoDatabase mongo_db_    = null;
