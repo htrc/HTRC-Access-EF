@@ -14,7 +14,9 @@ import org.bson.Document;
 import org.hathitrust.extractedfeatures.VolumeUtils;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import com.mongodb.MongoClient;  
 
 public class VolumeCheckAction 
@@ -23,15 +25,15 @@ public class VolumeCheckAction
 
 	enum OperationMode { OnlyHashmap, HashmapTransition, MongoDB };
 	
-	protected OperationMode mode_ = OperationMode.OnlyHashmap;
-	//protected OperationMode mode_ = OperationMode.MongoDB;
+	//protected OperationMode mode_ = OperationMode.OnlyHashmap;
+	protected OperationMode mode_ = OperationMode.MongoDB;
 	
 	
 	protected static int HASHMAP_INIT_SIZE = 13800000;
 	protected HashMap<String, Boolean> id_check_ = null;
 
 	protected static int TEST_LIMIT = 100000;
-	protected static boolean APPLY_TEST_LIMIT = false;
+	protected static boolean APPLY_TEST_LIMIT = true;
 	
 	protected MongoClient mongo_client_  = null;
 	protected MongoDatabase mongo_db_    = null;
@@ -40,7 +42,7 @@ public class VolumeCheckAction
 	public VolumeCheckAction(ServletContext servletContext ) 
 	{
 		if ((mode_ == OperationMode.HashmapTransition) || (mode_ == OperationMode.MongoDB)) {
-			mongo_client_ = new MongoClient("localhost",27017);
+			mongo_client_ = new MongoClient("localhost",28017);
 			mongo_db_     = mongo_client_.getDatabase("solrEF");
 			mongo_col_    = mongo_db_.getCollection("idExists");
 		}
@@ -106,11 +108,23 @@ public class VolumeCheckAction
 
 	public boolean exists(String id)
 	{
-		return id_check_.containsKey(id);
+		if (mode_ == OperationMode.MongoDB){
+			MongoCursor<Document> cursor = mongo_col_.find(Filters.eq("_id",id)).iterator();
+			return cursor.hasNext();
+		}
+		else {
+			return id_check_.containsKey(id);
+		}
 	}
 	
 	public int size() {
-		return id_check_.size();
+		if (mode_ == OperationMode.MongoDB){
+			long col_count = mongo_col_.count();
+			return (int)col_count;
+		}
+		else {
+			return id_check_.size();
+		}
 	}
 	
 	public boolean validityCheckID(HttpServletResponse response, String id) throws IOException
