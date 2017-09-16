@@ -10,22 +10,33 @@ import java.util.HashMap;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
+import org.bson.Document;
 import org.hathitrust.extractedfeatures.VolumeUtils;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.MongoClient;  
 
 public class VolumeCheckAction 
 {
 	//private static final long serialVersionUID = 1L;
 
+	MongoClient mongo_client_  = null;
+	MongoDatabase mongo_db_    = null;
+	MongoCollection<Document> mongo_col_ = null;
+	
 	protected static int HASHMAP_INIT_SIZE = 13800000;
 	protected HashMap<String, Boolean> id_check_ = null;
 
 	public VolumeCheckAction(ServletContext servletContext ) 
 	{
-		//System.err.println(servletContext);
-	
 		String htrc_list_fname = "htrc-ef-all-files.txt";
 		InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_fname);
 
+		mongo_client_ = new MongoClient( "localhost",27017);
+		mongo_db_     = mongo_client_.getDatabase("solrEF");
+		mongo_col_    = mongo_db_.getCollection("idExists");
+		
 		id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
 		
 		try {
@@ -57,6 +68,9 @@ public class VolumeCheckAction
 
 				id_check_.put(id, true);
 
+				Document doc = new Document("id", true);
+				mongo_col_.insertOne(doc);
+				    
 				if ((line_num % 100000) == 0) {
 					System.err.print(".");
 				}
