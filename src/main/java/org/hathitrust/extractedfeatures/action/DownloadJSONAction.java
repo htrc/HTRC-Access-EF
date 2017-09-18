@@ -7,22 +7,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.compress.compressors.CompressorException;
-import org.apache.commons.compress.compressors.CompressorInputStream;
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.apache.commons.jcs.JCS;
-import org.apache.commons.jcs.access.exception.CacheException;
 import org.hathitrust.extractedfeatures.VolumeUtils;
 import org.hathitrust.extractedfeatures.io.JSONFileManager;
-import org.apache.commons.jcs.access.CacheAccess;
 
 
 /**
