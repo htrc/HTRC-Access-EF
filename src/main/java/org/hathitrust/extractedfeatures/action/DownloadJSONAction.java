@@ -54,9 +54,12 @@ public class DownloadJSONAction
 			String json_content = json_file_manager_.readCompressedTextFile(file);
 			
 			//String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-			response.setContentType("application/json");
+			//response.setContentType("application/json");
+			response.setContentType("text/plain");
 			//response.setHeader("Content-Disposition","attachment; filename=\"" + json_filename_tail + "\"");
-			
+
+			response.setCharacterEncoding("UTF-8");
+			 
 			PrintWriter pw = response.getWriter();
 			pw.append(json_content);
 			/*
@@ -86,7 +89,7 @@ public class DownloadJSONAction
 			
 			if (json_file_manager_.usingRsync()) {
 				// remove file retrieved over rsync
-				file.delete();
+				//file.delete(); // ****
 			}
 		}
 
@@ -171,7 +174,7 @@ public class DownloadJSONAction
 
 				if (json_file_manager_.usingRsync()) {
 					// remove file retrieved over rsync
-					file.delete();
+					// file.delete(); ****
 				}
 			}
 		}
