@@ -10,7 +10,9 @@ import java.io.PrintWriter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.hathitrust.extractedfeatures.VolumeUtils;
@@ -20,7 +22,7 @@ import org.hathitrust.extractedfeatures.io.JSONFileManager;
 /**
  * Servlet implementation class VolumeCheck
  */
-public class DownloadJSONAction
+public class DownloadJSONAction extends BaseAction
 {
 	//private static final long serialVersionUID = 1L;
 	
@@ -28,8 +30,25 @@ public class DownloadJSONAction
 
 	protected JSONFileManager json_file_manager_;
 	
-	public DownloadJSONAction(ServletConfig config)
-	{	
+	public String getHandle() 
+	{
+		return "download-ids";
+	}
+	
+	public String[] getDescription()
+	{
+		String[]  mess =
+			{ "Download HTRC Extracted Features JSON files for the given IDs.",
+					"Required parameter: 'id' or 'ids'",
+					"Returns:            a JSON Extracted Feature file for a single ID;\n"
+				    + "                        or a zipped up file of JSON files when multiple IDs requested."
+			};
+		
+		return mess;
+	}
+	
+	public DownloadJSONAction(ServletContext context, ServletConfig config)
+	{	super(context);
 		json_file_manager_ = JSONFileManager.getInstance(config);
 	}
 
@@ -181,6 +200,30 @@ public class DownloadJSONAction
 
 		if (output_as_zip) {
 			download_os.close();
+		}
+	}
+	
+	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+			throws ServletException, IOException
+	{
+		String cgi_download_id = request.getParameter("id");
+		String cgi_download_ids = request.getParameter("ids");
+		
+		if (cgi_download_ids != null) {
+			String[] download_ids = cgi_download_ids.split(",");
+		
+			if (validityCheckIDs(response, download_ids)) {
+				outputZippedVolumes(response,download_ids);
+			}
+		}
+		else if (cgi_download_id != null) {
+			if (validityCheckID(response, cgi_download_id)) {
+				outputVolume(response,cgi_download_id);
+			}
+		}
+		else {
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter to action '" + getHandle()
+			+"' -- either parameter 'id' or 'ids' must be specified.");
 		}
 	}
 }

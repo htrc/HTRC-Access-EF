@@ -8,6 +8,8 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bson.Document;
@@ -19,27 +21,29 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.MongoClient;  
 
-public class VolumeCheckAction 
+public abstract class BaseAction
 {
 	//private static final long serialVersionUID = 1L;
 
 	enum OperationMode { OnlyHashmap, HashmapTransition, MongoDB };
 	
-	//protected OperationMode mode_ = OperationMode.OnlyHashmap;
-	protected OperationMode mode_ = OperationMode.MongoDB;
+	protected OperationMode mode_ = OperationMode.OnlyHashmap;
+	//protected OperationMode mode_ = OperationMode.MongoDB;
 	
 	
 	protected static int HASHMAP_INIT_SIZE = 13800000;
 	protected HashMap<String, Boolean> id_check_ = null;
 
 	protected static int TEST_LIMIT = 100000;
-	protected static boolean APPLY_TEST_LIMIT = false;
+	//protected static boolean APPLY_TEST_LIMIT = false;
+	protected static boolean APPLY_TEST_LIMIT = true;
 	
 	protected MongoClient mongo_client_  = null;
 	protected MongoDatabase mongo_db_    = null;
 	protected MongoCollection<Document> mongo_col_ = null;
 	
-	public VolumeCheckAction(ServletContext servletContext ) 
+	
+	public BaseAction(ServletContext servletContext ) 
 	{
 		if ((mode_ == OperationMode.HashmapTransition) || (mode_ == OperationMode.MongoDB)) {
 			mongo_client_ = new MongoClient("localhost",27017);
@@ -67,6 +71,12 @@ public class VolumeCheckAction
 		}
 	}
 
+	public abstract String getHandle();
+	public abstract String[] getDescription();
+	
+	public abstract void doAction(HttpServletRequest request, HttpServletResponse response) 
+			throws ServletException, IOException;
+	
 	protected void storeIDs(BufferedReader br) {
 	
 		try {
@@ -138,11 +148,15 @@ public class VolumeCheckAction
 		
 		return exists;
 	}
+	
 	public boolean validityCheckIDs(HttpServletResponse response, String[] ids) throws IOException
 	{
 		int ids_len = ids.length;
 	
 		boolean check = true;
+		
+		// If backed by MongoDB, the following (with appropriate find expression)
+		// might provide more efficient way to check
 		/*
 		MongoCursor<Document> cursor = collection.find().iterator();
 		try {
@@ -166,25 +180,4 @@ public class VolumeCheckAction
 		return check;
 	}
 	
-	public void outputJSON(HttpServletResponse response, String[] ids) throws IOException
-	{
-		response.setContentType("application/json");
-		PrintWriter pw = response.getWriter();
-		
-		int ids_len = ids.length;
-
-		pw.append("{");
-
-		for (int i = 0; i < ids_len; i++) {
-			String id = ids[i];
-
-			boolean exists = exists(id);
-
-			if (i > 0) {
-				pw.append(",");
-			}
-			pw.append("\"" + id + "\":" + exists);
-		}
-		pw.append("}");
-	}
 }

@@ -2,6 +2,8 @@ package org.hathitrust.extractedfeatures;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -10,9 +12,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.hathitrust.extractedfeatures.action.BaseAction;
 import org.hathitrust.extractedfeatures.action.CollectionToWorksetAction;
 import org.hathitrust.extractedfeatures.action.DownloadJSONAction;
-import org.hathitrust.extractedfeatures.action.VolumeCheckAction;
+import org.hathitrust.extractedfeatures.action.CheckExistsAction;
 
 
 /**
@@ -22,10 +25,11 @@ public class AccessServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
 
-
-	protected static VolumeCheckAction vol_check_ = null;
+	protected static CheckExistsAction check_exists_ = null;
 	protected static DownloadJSONAction download_json_ = null;
-	protected static CollectionToWorksetAction c2w_action_ = null;
+	protected static CollectionToWorksetAction col2workset_ = null;
+	
+	protected static ArrayList<BaseAction> action_list_ = null;
 	
 	public AccessServlet() {
 	}
@@ -36,25 +40,31 @@ public class AccessServlet extends HttpServlet
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		
-		if (vol_check_ == null) {
-			ServletContext servletContext = getServletContext();
-			vol_check_ = new VolumeCheckAction(servletContext);
+		ServletContext context = getServletContext();
+		
+		if (check_exists_ == null) {	
+			check_exists_ = new CheckExistsAction(context);
 		}
 		
 		if (download_json_ == null) {
-			download_json_ = new DownloadJSONAction(config);
+			download_json_ = new DownloadJSONAction(context,config);
 		}
 		
-		if (c2w_action_ == null) {
-			c2w_action_ = new CollectionToWorksetAction(vol_check_);
+		if (col2workset_ == null) {
+			col2workset_ = new CollectionToWorksetAction(context);
 		}
+		
+		if (action_list_ == null) {
+			action_list_ = new ArrayList<BaseAction>();
+			action_list_.add(check_exists_);
+			action_list_.add(download_json_);
+			action_list_.add(col2workset_);
+		}
+		
 	}
 	
 	
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+	protected void doGetLegacy(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		String cgi_ids = request.getParameter("check-ids");
 		if (cgi_ids == null) {
@@ -75,29 +85,21 @@ public class AccessServlet extends HttpServlet
 			}
 		}
 
-		/*
-		// if cgi_id in play then upgrade to cgi_ids (one item in it) to simplify later code
-		if (cgi_download_ids == null) {
-			if (cgi_download_id != null) {
-				cgi_download_ids = cgi_download_id;
-			}
-		}
-*/
 		
 		if (cgi_ids != null) {
 			String[] ids = cgi_ids.split(",");
-			vol_check_.outputJSON(response,ids);
+			check_exists_.outputJSON(response,ids);
 		}
 		else if (cgi_download_id != null) {
 			
-			if (vol_check_.validityCheckID(response, cgi_download_id)) {
+			if (check_exists_.validityCheckID(response, cgi_download_id)) {
 				download_json_.outputVolume(response,cgi_download_id);
 			}
 		} 
 		else if (cgi_download_ids != null) {
 			String[] download_ids = cgi_download_ids.split(",");
 			
-			if (vol_check_.validityCheckIDs(response, download_ids)) {
+			if (check_exists_.validityCheckIDs(response, download_ids)) {
 				download_json_.outputZippedVolumes(response,download_ids);
 			}
 		} 
@@ -110,19 +112,67 @@ public class AccessServlet extends HttpServlet
 			String cgi_a = request.getParameter("a");
 			String cgi_format = request.getParameter("format");
 			
-			c2w_action_.outputWorkset(response, cgi_convert_col, cgi_col_title, cgi_a, cgi_format);
+			col2workset_.outputWorkset(response, cgi_convert_col, cgi_col_title, cgi_a, cgi_format);
 
 		} 
 		else {
 			PrintWriter pw = response.getWriter();
 
-			pw.append("General Info: Number of HTRC Volumes in check-list = " + vol_check_.size());
+			pw.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size());
 
 		}
 		//pw.close();
 
 	}
 
+	protected void displayUsage(PrintWriter pw)
+	{
+		pw.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size() + "\n");
+		pw.append("====\n\n");
+		
+		pw.append("Usage:\n");
+		
+		for (BaseAction action: action_list_) {
+		
+			pw.append("  action=" + action.getHandle() + "\n");
+			String[] mess = action.getDescription();
+			for (String sm: mess) {
+				pw.append("    " + sm + "\n");
+			}
+			pw.append("\n");
+		}
+		pw.close();
+		
+	}
+	
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException 
+	{
+		String action_handle = request.getParameter("action");
+		if (action_handle == null) {
+			doGetLegacy(request,response);
+			return;
+		}
+		
+		boolean action_match = false;
+		
+		for (BaseAction action: action_list_) {
+			if (action.getHandle().equals(action_handle)) {
+				action_match = true;
+				action.doAction(request,response);
+				break;
+			}
+		}
+		
+		if (!action_match) {
+			response.setContentType("text/plain");
+			PrintWriter pw = response.getWriter();
+			displayUsage(pw);
+		}
+		
+	}
+	
+		
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */

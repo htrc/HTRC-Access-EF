@@ -10,17 +10,42 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class CollectionToWorksetAction 
+public class CollectionToWorksetAction extends BaseAction
 {
 	protected static final String ht_col_url = "https://babel.hathitrust.org/cgi/mb";
 	
-	VolumeCheckAction vol_check_;
+	//VolumeCheckAction vol_check_;
 	
+	public String getHandle() 
+	{
+		return "convert-col";
+	}
+	public String[] getDescription() 
+	{
+		String[] mess = { 
+				"Convert a HathiTrust collection to an HTRC workset",
+				"Required parameter: 'collection'",
+				"Returns:            a tab-separated text file, each line containing id and metadata for those\n"
+				+ "                        collection items also aviailable as an HTRC Extracted Feature file."
+		};
+		
+		return mess;
+	}
+	
+	/*
 	public CollectionToWorksetAction(VolumeCheckAction vol_check)
 	{
 		vol_check_ = vol_check;
+	}
+	*/
+	public CollectionToWorksetAction(ServletContext context) 
+	{
+		super(context);
 	}
 	
 	public void outputWorkset(HttpServletResponse response, String cgi_convert_col, String cgi_col_title,
@@ -77,7 +102,7 @@ public class CollectionToWorksetAction
 					int first_tab_pos = line.indexOf("\t");
 					String id = (first_tab_pos > 0) ? line.substring(0, first_tab_pos) : line;
 
-					if (vol_check_.exists(id)) {
+					if (exists(id)) {
 						workset_friendly_sb.append(line + "\n");
 					} else {
 						workset_unfriendly_sb.append("#" + line + "\n");
@@ -107,4 +132,29 @@ public class CollectionToWorksetAction
 					"Failed to convert HT collection to HTRC workset");
 		}
 	}
+	
+	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+			throws ServletException, IOException
+	{
+		
+		
+		String cgi_convert_col = request.getParameter("convert-col");
+		if (cgi_convert_col != null) {
+			String cgi_col_title = request.getParameter("col-title");
+			if (cgi_col_title == null) {
+				cgi_col_title = "htrc-workset-" + cgi_convert_col;
+			}
+			String cgi_a = request.getParameter("a");
+			String cgi_format = request.getParameter("format");
+			
+			outputWorkset(response, cgi_convert_col, cgi_col_title, cgi_a, cgi_format);
+				
+		}
+		else {
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter to action '" + getHandle()
+			+"' -- parameter 'collection' must be specified.");	
+		}		
+	}
+	
+	
 }
