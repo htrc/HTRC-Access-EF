@@ -27,46 +27,54 @@ public abstract class BaseAction
 
 	enum OperationMode { OnlyHashmap, HashmapTransition, MongoDB };
 	
-	protected OperationMode mode_ = OperationMode.OnlyHashmap;
-	//protected OperationMode mode_ = OperationMode.MongoDB;
+	//protected static OperationMode mode_ = OperationMode.OnlyHashmap;
+	protected static OperationMode mode_ = OperationMode.MongoDB;
 	
 	
 	protected static int HASHMAP_INIT_SIZE = 13800000;
-	protected HashMap<String, Boolean> id_check_ = null;
+	protected static HashMap<String, Boolean> id_check_ = null;
 
 	protected static int TEST_LIMIT = 100000;
-	//protected static boolean APPLY_TEST_LIMIT = false;
-	protected static boolean APPLY_TEST_LIMIT = true;
+	protected static boolean APPLY_TEST_LIMIT = false;
+	//protected static boolean APPLY_TEST_LIMIT = true;
 	
-	protected MongoClient mongo_client_  = null;
-	protected MongoDatabase mongo_db_    = null;
-	protected MongoCollection<Document> mongo_col_ = null;
+	protected static MongoClient mongo_client_  = null;
+	protected static MongoDatabase mongo_db_    = null;
+	protected static MongoCollection<Document> mongo_exists_col_ = null;
 	
 	
 	public BaseAction(ServletContext servletContext ) 
 	{
 		if ((mode_ == OperationMode.HashmapTransition) || (mode_ == OperationMode.MongoDB)) {
-			mongo_client_ = new MongoClient("localhost",27017);
-			mongo_db_     = mongo_client_.getDatabase("solrEF");
-			mongo_col_    = mongo_db_.getCollection("idExists");
+			if (mongo_client_ == null) {
+				mongo_client_ = new MongoClient("localhost",27017);
+			}
+			if (mongo_db_ == null) {
+				mongo_db_     = mongo_client_.getDatabase("solrEF");
+			}
+			if (mongo_exists_col_ == null) {
+				mongo_exists_col_    = mongo_db_.getCollection("idExists");
+			}
 		}
 		
 		if (mode_ == OperationMode.OnlyHashmap || mode_ == OperationMode.HashmapTransition) {
-			id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
-		
-			String htrc_list_fname = "htrc-ef-all-files.txt";
-			InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_fname);
-		
-			try {
-				System.err.println("INFO: Loading in volume IDS: " + htrc_list_fname);
+			if (id_check_ == null) {
+				id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
 
-				InputStreamReader isr = new InputStreamReader(is, "UTF-8");
-				BufferedReader br = new BufferedReader(isr);
+				String htrc_list_fname = "htrc-ef-all-files.txt";
+				InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_fname);
 
-				storeIDs(br);
-				br.close();
-			} catch (Exception e) {
-				e.printStackTrace();
+				try {
+					System.err.println("INFO: Loading in volume IDS: " + htrc_list_fname);
+
+					InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+					BufferedReader br = new BufferedReader(isr);
+
+					storeIDs(br);
+					br.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -94,7 +102,7 @@ public abstract class BaseAction
 
 				if (mode_ == OperationMode.HashmapTransition) {
 					Document doc = new Document("_id", id);
-					mongo_col_.insertOne(doc);
+					mongo_exists_col_.insertOne(doc);
 				}
 				
 				if ((line_num % 100000) == 0) {
@@ -119,7 +127,7 @@ public abstract class BaseAction
 	public boolean exists(String id)
 	{
 		if (mode_ == OperationMode.MongoDB){
-			MongoCursor<Document> cursor = mongo_col_.find(Filters.eq("_id",id)).iterator();
+			MongoCursor<Document> cursor = mongo_exists_col_.find(Filters.eq("_id",id)).iterator();
 			return cursor.hasNext();
 		}
 		else {
@@ -129,7 +137,7 @@ public abstract class BaseAction
 	
 	public int size() {
 		if (mode_ == OperationMode.MongoDB){
-			long col_count = mongo_col_.count();
+			long col_count = mongo_exists_col_.count();
 			return (int)col_count;
 		}
 		else {
