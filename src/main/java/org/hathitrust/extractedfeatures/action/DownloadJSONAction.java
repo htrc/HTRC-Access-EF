@@ -63,7 +63,7 @@ public class DownloadJSONAction extends BaseAction
 		
 		String volume_id = download_id;
 		String page_num_str = null;
-		int page_num;
+		int page_num = 0;
 		
 		Pattern page_patt = Pattern.compile("^(.*)\\.page-(\\d+)$");
 		
