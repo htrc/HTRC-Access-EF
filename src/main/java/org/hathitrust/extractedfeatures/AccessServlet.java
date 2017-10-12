@@ -11,6 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.hathitrust.extractedfeatures.action.BaseAction;
 import org.hathitrust.extractedfeatures.action.CollectionToWorksetAction;
@@ -66,6 +67,9 @@ public class AccessServlet extends HttpServlet
 	
 	protected void doGetLegacy(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		
+		HttpSession http_session = request.getSession();
+		
 		String cgi_ids = request.getParameter("check-ids");
 		if (cgi_ids == null) {
 			cgi_ids = request.getParameter("ids");
