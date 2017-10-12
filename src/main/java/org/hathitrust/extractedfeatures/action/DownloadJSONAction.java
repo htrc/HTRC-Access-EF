@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.ServletConfig;
@@ -17,6 +19,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.hathitrust.extractedfeatures.VolumeUtils;
 import org.hathitrust.extractedfeatures.io.JSONFileManager;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 
 /**
@@ -56,9 +60,22 @@ public class DownloadJSONAction extends BaseAction
 			throws ServletException, IOException
 	{
 		OutputStream download_os = null;
-
+		
+		String volume_id = download_id;
+		String page_num_str = null;
+		int page_num;
+		
+		Pattern page_patt = Pattern.compile("^(.*)\\.page-(\\d+)$");
+		
+		Matcher matcher = page_patt.matcher(download_id);
+		if (matcher.matches()) {
+		  volume_id = matcher.group(1);
+		  page_num_str =matcher.group(2);
+		  page_num = Integer.parseInt(page_num_str);
+		}
+		
 		// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
-		String full_json_filename = VolumeUtils.idToPairtreeFilename(download_id);
+		String full_json_filename = VolumeUtils.idToPairtreeFilename(volume_id);
 		File file = json_file_manager_.fileOpen(full_json_filename);
 
 		if (file == null) {
@@ -70,7 +87,9 @@ public class DownloadJSONAction extends BaseAction
 			}
 		}
 		else {
-			String json_content = json_file_manager_.readCompressedTextFile(file);
+			String json_content_str = json_file_manager_.readCompressedTextFile(file);
+			
+		
 			
 			//String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
 			//response.setContentType("application/json");
@@ -78,9 +97,23 @@ public class DownloadJSONAction extends BaseAction
 			//response.setHeader("Content-Disposition","attachment; filename=\"" + json_filename_tail + "\"");
 
 			response.setCharacterEncoding("UTF-8");
-			 
+		
+			if (page_num_str != null) {
+				JSONObject json_ef = new JSONObject(json_content_str);
+				JSONObject json_ef_features = json_ef.getJSONObject("features");
+				JSONArray json_ef_pages = json_ef_features.getJSONArray("pages");
+				int index_pos = page_num -1;
+				if ((index_pos>0) && (index_pos < json_ef_pages.length())) {
+					JSONObject json_ef_page = json_ef_pages.getJSONObject(index_pos);
+					json_content_str = json_ef_page.toString();
+				}
+				else {
+					json_content_str = "{ error: \"Page number '" + page_num_str + "' out of bounds\"}";
+				}
+			}			
+			
 			PrintWriter pw = response.getWriter();
-			pw.append(json_content);
+			pw.append(json_content_str);
 			/*
 			
 			response.setContentType("application/x-bzip2");
