@@ -62,6 +62,13 @@
 		  <version>6.6.2</version>
 		</dependency>
 		
+		<!-- https://mvnrepository.com/artifact/org.apache.tika/tika-langdetect -->
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-langdetect</artifactId>
+			<version>1.16</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
