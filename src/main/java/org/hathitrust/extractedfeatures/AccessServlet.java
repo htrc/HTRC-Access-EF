@@ -14,9 +14,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.hathitrust.extractedfeatures.action.BaseAction;
+import org.hathitrust.extractedfeatures.action.CheckExistsAction;
 import org.hathitrust.extractedfeatures.action.CollectionToWorksetAction;
 import org.hathitrust.extractedfeatures.action.DownloadJSONAction;
-import org.hathitrust.extractedfeatures.action.CheckExistsAction;
+import org.hathitrust.extractedfeatures.action.ICUTokenizeAction;
 
 
 /**
@@ -29,6 +30,7 @@ public class AccessServlet extends HttpServlet
 	protected static CheckExistsAction check_exists_ = null;
 	protected static DownloadJSONAction download_json_ = null;
 	protected static CollectionToWorksetAction col2workset_ = null;
+    	protected static ICUTokenizeAction icu_tokenize_ = null;
 	
 	protected static ArrayList<BaseAction> action_list_ = null;
 	
@@ -54,16 +56,19 @@ public class AccessServlet extends HttpServlet
 		if (col2workset_ == null) {
 			col2workset_ = new CollectionToWorksetAction(context);
 		}
-		
+
+		if (icu_tokenize_ == null) {
+			icu_tokenize_ = new ICUTokenizeAction(context);
+		}
+
 		if (action_list_ == null) {
 			action_list_ = new ArrayList<BaseAction>();
 			action_list_.add(check_exists_);
 			action_list_.add(download_json_);
 			action_list_.add(col2workset_);
-		}
-		
-	}
-	
+			action_list_.add(icu_tokenize_);
+		}		
+	}	
 	
 	protected void doGetLegacy(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
