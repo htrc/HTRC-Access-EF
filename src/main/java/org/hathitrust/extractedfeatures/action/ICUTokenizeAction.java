@@ -101,7 +101,7 @@ public class ICUTokenizeAction extends BaseAction
 		
 		pw.append("{");
 		
-		pw.append("\"text_out\":" + String.join(" ", words));
+		pw.append("\"text_out\": \"" + String.join(" ", words) + "\"");
 		pw.append("}");
 	}
 }
