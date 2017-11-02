@@ -2,6 +2,7 @@ package org.hathitrust.extractedfeatures.action;
 
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -87,6 +88,15 @@ public class ICUTokenizeAction extends BaseAction
 		else {
 		    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'text-in' parameter to " + getHandle());
 		}
+
+		response.setContentType("application/json");
+		PrintWriter pw = response.getWriter();
+		
+		pw.append("{");
+		
+		pw.append("\"text_out\":" + words.join(" "));
+		
+		pw.append("}");
 	}
 }
 
