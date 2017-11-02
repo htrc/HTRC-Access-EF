@@ -16,6 +16,7 @@ import javax.servlet.http.HttpSession;
 import org.hathitrust.extractedfeatures.action.BaseAction;
 import org.hathitrust.extractedfeatures.action.CheckExistsAction;
 import org.hathitrust.extractedfeatures.action.CollectionToWorksetAction;
+import org.hathitrust.extractedfeatures.action.GuessLanguageAction;
 import org.hathitrust.extractedfeatures.action.DownloadJSONAction;
 import org.hathitrust.extractedfeatures.action.ICUTokenizeAction;
 
@@ -30,10 +31,11 @@ public class AccessServlet extends HttpServlet
 	protected static CheckExistsAction check_exists_ = null;
 	protected static DownloadJSONAction download_json_ = null;
 	protected static CollectionToWorksetAction col2workset_ = null;
-    	protected static ICUTokenizeAction icu_tokenize_ = null;
+	protected static ICUTokenizeAction icu_tokenize_ = null;
+	protected static GuessLanguageAction guess_language_ = null;
 	
 	protected static ArrayList<BaseAction> action_list_ = null;
-	
+
 	public AccessServlet() {
 	}
 
@@ -42,17 +44,17 @@ public class AccessServlet extends HttpServlet
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		
+
 		ServletContext context = getServletContext();
-		
+
 		if (check_exists_ == null) {	
 			check_exists_ = new CheckExistsAction(context);
 		}
-		
+
 		if (download_json_ == null) {
 			download_json_ = new DownloadJSONAction(context,config);
 		}
-		
+
 		if (col2workset_ == null) {
 			col2workset_ = new CollectionToWorksetAction(context);
 		}
@@ -61,20 +63,25 @@ public class AccessServlet extends HttpServlet
 			icu_tokenize_ = new ICUTokenizeAction(context);
 		}
 
+		if (guess_language_ == null) {
+			guess_language_ = new GuessLanguageAction(context);
+		}
+		
 		if (action_list_ == null) {
 			action_list_ = new ArrayList<BaseAction>();
 			action_list_.add(check_exists_);
 			action_list_.add(download_json_);
 			action_list_.add(col2workset_);
 			action_list_.add(icu_tokenize_);
+			action_list_.add(guess_language_);
 		}		
 	}	
-	
+
 	protected void doGetLegacy(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		
+
 		HttpSession http_session = request.getSession();
-		
+
 		String cgi_ids = request.getParameter("check-ids");
 		if (cgi_ids == null) {
 			cgi_ids = request.getParameter("ids");
@@ -94,20 +101,20 @@ public class AccessServlet extends HttpServlet
 			}
 		}
 
-		
+
 		if (cgi_ids != null) {
 			String[] ids = cgi_ids.split(",");
 			check_exists_.outputJSON(response,ids);
 		}
 		else if (cgi_download_id != null) {
-			
+
 			if (check_exists_.validityCheckID(response, cgi_download_id)) {
 				download_json_.outputVolume(response,cgi_download_id);
 			}
 		} 
 		else if (cgi_download_ids != null) {
 			String[] download_ids = cgi_download_ids.split(",");
-			
+
 			if (check_exists_.validityCheckIDs(response, download_ids)) {
 				download_json_.outputZippedVolumes(response,download_ids);
 			}
@@ -120,7 +127,7 @@ public class AccessServlet extends HttpServlet
 			}
 			String cgi_a = request.getParameter("a");
 			String cgi_format = request.getParameter("format");
-			
+
 			col2workset_.outputWorkset(response, cgi_convert_col, cgi_col_title, cgi_a, cgi_format);
 
 		} 
@@ -138,11 +145,11 @@ public class AccessServlet extends HttpServlet
 	{
 		pw.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size() + "\n");
 		pw.append("====\n\n");
-		
+
 		pw.append("Usage:\n");
-		
+
 		for (BaseAction action: action_list_) {
-		
+
 			pw.append("  action=" + action.getHandle() + "\n");
 			String[] mess = action.getDescription();
 			for (String sm: mess) {
@@ -151,9 +158,9 @@ public class AccessServlet extends HttpServlet
 			pw.append("\n");
 		}
 		pw.close();
-		
+
 	}
-	
+
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException 
 	{
@@ -162,9 +169,9 @@ public class AccessServlet extends HttpServlet
 			doGetLegacy(request,response);
 			return;
 		}
-		
+
 		boolean action_match = false;
-		
+
 		for (BaseAction action: action_list_) {
 			if (action.getHandle().equals(action_handle)) {
 				action_match = true;
@@ -172,16 +179,16 @@ public class AccessServlet extends HttpServlet
 				break;
 			}
 		}
-		
+
 		if (!action_match) {
 			response.setContentType("text/plain");
 			PrintWriter pw = response.getWriter();
 			displayUsage(pw);
 		}
-		
+
 	}
-	
-		
+
+
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
