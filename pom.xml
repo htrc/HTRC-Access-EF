@@ -48,7 +48,7 @@
 			<artifactId>mongo-java-driver</artifactId>
 			<version>3.5.0</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
@@ -57,17 +57,18 @@
 
 		<!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-analyzers-icu -->
 		<dependency>
-		  <groupId>org.apache.lucene</groupId>
-		  <artifactId>lucene-analyzers-icu</artifactId>
-		  <version>6.6.2</version>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-analyzers-icu</artifactId>
+			<version>6.6.2</version>
 		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/org.apache.tika/tika-langdetect -->
+
+		<!-- https://mvnrepository.com/artifact/com.cybozu.labs/langdetect -->
 		<dependency>
-			<groupId>org.apache.tika</groupId>
-			<artifactId>tika-langdetect</artifactId>
-			<version>1.16</version>
+			<groupId>com.cybozu.labs</groupId>
+			<artifactId>langdetect</artifactId>
+			<version>1.1-20120112</version>
 		</dependency>
+
 
 	</dependencies>
 
