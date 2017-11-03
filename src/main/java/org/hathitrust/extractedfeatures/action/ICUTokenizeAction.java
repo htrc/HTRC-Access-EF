@@ -21,9 +21,6 @@ import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.language.LanguageIdentifier;
-
 public class ICUTokenizeAction extends BaseAction
 {
 	public String getHandle() 
@@ -45,10 +42,6 @@ public class ICUTokenizeAction extends BaseAction
 	public ICUTokenizeAction(ServletContext context) 
 	{
 		super(context);
-		
-		 LanguageIdentifier identifier = new LanguageIdentifier("this is english ");
-	      String language = identifier.getLanguage();
-	      System.out.println("Language of the given content is : " + language);
 	}
 
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
