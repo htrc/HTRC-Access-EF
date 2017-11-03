@@ -11,7 +11,7 @@ jcs.default.elementattributes.IsEternal=false
 
 jcs.auxiliary.DC=org.apache.commons.jcs.auxiliary.disk.indexed.IndexedDiskCacheFactory
 jcs.auxiliary.DC.attributes=org.apache.commons.jcs.auxiliary.disk.indexed.IndexedDiskCacheAttributes
-jcs.auxiliary.DC.attributes.DiskPath=d:/tmp/jcs-cache
+jcs.auxiliary.DC.attributes.DiskPath=/tmp/jcs-cache
     
  
 # PRE-DEFINED CACHE REGIONS

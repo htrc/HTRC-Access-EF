@@ -13,6 +13,16 @@
 		<welcome-file>default.jsp</welcome-file>
 	</welcome-file-list>
 
+	<context-param>
+	  <param-name>org.eclipse.jetty.servlet.SessionCookie</param-name>
+	  <param-value>XSESSIONID</param-value>
+	</context-param>
+	<context-param>
+	  <param-name>org.eclipse.jetty.servlet.SessionIdPathParameterName</param-name>
+	  <param-value>xsessionid</param-value>
+	</context-param>
+
+	
 	<filter>
 		<filter-name>GzipHandler</filter-name>
 		<filter-class>org.eclipse.jetty.servlets.GzipFilter</filter-class>
