@@ -90,9 +90,14 @@ public class GuessLanguageAction extends BaseAction
 
 		pw.append("[");
 
+		int i = 0;
+		
 		for (Language l: languages) {
-			
+			if (i>0) {
+				pw.append(",");
+			}
 			pw.append("{ \"lang\":\"" + l.lang + "\"," + "\"prob\":\"" + l.prob + "\"}" );
+			i++;
 		}
 		pw.append("]");
 	}
