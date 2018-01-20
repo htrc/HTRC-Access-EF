@@ -3,6 +3,9 @@ package org.hathitrust.extractedfeatures.action;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -109,10 +112,17 @@ public class URLShortenerAction extends BaseAction
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException
 	{
+		//request.setCharacterEncoding("UTF-8");
+		
+		response.setContentType("text/plain");
+		response.setCharacterEncoding("UTF-8");
+		
 		String value = request.getParameter("value");
 		String key   = request.getParameter("key");
 		
 		if (value != null) {
+			value = URLDecoder.decode(value,"UTF-8");
+			
 			key = shortenValue(value);
 			
 			PrintWriter pw = response.getWriter();
