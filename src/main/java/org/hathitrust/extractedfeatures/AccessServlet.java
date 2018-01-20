@@ -19,6 +19,7 @@ import org.hathitrust.extractedfeatures.action.CollectionToWorksetAction;
 import org.hathitrust.extractedfeatures.action.GuessLanguageAction;
 import org.hathitrust.extractedfeatures.action.DownloadJSONAction;
 import org.hathitrust.extractedfeatures.action.ICUTokenizeAction;
+import org.hathitrust.extractedfeatures.action.URLShortenerAction;
 
 
 /**
@@ -33,6 +34,7 @@ public class AccessServlet extends HttpServlet
 	protected static CollectionToWorksetAction col2workset_ = null;
 	protected static ICUTokenizeAction icu_tokenize_ = null;
 	protected static GuessLanguageAction guess_language_ = null;
+	protected static URLShortenerAction url_shortener_ = null;
 	
 	protected static ArrayList<BaseAction> action_list_ = null;
 
@@ -67,6 +69,10 @@ public class AccessServlet extends HttpServlet
 			guess_language_ = new GuessLanguageAction(context);
 		}
 		
+		if (url_shortener_ == null) {
+			url_shortener_ = new URLShortenerAction(context);
+		}
+		
 		if (action_list_ == null) {
 			action_list_ = new ArrayList<BaseAction>();
 			action_list_.add(check_exists_);
@@ -74,6 +80,7 @@ public class AccessServlet extends HttpServlet
 			action_list_.add(col2workset_);
 			action_list_.add(icu_tokenize_);
 			action_list_.add(guess_language_);
+			action_list_.add(url_shortener_);
 		}		
 	}	
 
@@ -100,7 +107,6 @@ public class AccessServlet extends HttpServlet
 				cgi_ids = cgi_id;
 			}
 		}
-
 
 		if (cgi_ids != null) {
 			String[] ids = cgi_ids.split(",");
@@ -181,6 +187,7 @@ public class AccessServlet extends HttpServlet
 		}
 
 		if (!action_match) {
+			// No action given => generate usage statement
 			response.setContentType("text/plain");
 			PrintWriter pw = response.getWriter();
 			displayUsage(pw);
