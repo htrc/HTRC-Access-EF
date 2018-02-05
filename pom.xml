@@ -3,9 +3,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.hathitrust.extractedfeatures</groupId>
-	<version>0.0.0</version>
-	<artifactId>vol-checker</artifactId>
-	<name>htrc-mashup</name>
+	<version>0.0.1</version>
+	<artifactId>htrc-access-ef</artifactId>
+	<name>htrc-access-ef</name>
 	<packaging>war</packaging>
 
 	<properties>
@@ -74,6 +74,7 @@
 
 	<build>
 		<finalName>${project.name}</finalName>
+		<pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.eclipse.jetty</groupId>
@@ -99,5 +100,6 @@
 				</executions>
 			</plugin>
 		</plugins>
+		</pluginManagement>
 	</build>
 </project>
