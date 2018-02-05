@@ -31,7 +31,7 @@ public abstract class BaseAction
 	protected static OperationMode mode_ = OperationMode.MongoDB;
 	
 	
-	protected static int HASHMAP_INIT_SIZE = 13800000;
+	protected static int HASHMAP_INIT_SIZE = 16000000;
 	protected static HashMap<String, Boolean> id_check_ = null;
 
 	protected static int TEST_LIMIT = 100000;
