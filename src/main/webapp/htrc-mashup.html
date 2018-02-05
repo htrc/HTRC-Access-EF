@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+        <title>HTRC Mashup - Home </title>
+        <link rel="shortcut icon" href="images/favicon.ico"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="600">
+            <!-- Bootstrap -->
+        <link href="/assets/stylesheets/bootstrap.min.css" rel="stylesheet" media="screen">
+        <link href="/assets/stylesheets/main.css" rel="stylesheet" media="screen">
+        <link href="/assets/stylesheets/flat.css" rel="stylesheet" media="screen">
+        <link href="/assets/stylesheets/font-awesome.min.css" rel="stylesheet">
+        <link href="/assets/stylesheets/tomorrow.min.css" rel="stylesheet">
+        
+        <link rel="stylesheet" href="/theme">
+        
+        <script src="/assets/javascripts/highlight.min.js"></script>
+        <script src="/assets/javascripts/jquery.min.js"></script>
+        <script src="/assets/javascripts/stupidtable.min.js"></script>
+        <script src="/assets/javascripts/bootstrap.min.js"></script>
+        <script src="/assets/javascripts/bowser.min.js"></script>
+        <script type="text/javascript" src="/assets/javascripts/htrcwarnings.js"></script>
+        <script type="text/javascript" src="/assets/javascripts/uploadws.js"></script>
+        <script type="text/javascript" src="/assets/javascripts/ga-download-tracking.js"></script>
+
+  </head>
+  <body>
+    <div class="container container-panel" style="padding-top: 15px; padding-bottom: 15px;">
+xs        <div class="row">
+            <div style="float: left;">
+                <img class="img-responsive"  width="200" src="images/hathi.jpg" alt=" ">
+            </div>
+            <div style="float: left;">
+                <h1 style="font-weight:bold;font-size:56px; padding-left: 20px; ">
+                    HT + HTRC Mashup
+                </h1>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+        <div class="row" style="padding-top : 25px; font-size : 17px; line-height : 27px;">
+            <div class="col-md-12">
+
+     <h2>Overview</h2>
+
+     <p>
+       Installing the software provided through this web page 
+       allows you to mashup HTRC's
+       Bookworm and Extracted Features data-set with the main
+       HathiTrust web site.  Once the software is installed
+       when you next visit 
+       <a href="http://www.hathitrust.org">www.hathitrust.org</a> 
+       you will notice a few additional features:
+     </p>
+     <ul>
+       <li><b>Bookworm Button.</b> Next to the
+	 regular search button there will now also be a button 
+	 with a worm icon on it.  Having entered some terms 
+	 into the search box, you now have a choice: pressing
+	 the magnifying search button to initiate a regular
+	 search within the HathiTrust DL, or else pressing this 
+	 new button next to it to initiate a bookworm search
+	 with the terms you have just entered.
+       </li>
+       <li><b>Extracted Features Integration.</b> Along side
+	 links for Catalog Record
+	 and
+         Full view
+	 for volumes/documents in the interface, there will additional be links for
+	 download Extracted Features.
+	 You find these links appearing in search result sets, and when
+	 browsing the items that make up publicly available collections.
+	 While most HT volumes have an extracted feature counterpart
+	 in HTRC, due to the on-going expansion of the content of the
+	 HathiTrust, not all of them do.  In such circumstances the
+	 Mashup software marks these entries
+	 as HTRC Unfriendly.
+
+       </li>
+
+       <li><b>HT Collection to HTRC Workset.</b>In the collections
+	 area of the HathiTrust it is possible to download metadata
+	 for the currently selected collection.  Now an additional download
+	 button is available&mdash;Collection to Workset&mdash;that 
+	 downloads the same metadata, but filtered to those that are 
+	 available as extracted features in the HTRC.
+     </ul>
+
+     <p>
+       Some PowerPoint slides emphasizing where the mashup changes occur 
+       can be accessed <a href="https://data.analytics.hathitrust.org/features/htrc-mashup.pptx">here</a>
+     </p>
+      <h2>Installation</h2>
+
+      <p>
+	To try out this HT + HTRC Mashup you need to have 
+<!--
+	<a href="https://wiki.greasespot.net/Cross-browser_userscripting">
+	<a href="https://wiki.greasespot.net/User_script">
+-->
+        <a href="https://github.com/OpenUserJs/OpenUserJS.org/wiki/Userscript-beginners-HOWTO">
+	  user-scripting
+	</a>
+	enabled in your browser.  This is a two-step process:
+	<ol>
+	  <li>
+	    Install a user-script manager extension/add-in to your web browser such
+	    as 
+	    <a href="https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/">
+	      GreaseMonkey
+	    </a> (Firefox)
+	    or 
+	    <a href="https://tampermonkey.net/">TamperMonkey</a> (other browsers: Chrome, Microsoft Edge, Safari, Opera etc.).
+	    The former is the add-in, developed for Firefox, that became
+	    the catalyst for the more general idea of user-scripting in
+	    browsers.  The latter is a project that has put emphasis on
+	    being cross-browser compatible.
+	    
+	  </li>
+	  <li>
+	    Add the HT+HTRC Mashup Script to your user-scripting extension/add-in:
+	    <a id="download"></a>
+	    <ul>
+	      
+	      <li>
+		<a href="https://data.analytics.hathitrust.org/features/HT-HTRC_Mashup.user.js">
+		  Mashup Version 1.2
+		</a>
+	      </li>
+	    </ul>
+	</ol>
+
+
+      <p>
+	Now visit <a href="http://www.hathitrust.org">www.hathitrust.org</a> and
+	look out for the additional buttons and links!
+
+      </p>
+
+
+
+
+	    </div>
+        </div>
+
+    </div>
+
+
+	
+        <div class="container">
+        <p style="text-align: center; font-size: small; margin-top: 10px;">HTRC Portal (<a href="https://wiki.htrc.illinois.edu/display/COM/HTRC+Service+Release+v3.1+for+Uncamp+2015" target="_blank">v3.2.x</a>)
+        </p>
+        </div>
+
+        
+        <div id="push"></div>
+        
+        
+        
+        
+        
+        
+
+	<!--
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+            ga('create', 'UA-42842720-8', 'auto');
+            ga('send', 'pageview');
+        </script>
+	-->
+	
+  </body>
+
+
+
+</html>
+
