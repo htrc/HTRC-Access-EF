@@ -140,7 +140,8 @@ public class AccessServlet extends HttpServlet
 		else {
 			PrintWriter pw = response.getWriter();
 
-			pw.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size());
+			pw.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size() + "\n");
+			pw.append("Add '?action=' to URL get usage");
 
 		}
 		//pw.close();
@@ -150,6 +151,7 @@ public class AccessServlet extends HttpServlet
 	protected void displayUsage(PrintWriter pw)
 	{
 		pw.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size() + "\n");
+		pw.append("\nSample id: mdp.39076000484811\n");
 		pw.append("====\n\n");
 
 		pw.append("Usage:\n");
