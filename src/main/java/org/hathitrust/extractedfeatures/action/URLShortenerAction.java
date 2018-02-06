@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -13,6 +14,12 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.bson.Document;
+import static com.mongodb.client.model.Filters.*;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Indexes;
 
 // The following class based loosely on details at:
 //   https://gist.github.com/rakeshsingh/64918583972dd5a08012
@@ -29,6 +36,8 @@ public class URLShortenerAction extends BaseAction
 	protected Random random_generator_;   
 	protected final int key_length_ = 32; // The length of the output keys generated
 
+	protected static MongoCollection<Document> mongo_key_and_val_col_ = null;
+	
 	public String getHandle() 
 	{
 		return "url-shortener";
@@ -60,6 +69,13 @@ public class URLShortenerAction extends BaseAction
 		output_alphabet_ = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 										'A', 'B', 'C', 'D', 'E', 'F' };
 		output_alphabet_length_ = output_alphabet_.length;
+		
+		if (mongo_key_and_val_col_ == null) {
+			// The following will create the collection if it didn't already exist
+			mongo_key_and_val_col_ = mongo_db_.getCollection("shortKeyValue");
+			mongo_key_and_val_col_.createIndex(Indexes.ascending("value","timestamp"));
+		}
+		
 	}
 
 	protected String generateKey() 
@@ -75,6 +91,8 @@ public class URLShortenerAction extends BaseAction
 			}
 			
 			if (!key_map_.containsKey(pot_key)) {
+				// randomly generated sequence hasn't been used before
+				// => can return it
 				key = pot_key;
 			}
 		}
@@ -87,6 +105,14 @@ public class URLShortenerAction extends BaseAction
 		key_map_.put(key, value);
 		value_map_.put(value, key);
 		
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		
+		Document doc = new Document("_id", key);
+		doc.put("value",value);
+		doc.put("timestamp", timestamp);
+		
+		mongo_key_and_val_col_.insertOne(doc);
+		
 		return key;
 	}
 
@@ -98,7 +124,20 @@ public class URLShortenerAction extends BaseAction
 		if (value_map_.containsKey(value)) {
 			key = value_map_.get(value);
 		} else {
-			key= getKey(value);
+			// is it in mongoDB?
+			Document doc = mongo_key_and_val_col_.find(eq("value", value)).first();
+			
+			if (doc != null) {
+				// Found it in mongoDB
+				key = doc.getString("_id");
+				// Re-populate the hashmaps
+				key_map_.put(key, value);
+				value_map_.put(value, key);
+			}
+			else {
+				// value not encountered before => generate new key
+				key = getKey(value);
+			}
 		}
 		
 		return key;

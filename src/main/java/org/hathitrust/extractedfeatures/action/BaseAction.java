@@ -45,18 +45,17 @@ public abstract class BaseAction
 	
 	public BaseAction(ServletContext servletContext ) 
 	{
-		if ((mode_ == OperationMode.HashmapTransition) || (mode_ == OperationMode.MongoDB)) {
-			if (mongo_client_ == null) {
-				mongo_client_ = new MongoClient("localhost",27017);
-			}
-			if (mongo_db_ == null) {
-				mongo_db_     = mongo_client_.getDatabase("solrEF");
-			}
-			if (mongo_exists_col_ == null) {
-				mongo_exists_col_    = mongo_db_.getCollection("idExists");
-			}
+		// Set up mongoDB link regardless of 'mode' we are in as other actions reply on it
+		if (mongo_client_ == null) {
+			mongo_client_ = new MongoClient("localhost",27017);
 		}
-		
+		if (mongo_db_ == null) {
+			mongo_db_     = mongo_client_.getDatabase("solrEF");
+		}
+		if (mongo_exists_col_ == null) {
+			mongo_exists_col_    = mongo_db_.getCollection("idExists");
+		}
+	
 		if (mode_ == OperationMode.OnlyHashmap || mode_ == OperationMode.HashmapTransition) {
 			if (id_check_ == null) {
 				id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
