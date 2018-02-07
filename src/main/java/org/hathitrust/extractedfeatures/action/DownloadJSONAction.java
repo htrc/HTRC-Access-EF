@@ -89,8 +89,6 @@ public class DownloadJSONAction extends BaseAction
 		else {
 			String json_content_str = json_file_manager_.readCompressedTextFile(file);
 			
-		
-			
 			//String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
 			//response.setContentType("application/json");
 			response.setContentType("text/plain");
@@ -220,13 +218,11 @@ public class DownloadJSONAction extends BaseAction
 				}
 				else {
 					download_os.close();
-					
-					
 				}
 
 				if (json_file_manager_.usingRsync()) {
 					// remove file retrieved over rsync
-					// file.delete(); ****
+					file.delete(); // ****
 				}
 			}
 		}
