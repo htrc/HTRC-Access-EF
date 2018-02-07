@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.util.HashMap;
 
 import javax.servlet.ServletContext;
@@ -27,7 +26,10 @@ public abstract class BaseAction
 
 	enum OperationMode { OnlyHashmap, HashmapTransition, MongoDB };
 	
+	enum MongoDBState { Unconnected, FailedStartup, Connected };
+	
 	//protected static OperationMode mode_ = OperationMode.OnlyHashmap;
+	//protected static OperationMode mode_ = OperationMode.HashmapTransition;
 	protected static OperationMode mode_ = OperationMode.MongoDB;
 	
 	
@@ -38,6 +40,7 @@ public abstract class BaseAction
 	protected static boolean APPLY_TEST_LIMIT = false;
 	//protected static boolean APPLY_TEST_LIMIT = true;
 	
+	protected static MongoDBState mongo_state_  = MongoDBState.Unconnected;
 	protected static MongoClient mongo_client_  = null;
 	protected static MongoDatabase mongo_db_    = null;
 	protected static MongoCollection<Document> mongo_exists_col_ = null;
@@ -45,17 +48,35 @@ public abstract class BaseAction
 	
 	public BaseAction(ServletContext servletContext ) 
 	{
-		// Set up mongoDB link regardless of 'mode' we are in as other actions reply on it
-		if (mongo_client_ == null) {
-			mongo_client_ = new MongoClient("localhost",27017);
+		
+		// Set up mongoDB connection regardless of 'mode' we are in as other actions reply on it
+		if (mongo_state_ != MongoDBState.FailedStartup) {
+
+
+			if (mongo_client_ == null) {
+				mongo_client_ = new MongoClient("localhost",27017);
+			}
+
+			try {
+				// Check connection opened OK
+				mongo_client_.getAddress(); // throws exception is not connected
+				mongo_state_ = MongoDBState.Connected;
+
+				if (mongo_db_ == null) {
+					mongo_db_     = mongo_client_.getDatabase("solrEF");
+				}
+				if (mongo_exists_col_ == null) {
+					mongo_exists_col_    = mongo_db_.getCollection("idExists");
+				}
+			}
+			catch (Exception e) {
+				System.err.println("Unable to open connection to MongoDB on port 27017.  Is it running?");
+				mongo_state_ = MongoDBState.FailedStartup;
+				mongo_client_.close();
+				mongo_client_ = null;
+			}
 		}
-		if (mongo_db_ == null) {
-			mongo_db_     = mongo_client_.getDatabase("solrEF");
-		}
-		if (mongo_exists_col_ == null) {
-			mongo_exists_col_    = mongo_db_.getCollection("idExists");
-		}
-	
+		
 		if (mode_ == OperationMode.OnlyHashmap || mode_ == OperationMode.HashmapTransition) {
 			if (id_check_ == null) {
 				id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
@@ -101,7 +122,9 @@ public abstract class BaseAction
 
 				if (mode_ == OperationMode.HashmapTransition) {
 					Document doc = new Document("_id", id);
-					mongo_exists_col_.insertOne(doc);
+					if (mongo_state_ == MongoDBState.Connected) {
+						mongo_exists_col_.insertOne(doc);
+					}
 				}
 				
 				if ((line_num % 100000) == 0) {
@@ -135,8 +158,13 @@ public abstract class BaseAction
 	}
 	
 	public int size() {
-		if (mode_ == OperationMode.MongoDB){
-			long col_count = mongo_exists_col_.count();
+		if (mode_ == OperationMode.MongoDB) {
+			
+			long col_count = 0;
+			if (mongo_state_ == MongoDBState.Connected) {
+				col_count = mongo_exists_col_.count();
+			}
+			
 			return (int)col_count;
 		}
 		else {
