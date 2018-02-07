@@ -3,6 +3,7 @@ package org.hathitrust.extractedfeatures.action;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -16,8 +17,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bson.Document;
+import org.hathitrust.extractedfeatures.action.BaseAction.MongoDBState;
+
 import static com.mongodb.client.model.Filters.*;
 
+import com.mongodb.MongoSocketOpenException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Indexes;
 
@@ -71,9 +75,11 @@ public class URLShortenerAction extends BaseAction
 		output_alphabet_length_ = output_alphabet_.length;
 		
 		if (mongo_key_and_val_col_ == null) {
-			// The following will create the collection if it didn't already exist
-			mongo_key_and_val_col_ = mongo_db_.getCollection("shortKeyValue");
-			mongo_key_and_val_col_.createIndex(Indexes.ascending("value","timestamp"));
+			if (mongo_state_ == MongoDBState.Connected) {
+				// The following will create the collection if it didn't already exist
+				mongo_key_and_val_col_ = mongo_db_.getCollection("shortKeyValue");
+				mongo_key_and_val_col_.createIndex(Indexes.ascending("value","timestamp"));
+			}
 		}
 		
 	}
