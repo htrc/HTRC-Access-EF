@@ -25,7 +25,6 @@ public abstract class BaseAction
 	//private static final long serialVersionUID = 1L;
 
 	enum OperationMode { OnlyHashmap, HashmapTransition, MongoDB };
-	
 	enum MongoDBState { Unconnected, FailedStartup, Connected };
 	
 	//protected static OperationMode mode_ = OperationMode.OnlyHashmap;
@@ -37,8 +36,8 @@ public abstract class BaseAction
 	protected static HashMap<String, Boolean> id_check_ = null;
 
 	protected static int TEST_LIMIT = 100000;
-	protected static boolean APPLY_TEST_LIMIT = false;
 	//protected static boolean APPLY_TEST_LIMIT = true;
+	protected static boolean APPLY_TEST_LIMIT = false;
 	
 	protected static MongoDBState mongo_state_  = MongoDBState.Unconnected;
 	protected static MongoClient mongo_client_  = null;
