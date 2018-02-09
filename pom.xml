@@ -81,6 +81,7 @@
 				<artifactId>jetty-maven-plugin</artifactId>
 				<version>${jettyVersion}</version>
 			</plugin>
+			<!--
 			<plugin>
 				<groupId>com.googlecode.maven-download-plugin</groupId>
 				<artifactId>download-maven-plugin</artifactId>
@@ -98,7 +99,9 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
+				</plugin>
+			-->
+			
 		</plugins>
 		</pluginManagement>
 	</build>
