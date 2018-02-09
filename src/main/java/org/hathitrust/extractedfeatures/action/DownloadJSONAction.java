@@ -62,23 +62,23 @@ public class DownloadJSONAction extends BaseAction
 		OutputStream download_os = null;
 		
 		String volume_id = download_id;
-		String page_num_str = null;
-		int page_num = 0;
+		String seq_num_str = null;
+		int seq_num = 0;
 		
-		Pattern page_patt = Pattern.compile("^(.*)\\.page-(\\d+)$");
-		
-		Matcher matcher = page_patt.matcher(download_id);
+		Matcher matcher = page_patt_.matcher(download_id);
 		if (matcher.matches()) {
 		  volume_id = matcher.group(1);
-		  page_num_str =matcher.group(2);
-		  page_num = Integer.parseInt(page_num_str);
+		  seq_num_str =matcher.group(2);
+		  seq_num = Integer.parseInt(seq_num_str);
 		}
 		
-		// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
-		String full_json_filename = VolumeUtils.idToPairtreeFilename(volume_id);
-		File file = json_file_manager_.fileOpen(full_json_filename);
+		//String full_json_filename = VolumeUtils.idToPairtreeFilename(volume_id);
+		//File file = json_file_manager_.fileOpen(full_json_filename);
 
-		if (file == null) {
+		String json_content_str = json_file_manager_.getVolumeContent(volume_id);
+		
+		//if (file == null) {
+		if (json_content_str == null) {
 			if (json_file_manager_.usingRsync()) {
 				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
 			}
@@ -87,26 +87,27 @@ public class DownloadJSONAction extends BaseAction
 			}
 		}
 		else {
-			String json_content_str = json_file_manager_.readCompressedTextFile(file);
+			//String json_content_str = json_file_manager_.readCompressedTextFile(file);
 			
-			//String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-			//response.setContentType("application/json");
+			////String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
+			////response.setContentType("application/json");
 			response.setContentType("text/plain");
-			//response.setHeader("Content-Disposition","attachment; filename=\"" + json_filename_tail + "\"");
+			////response.setHeader("Content-Disposition","attachment; filename=\"" + json_filename_tail + "\"");
 
 			response.setCharacterEncoding("UTF-8");
 		
-			if (page_num_str != null) {
+			if (seq_num_str != null) {
+				// consider having a page-level cache
 				JSONObject json_ef = new JSONObject(json_content_str);
 				JSONObject json_ef_features = json_ef.getJSONObject("features");
 				JSONArray json_ef_pages = json_ef_features.getJSONArray("pages");
-				int index_pos = page_num -1;
+				int index_pos = seq_num -1; // sequence numbers start at 1, but indexes don't!!
 				if ((index_pos>0) && (index_pos < json_ef_pages.length())) {
 					JSONObject json_ef_page = json_ef_pages.getJSONObject(index_pos);
 					json_content_str = json_ef_page.toString();
 				}
 				else {
-					json_content_str = "{ error: \"Page number '" + page_num_str + "' out of bounds\"}";
+					json_content_str = "{ error: \"Seq number '" + seq_num_str + "' out of bounds\"}";
 				}
 			}			
 			
