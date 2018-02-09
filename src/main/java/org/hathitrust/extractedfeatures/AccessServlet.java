@@ -115,7 +115,8 @@ public class AccessServlet extends HttpServlet
 		else if (cgi_download_id != null) {
 
 			if (check_exists_.validityCheckID(response, cgi_download_id)) {
-				download_json_.outputVolume(response,cgi_download_id);
+				String [] download_ids = new String[] {cgi_download_id};
+				download_json_.outputVolume(response,download_ids);
 			}
 		} 
 		else if (cgi_download_ids != null) {

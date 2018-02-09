@@ -43,10 +43,13 @@ public class DownloadJSONAction extends BaseAction
 	{
 		String[]  mess =
 			{ "Download HTRC Extracted Features JSON files for the given IDs.",
-					"Required parameter: 'id' or 'ids'",
-					"Returns:            a JSON Extracted Feature file for a single ID;\n"
-				    + "                        or a zipped up file of JSON files when multiple IDs requested."
-			};
+					"Required parameter: 'id' or 'ids'\n"
+				   +"Optional parameter: 'output=json|zip (defaults to 'json')",
+					"Returns:            Uncompressed JSON Extracted Feature file content for given id(s);\n"
+				    + "                    or a zipped up version, when output=zipfile."
+					+ "                  To return just the volume level metadata specify 'id' in the form mdp.123456789-metata"
+					+ "                  To return just the page level JSON specify 'id' in the form mdp.123456789-seq-000000"
+							};
 		
 		return mess;
 	}
@@ -56,94 +59,79 @@ public class DownloadJSONAction extends BaseAction
 		json_file_manager_ = JSONFileManager.getInstance(config);
 	}
 
-	public void outputVolume(HttpServletResponse response, String download_id) 
+	public void outputVolume(HttpServletResponse response, String[] download_ids) 
 			throws ServletException, IOException
-	{
-		OutputStream download_os = null;
+	{	
+		response.setContentType("text/plain");
+		response.setCharacterEncoding("UTF-8");
 		
-		String volume_id = download_id;
-		String seq_num_str = null;
-		int seq_num = 0;
-		
-		Matcher matcher = page_patt_.matcher(download_id);
-		if (matcher.matches()) {
-		  volume_id = matcher.group(1);
-		  seq_num_str =matcher.group(2);
-		  seq_num = Integer.parseInt(seq_num_str);
-		}
-		
-		//String full_json_filename = VolumeUtils.idToPairtreeFilename(volume_id);
-		//File file = json_file_manager_.fileOpen(full_json_filename);
+		for (int i=0; i<download_ids.length; i++) {
+			String download_id = download_ids[i];
 
-		String json_content_str = json_file_manager_.getVolumeContent(volume_id);
-		
-		//if (file == null) {
-		if (json_content_str == null) {
-			if (json_file_manager_.usingRsync()) {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
+			String volume_id = download_id;
+			boolean has_seq_num = false;
+			boolean has_metadata = false;
+
+			String seq_num_str = null;
+			int seq_num = 0;
+
+			Matcher seq_matcher = seq_patt_.matcher(download_id);
+			if (seq_matcher.matches()) {
+				has_seq_num = true;
+				volume_id = seq_matcher.group(1);
+				seq_num_str = seq_matcher.group(2);
+				seq_num = Integer.parseInt(seq_num_str);
 			}
 			else {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
+				Matcher md_matcher = metadata_patt_.matcher(download_id);
+				if (md_matcher.matches()) {
+					volume_id = md_matcher.group(1);
+					has_metadata = true;
+				}
 			}
-		}
-		else {
-			//String json_content_str = json_file_manager_.readCompressedTextFile(file);
-			
-			////String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-			////response.setContentType("application/json");
-			response.setContentType("text/plain");
-			////response.setHeader("Content-Disposition","attachment; filename=\"" + json_filename_tail + "\"");
 
-			response.setCharacterEncoding("UTF-8");
-		
-			if (seq_num_str != null) {
-				// consider having a page-level cache
-				JSONObject json_ef = new JSONObject(json_content_str);
-				JSONObject json_ef_features = json_ef.getJSONObject("features");
-				JSONArray json_ef_pages = json_ef_features.getJSONArray("pages");
-				int index_pos = seq_num -1; // sequence numbers start at 1, but indexes don't!!
-				if ((index_pos>0) && (index_pos < json_ef_pages.length())) {
-					JSONObject json_ef_page = json_ef_pages.getJSONObject(index_pos);
-					json_content_str = json_ef_page.toString();
-				}
-				else {
-					json_content_str = "{ error: \"Seq number '" + seq_num_str + "' out of bounds\"}";
-				}
-			}			
-			
-			PrintWriter pw = response.getWriter();
-			pw.append(json_content_str);
-			/*
-			
-			response.setContentType("application/x-bzip2");
-			response.setHeader("Content-Disposition",
-					"attachment; filename=\"" + json_filename_tail + "\"");
+			String json_content_str = json_file_manager_.getVolumeContent(volume_id);
 
-			OutputStream ros = response.getOutputStream();
-			download_os = new BufferedOutputStream(ros);
-
-
-			byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
-
-			while (true) {
-				int num_bytes = bis.read(buf);
-				if (num_bytes == -1) {
+			if (json_content_str == null) {
+				if (json_file_manager_.usingRsync()) {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
 					break;
 				}
-				download_os.write(buf, 0, num_bytes);
+				else {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
+					break;
+				}
 			}
+			else {
+				if (has_seq_num) {
+					// consider having a page-level cache
+					JSONObject json_ef = new JSONObject(json_content_str);
+					JSONObject json_ef_features = json_ef.getJSONObject("features");
+					JSONArray json_ef_pages = json_ef_features.getJSONArray("pages");
 
-			bis.close();	    
+					int index_pos = seq_num -1; // sequence numbers start at 1, but indexes don't!!
+					if ((index_pos>=0) && (index_pos < json_ef_pages.length())) {
+						JSONObject json_ef_page = json_ef_pages.getJSONObject(index_pos);
+						json_content_str = json_ef_page.toString();
+					}
+					else {
+						json_content_str = "{ error: \"Seq number '" + seq_num_str + "' out of bounds\"}";
+					}
+				}			
+				else if (has_metadata) {
+					// consider having a metadata cache
+					JSONObject json_ef = new JSONObject(json_content_str);
+					JSONObject json_ef_metadata = json_ef.getJSONObject("metadata");
+					json_content_str = json_ef_metadata.toString();
+				}
+				// Otherwise, leave full volume JSON content alone
+				
 
-			download_os.close();
-*/
-			
-			if (json_file_manager_.usingRsync()) {
-				// remove file retrieved over rsync
-				//file.delete(); // ****
+				PrintWriter pw = response.getWriter();
+				pw.append(json_content_str);
 			}
 		}
-
+		
 	}
 	
 	public void outputZippedVolumes(HttpServletResponse response, String[] download_ids) 
@@ -238,17 +226,33 @@ public class DownloadJSONAction extends BaseAction
 	{
 		String cgi_download_id = request.getParameter("id");
 		String cgi_download_ids = request.getParameter("ids");
+		String cgi_output = request.getParameter("output");
+		
+		if (cgi_output == null) {
+			cgi_output = "json";
+		}
+		
+		String[] download_ids = null;
 		
 		if (cgi_download_ids != null) {
-			String[] download_ids = cgi_download_ids.split(",");
-		
-			if (validityCheckIDs(response, download_ids)) {
+			download_ids = cgi_download_ids.split(",");
+		}
+		else {
+			download_ids = new String[] {cgi_download_id};
+		}
+			
+
+		if (validityCheckIDs(response, download_ids)) {
+			
+			if (cgi_output.equals("zip")) {
 				outputZippedVolumes(response,download_ids);
 			}
-		}
-		else if (cgi_download_id != null) {
-			if (validityCheckID(response, cgi_download_id)) {
-				outputVolume(response,cgi_download_id);
+			else if (cgi_output.equals("json")) {
+				outputVolume(response,download_ids);
+			}
+			else {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
+				+"' -- 'output' parameter must be 'json' or 'zip'.");	
 			}
 		}
 		else {

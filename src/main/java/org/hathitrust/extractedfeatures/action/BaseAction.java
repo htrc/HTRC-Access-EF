@@ -48,7 +48,8 @@ public abstract class BaseAction
 	protected static MongoCollection<Document> mongo_exists_col_ = null;
 	
 	//Pattern static page_patt_ = Pattern.compile("^(.*)\\.page-(\\d+)$");
-	protected static Pattern page_patt_ = Pattern.compile("^(.*)-seq-(\\d+)$");	
+	protected static Pattern seq_patt_ = Pattern.compile("^(.*)-seq-(\\d+)$");	
+	protected static Pattern metadata_patt_ = Pattern.compile("^(.*)-metadata$");	
 	
 	public BaseAction(ServletContext servletContext ) 
 	{
@@ -151,6 +152,8 @@ public abstract class BaseAction
 
 	public boolean exists(String id)
 	{
+		//return true; // ****
+	
 		if (mode_ == OperationMode.MongoDB){
 			MongoCursor<Document> cursor = mongo_exists_col_.find(Filters.eq("_id",id)).iterator();
 			return cursor.hasNext();
@@ -158,6 +161,7 @@ public abstract class BaseAction
 		else {
 			return id_check_.containsKey(id);
 		}
+		
 	}
 	
 	public int size() {
@@ -179,7 +183,7 @@ public abstract class BaseAction
 	{
 		String volume_id = id;
 		
-		Matcher matcher = page_patt_.matcher(volume_id);
+		Matcher matcher = seq_patt_.matcher(volume_id);
 		if (matcher.matches()) {
 		  volume_id = matcher.group(1);
 		}
