@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -45,13 +47,14 @@ public abstract class BaseAction
 	protected static MongoDatabase mongo_db_    = null;
 	protected static MongoCollection<Document> mongo_exists_col_ = null;
 	
+	//Pattern static page_patt_ = Pattern.compile("^(.*)\\.page-(\\d+)$");
+	protected static Pattern page_patt_ = Pattern.compile("^(.*)-seq-(\\d+)$");	
 	
 	public BaseAction(ServletContext servletContext ) 
 	{
 		
 		// Set up mongoDB connection regardless of 'mode' we are in as other actions reply on it
 		if (mongo_state_ != MongoDBState.FailedStartup) {
-
 
 			if (mongo_client_ == null) {
 				mongo_client_ = new MongoClient("localhost",27017);
@@ -172,13 +175,26 @@ public abstract class BaseAction
 		}
 	}
 	
+	public String getVolumeID(String id)
+	{
+		String volume_id = id;
+		
+		Matcher matcher = page_patt_.matcher(volume_id);
+		if (matcher.matches()) {
+		  volume_id = matcher.group(1);
+		}
+		
+		return volume_id;
+	}
+	
 	public boolean validityCheckID(HttpServletResponse response, String id) throws IOException
 	{
-	
-		boolean exists = exists(id);
+		String volume_id = getVolumeID(id);
+		
+		boolean exists = exists(volume_id);
 		if (!exists) {
 			// Error
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested volume id '" + id + "' does not exist.");
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested volume id '" + volume_id + "' does not exist.");
 		}
 		
 		return exists;
