@@ -136,7 +136,7 @@ public class JSONFileManager
 	}
 	
 	
-	public File doRsyncDownload(String full_json_filename) throws IOException 
+	protected File doRsyncDownload(String full_json_filename) throws IOException 
 	{
 		String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
 		File tmp_full_json_file = new File(tmp_dir_, json_filename_tail);
@@ -146,6 +146,9 @@ public class JSONFileManager
 		if (json_content == null) {
 			// Not in cache
 		
+			// Usage of HTRC rsync server:
+			//   rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
+			
 			Runtime runtime = Runtime.getRuntime();
 			String[] rsync_command = {"rsync", "-av", rsync_base + full_json_filename, tmp_dir_.getPath()};
 
@@ -195,6 +198,57 @@ public class JSONFileManager
 		return file;
 	}
 
+	public String getVolumeContent(String volume_id)
+	{
+		String full_json_filename = VolumeUtils.idToPairtreeFilename(volume_id);
+		String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
+		
+		// Check cache first
+		String json_content = id_cache_.get("json-id-" + json_filename_tail);
+		
+		if (json_content == null) {
+
+			// Not in cache => work out if file is avaiable locally, or need to go through rsync
+			if (local_pairtree_root_ != null) {
+				// Access the file locally
+				File file = new File(local_pairtree_root_, full_json_filename);
+				json_content = readCompressedTextFile(file);
+			}
+			else {
+				// Work through rsync to get content
+				
+				// Usage of HTRC rsync server:
+				//   rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
+				
+				Runtime runtime = Runtime.getRuntime();
+				String[] rsync_command = {"rsync", "-av", rsync_base + full_json_filename, tmp_dir_.getPath()};
+
+				try {
+					Process proc = runtime.exec(rsync_command);
+					int retCode = proc.waitFor();
+
+					if (retCode != 0) {
+						throw new Exception("rsync command failed with code " + retCode);
+					}
+
+					File tmp_full_json_file = new File(tmp_dir_, json_filename_tail);
+					json_content = readCompressedTextFile(tmp_full_json_file);
+			
+					tmp_full_json_file.delete();
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+					json_content = null;
+				}			
+
+			}
+			// Store in cache for next time
+			id_cache_.put("json-id-" + json_filename_tail, json_content);
+		}
+	
+		return json_content;
+	}
+	
 	public boolean usingRsync()
 	{
 		return local_pairtree_root_ == null;
