@@ -26,14 +26,13 @@ public abstract class BaseAction
 {
 	//private static final long serialVersionUID = 1L;
 
-	enum OperationMode { OnlyHashmap, HashmapTransition, MongoDB };
+	enum CheckIDOperationMode { OnlyHashmap, HashmapTransition, MongoDB };
 	
 	enum MongoDBState { Unconnected, FailedStartup, Connected };
 	
-	//protected static OperationMode mode_ = OperationMode.OnlyHashmap;
-	//protected static OperationMode mode_ = OperationMode.HashmapTransition;
-	protected static OperationMode mode_ = OperationMode.MongoDB;
-	
+	//protected static OperationMode CheckIDMode_ = OperationMode.OnlyHashmap;
+	//protected static OperationMode CheckIDMode_ = OperationMode.HashmapTransition;
+	protected static CheckIDOperationMode CheckIDMode_ = CheckIDOperationMode.MongoDB;
 	
 	protected static int HASHMAP_INIT_SIZE = 16000000;
 	protected static HashMap<String, Boolean> id_check_ = null;
@@ -81,7 +80,7 @@ public abstract class BaseAction
 			}
 		}
 		
-		if (mode_ == OperationMode.OnlyHashmap || mode_ == OperationMode.HashmapTransition) {
+		if (CheckIDMode_ == CheckIDOperationMode.OnlyHashmap || CheckIDMode_ == CheckIDOperationMode.HashmapTransition) {
 			if (id_check_ == null) {
 				id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
 
@@ -124,7 +123,7 @@ public abstract class BaseAction
 
 				id_check_.put(id, true);
 
-				if (mode_ == OperationMode.HashmapTransition) {
+				if (CheckIDMode_ == CheckIDOperationMode.HashmapTransition) {
 					Document doc = new Document("_id", id);
 					if (mongo_state_ == MongoDBState.Connected) {
 						mongo_exists_col_.insertOne(doc);
@@ -154,7 +153,7 @@ public abstract class BaseAction
 	{
 		//return true; // ****
 	
-		if (mode_ == OperationMode.MongoDB){
+		if (CheckIDMode_ == CheckIDOperationMode.MongoDB){
 			MongoCursor<Document> cursor = mongo_exists_col_.find(Filters.eq("_id",id)).iterator();
 			return cursor.hasNext();
 		}
@@ -165,7 +164,7 @@ public abstract class BaseAction
 	}
 	
 	public int size() {
-		if (mode_ == OperationMode.MongoDB) {
+		if (CheckIDMode_ == CheckIDOperationMode.MongoDB) {
 			
 			long col_count = 0;
 			if (mongo_state_ == MongoDBState.Connected) {
