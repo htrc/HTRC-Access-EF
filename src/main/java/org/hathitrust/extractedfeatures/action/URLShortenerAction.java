@@ -151,7 +151,22 @@ public class URLShortenerAction extends BaseAction
 	
 	protected String expandKey(String key) 
 	{
-		return key_map_.get(key);
+		String value = key_map_.get(key);
+		
+		if (value == null) {
+			
+			Document doc = mongo_key_and_val_col_.find(eq("_id", key)).first();
+
+			if (doc != null) {
+				// Found it in mongoDB
+				value = doc.getString("value");
+				// Re-populate the hashmaps
+				key_map_.put(key, value);
+				value_map_.put(value, key);
+			}
+		}
+		
+		return value;
 	}
 	
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
