@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -28,6 +29,9 @@ import org.json.JSONObject;
  */
 public class DownloadJSONAction extends BaseAction
 {
+	enum JsonExtractMode { Volume, Metadata, Seq };
+	enum OutputFormat { JSON, ZIP, CSV, TSV };
+	
 	//private static final long serialVersionUID = 1L;
 	
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
@@ -44,7 +48,7 @@ public class DownloadJSONAction extends BaseAction
 		String[]  mess =
 			{ "Download HTRC Extracted Features JSON files for the given IDs.",
 					"Required parameter: 'id' or 'ids'\n"
-				   +"Optional parameter: 'output=json|zip (defaults to 'json')",
+				   +"Optional parameter: 'output=json|zip|csv|tsv (defaults to 'json')",
 					"Returns:            Uncompressed JSON Extracted Feature file content for given id(s);\n"
 				    + "                    or a zipped up version, when output=zipfile."
 					+ "                  To return just the volume level metadata specify 'id' in the form mdp.123456789-metata"
@@ -59,13 +63,133 @@ public class DownloadJSONAction extends BaseAction
 		json_file_manager_ = JSONFileManager.getInstance(config);
 	}
 
-	public void outputVolume(HttpServletResponse response, String[] download_ids) 
+	protected String jsonToFieldSeparatedFileKeys(JSONObject json_obj, String sep)
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		Iterator<String> key_iterator = json_obj.keys();
+		while (key_iterator.hasNext()) {
+			String key = key_iterator.next();
+			sb.append(key);
+			
+			if (key_iterator.hasNext()) {
+				sb.append(sep);
+			}
+		}
+		sb.append("\n");
+		return sb.toString();
+	}
+	
+	protected String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		Iterator<String> key_iterator = json_obj.keys();
+		while (key_iterator.hasNext()) {
+			String key = key_iterator.next();
+			
+			Object val_obj = json_obj.get(key);
+			
+			if (val_obj instanceof JSONObject) {
+				JSONObject val_json_obj = (JSONObject)val_obj;
+				sb.append(val_json_obj.toString());
+			}
+			else if (val_obj instanceof JSONArray) {
+				JSONArray val_json_array = (JSONArray)val_obj;
+				sb.append(val_json_array.toString());
+			}
+			else {
+				// primitive type
+				String val_str = val_obj.toString(); //json_obj.getString(key);
+				sb.append(val_str);
+			}
+			
+			if (key_iterator.hasNext()) {
+				sb.append(sep);
+			}
+		}
+		sb.append("\n");
+		return sb.toString();
+	}
+	
+	protected String outputExtractVolumeMetadata(String json_content_str_in, String output_format, boolean first_entry)
+	{
+		String json_content_str_out = null;
+		
+		JSONObject json_ef = new JSONObject(json_content_str_in);
+		JSONObject json_ef_metadata = json_ef.getJSONObject("metadata");
+		
+		if (output_format.equals("csv") || output_format.equals("tsv")) {
+			String field_sep = output_format.equals("csv") ? "," : "\t";
+			
+			if (first_entry) {
+				json_content_str_out = jsonToFieldSeparatedFileKeys(json_ef_metadata,field_sep);
+			}
+			else {
+				json_content_str_out = "";
+			}
+		
+			json_content_str_out += jsonToFieldSeparatedFileValues(json_ef_metadata,field_sep);
+		}
+		else {
+			json_content_str_out = json_ef_metadata.toString();
+		}
+		return json_content_str_out;
+	}
+	
+	protected String outputExtractPage(String json_content_str_in, int seq_num, String output_format, boolean first_entry)
+	{
+		String json_content_str_out = null;
+		
+		JSONObject json_ef = new JSONObject(json_content_str_in);
+		JSONObject json_ef_features = json_ef.getJSONObject("features");
+		JSONArray json_ef_pages = json_ef_features.getJSONArray("pages");
+
+		int index_pos = seq_num -1; // sequence numbers start at 1, but indexes don't!!
+		if ((index_pos>=0) && (index_pos < json_ef_pages.length())) {
+			JSONObject json_ef_page = json_ef_pages.getJSONObject(index_pos);
+
+			if (output_format.equals("csv") || output_format.equals("tsv")) {
+				String field_sep = output_format.equals("csv") ? "," : "\t";
+				
+				if (first_entry) {
+					json_content_str_out = jsonToFieldSeparatedFileKeys(json_ef_page,field_sep);
+				}
+				else {
+					json_content_str_out = "";
+				}
+				json_content_str_out += jsonToFieldSeparatedFileValues(json_ef_page,field_sep);
+			}
+			else {
+				json_content_str_out = json_ef_page.toString();
+			}
+		}
+		else {
+			json_content_str_out = "{ error: \"Seq number '" + seq_num + "' out of bounds\"}";
+		}
+		
+		return json_content_str_out;
+	}
+	
+	
+	public void outputVolume(HttpServletResponse response, String[] download_ids, String output_format) 
 			throws ServletException, IOException
 	{	
 		response.setContentType("text/plain");
 		response.setCharacterEncoding("UTF-8");
 		
-		for (int i=0; i<download_ids.length; i++) {
+		PrintWriter pw = response.getWriter();
+		
+		int download_ids_len = download_ids.length;
+		if (download_ids_len > 1) {
+			if (output_format.equals("json")) {
+				pw.append("[");
+			}
+		}
+		
+		boolean first_entry = true;
+		
+		for (int i=0; i<download_ids_len; i++) {
 			String download_id = download_ids[i];
 
 			String volume_id = download_id;
@@ -105,36 +229,36 @@ public class DownloadJSONAction extends BaseAction
 			else {
 				if (has_seq_num) {
 					// consider having a page-level cache
-					JSONObject json_ef = new JSONObject(json_content_str);
-					JSONObject json_ef_features = json_ef.getJSONObject("features");
-					JSONArray json_ef_pages = json_ef_features.getJSONArray("pages");
-
-					int index_pos = seq_num -1; // sequence numbers start at 1, but indexes don't!!
-					if ((index_pos>=0) && (index_pos < json_ef_pages.length())) {
-						JSONObject json_ef_page = json_ef_pages.getJSONObject(index_pos);
-						json_content_str = json_ef_page.toString();
-					}
-					else {
-						json_content_str = "{ error: \"Seq number '" + seq_num_str + "' out of bounds\"}";
-					}
+					json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
+				
 				}			
 				else if (has_metadata) {
 					// consider having a metadata cache
-					JSONObject json_ef = new JSONObject(json_content_str);
-					JSONObject json_ef_metadata = json_ef.getJSONObject("metadata");
-					json_content_str = json_ef_metadata.toString();
+					json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
 				}
 				// Otherwise, leave full volume JSON content alone
 				
 
-				PrintWriter pw = response.getWriter();
 				pw.append(json_content_str);
+				
+				if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
+					if (output_format.equals("json")) {
+						pw.append(",");
+					}
+				}
 			}
+			
+			first_entry = false;
 		}
 		
+		if (download_ids_len > 1) {
+			if (output_format.equals("json")) {
+				pw.append("]");
+			}
+		}
 	}
 	
-	public void outputZippedVolumes(HttpServletResponse response, String[] download_ids) 
+	public void outputZippedVolumesAdaptive(HttpServletResponse response, String[] download_ids) 
 			throws ServletException, IOException
 	{
 		int download_ids_len = download_ids.length;
@@ -221,6 +345,67 @@ public class DownloadJSONAction extends BaseAction
 		}
 	}
 	
+	public void outputZippedVolumes(HttpServletResponse response, String[] download_ids) 
+			throws ServletException, IOException
+	{
+		int download_ids_len = download_ids.length;
+
+		response.setContentType("application/zip");
+		response.setHeader("Content-Disposition","attachment; filename=htrc-ef-export.zip");
+
+		OutputStream ros = response.getOutputStream();
+		BufferedOutputStream bros = new BufferedOutputStream(ros);
+		ZipOutputStream zbros = new ZipOutputStream(bros);
+		OutputStream download_os = zbros;
+		
+		for (int i=0; i<download_ids_len; i++) {
+
+			String download_id = download_ids[i];
+		
+			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
+			String full_json_filename = VolumeUtils.idToPairtreeFilename(download_id);
+			File file = json_file_manager_.fileOpen(full_json_filename);
+
+			if (file == null) {
+				if (json_file_manager_.usingRsync()) {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
+				}
+				else {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
+				}
+				break;
+			}
+			else {
+				FileInputStream fis = new FileInputStream(file);
+				BufferedInputStream bis = new BufferedInputStream(fis);
+				String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
+
+				ZipEntry zipentry = new ZipEntry(json_filename_tail);
+				zbros.putNextEntry(zipentry);
+
+				byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
+
+				while (true) {
+					int num_bytes = bis.read(buf);
+					if (num_bytes == -1) {
+						break;
+					}
+					download_os.write(buf, 0, num_bytes);
+				}
+
+				bis.close();	    
+				zbros.closeEntry();
+
+				if (json_file_manager_.usingRsync()) {
+					// remove file retrieved over rsync
+					file.delete(); // ****
+				}
+			}
+		}
+
+		download_os.close();
+	}
+	
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException
 	{
@@ -247,8 +432,8 @@ public class DownloadJSONAction extends BaseAction
 			if (cgi_output.equals("zip")) {
 				outputZippedVolumes(response,download_ids);
 			}
-			else if (cgi_output.equals("json")) {
-				outputVolume(response,download_ids);
+			else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
+				outputVolume(response,download_ids,cgi_output);
 			}
 			else {
 				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
