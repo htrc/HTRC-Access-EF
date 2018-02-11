@@ -185,7 +185,7 @@ public class DownloadJSONAction extends BaseAction
 		
 		int download_ids_len = download_ids.length;
 		if (download_ids_len > 1) {
-			if (output_format.equals("json")) {
+			if (output_format == OutputFormat.JSON) {
 				pw.append("[");
 			}
 		}
@@ -245,7 +245,7 @@ public class DownloadJSONAction extends BaseAction
 				pw.append(json_content_str);
 				
 				if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
-					if (output_format.equals("json")) {
+					if (output_format == OutputFormat.JSON) {
 						pw.append(",");
 					}
 				}
@@ -255,7 +255,7 @@ public class DownloadJSONAction extends BaseAction
 		}
 		
 		if (download_ids_len > 1) {
-			if (output_format.equals("json")) {
+			if (output_format == OutputFormat.JSON)  {
 				pw.append("]");
 			}
 		}
