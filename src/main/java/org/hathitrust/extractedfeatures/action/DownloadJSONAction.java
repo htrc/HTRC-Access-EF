@@ -29,9 +29,10 @@ import org.json.JSONObject;
  */
 public class DownloadJSONAction extends BaseAction
 {
-	enum JsonExtractMode { Volume, Metadata, Seq };
-	enum OutputFormat { JSON, ZIP, CSV, TSV };
+	public enum OutputFormat { JSON, ZIP, CSV, TSV };
 	protected static String[] OutputFormatFieldSeparator_ = new String[] { null, null, ",", "\t" };
+
+	protected enum JsonExtractMode { Volume, Metadata, Seq };
 	
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
 
@@ -174,7 +175,7 @@ public class DownloadJSONAction extends BaseAction
 	}
 	
 	
-	protected void outputVolume(HttpServletResponse response, String[] download_ids, OutputFormat output_format) 
+	public void outputVolume(HttpServletResponse response, String[] download_ids, OutputFormat output_format) 
 			throws ServletException, IOException
 	{	
 		response.setContentType("text/plain");
