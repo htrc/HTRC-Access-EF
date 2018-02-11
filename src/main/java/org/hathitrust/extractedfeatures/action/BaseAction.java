@@ -182,9 +182,15 @@ public abstract class BaseAction
 	{
 		String volume_id = id;
 		
-		Matcher matcher = seq_patt_.matcher(volume_id);
-		if (matcher.matches()) {
-		  volume_id = matcher.group(1);
+		Matcher seq_matcher = seq_patt_.matcher(volume_id);
+		if (seq_matcher.matches()) {
+		  volume_id = seq_matcher.group(1);
+		}
+		else {
+			Matcher metadata_matcher = metadata_patt_.matcher(volume_id);
+			if (metadata_matcher.matches()) {
+			  volume_id = metadata_matcher.group(1);
+			}
 		}
 		
 		return volume_id;
