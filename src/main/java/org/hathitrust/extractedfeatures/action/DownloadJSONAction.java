@@ -53,7 +53,7 @@ public class DownloadJSONAction extends BaseAction
 				    + "                    or a zipped up version, when output=zipfile."
 					+ "                  To return just the volume level metadata specify 'id' in the form mdp.123456789-metata"
 					+ "                  To return just the page level JSON specify 'id' in the form mdp.123456789-seq-000000"
-							};
+			};
 		
 		return mess;
 	}
