@@ -31,8 +31,7 @@ public class DownloadJSONAction extends BaseAction
 {
 	enum JsonExtractMode { Volume, Metadata, Seq };
 	enum OutputFormat { JSON, ZIP, CSV, TSV };
-	
-	//private static final long serialVersionUID = 1L;
+	protected static String[] OutputFormatFieldSeparator_ = new String[] { null, null, ",", "\t" };
 	
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
 
@@ -82,6 +81,8 @@ public class DownloadJSONAction extends BaseAction
 	
 	protected String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
 	{
+		// Needs escaping added in! // ****
+		
 		StringBuilder sb = new StringBuilder();
 		
 		Iterator<String> key_iterator = json_obj.keys();
@@ -112,16 +113,16 @@ public class DownloadJSONAction extends BaseAction
 		return sb.toString();
 	}
 	
-	protected String outputExtractVolumeMetadata(String json_content_str_in, String output_format, boolean first_entry)
+	protected String outputExtractVolumeMetadata(String json_content_str_in, OutputFormat output_format, boolean first_entry)
 	{
 		String json_content_str_out = null;
 		
 		JSONObject json_ef = new JSONObject(json_content_str_in);
 		JSONObject json_ef_metadata = json_ef.getJSONObject("metadata");
 		
-		if (output_format.equals("csv") || output_format.equals("tsv")) {
-			String field_sep = output_format.equals("csv") ? "," : "\t";
-			
+		if (output_format == OutputFormat.CSV || output_format == OutputFormat.TSV) {
+			String field_sep = OutputFormatFieldSeparator_[output_format.ordinal()];
+
 			if (first_entry) {
 				json_content_str_out = jsonToFieldSeparatedFileKeys(json_ef_metadata,field_sep);
 			}
@@ -137,7 +138,7 @@ public class DownloadJSONAction extends BaseAction
 		return json_content_str_out;
 	}
 	
-	protected String outputExtractPage(String json_content_str_in, int seq_num, String output_format, boolean first_entry)
+	protected String outputExtractPage(String json_content_str_in, int seq_num, OutputFormat output_format, boolean first_entry)
 	{
 		String json_content_str_out = null;
 		
@@ -149,8 +150,9 @@ public class DownloadJSONAction extends BaseAction
 		if ((index_pos>=0) && (index_pos < json_ef_pages.length())) {
 			JSONObject json_ef_page = json_ef_pages.getJSONObject(index_pos);
 
-			if (output_format.equals("csv") || output_format.equals("tsv")) {
-				String field_sep = output_format.equals("csv") ? "," : "\t";
+			if (output_format == OutputFormat.CSV || output_format == OutputFormat.TSV) {
+				
+				String field_sep = OutputFormatFieldSeparator_[output_format.ordinal()];
 				
 				if (first_entry) {
 					json_content_str_out = jsonToFieldSeparatedFileKeys(json_ef_page,field_sep);
@@ -172,7 +174,7 @@ public class DownloadJSONAction extends BaseAction
 	}
 	
 	
-	public void outputVolume(HttpServletResponse response, String[] download_ids, String output_format) 
+	protected void outputVolume(HttpServletResponse response, String[] download_ids, OutputFormat output_format) 
 			throws ServletException, IOException
 	{	
 		response.setContentType("text/plain");
@@ -258,7 +260,7 @@ public class DownloadJSONAction extends BaseAction
 		}
 	}
 	
-	public void outputZippedVolumesAdaptive(HttpServletResponse response, String[] download_ids) 
+	protected void outputZippedVolumesAdaptive(HttpServletResponse response, String[] download_ids) 
 			throws ServletException, IOException
 	{
 		int download_ids_len = download_ids.length;
@@ -433,7 +435,17 @@ public class DownloadJSONAction extends BaseAction
 				outputZippedVolumes(response,download_ids);
 			}
 			else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
-				outputVolume(response,download_ids,cgi_output);
+				OutputFormat output_format = null;
+				if (cgi_output.equals("json") ) {
+					output_format = OutputFormat.JSON;
+				}
+				else if (cgi_output.equals("csv") ) {
+					output_format = OutputFormat.CSV;
+				}
+				if (cgi_output.equals("tsv") ) {
+					output_format = OutputFormat.TSV;
+				}
+				outputVolume(response,download_ids,output_format);
 			}
 			else {
 				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
