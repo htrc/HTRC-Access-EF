@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.ServletConfig;
@@ -91,21 +90,27 @@ public class DownloadJSONAction extends BaseAction
 			String key = key_iterator.next();
 			
 			Object val_obj = json_obj.get(key);
+			String val_str = null;
 			
 			if (val_obj instanceof JSONObject) {
 				JSONObject val_json_obj = (JSONObject)val_obj;
-				sb.append(val_json_obj.toString());
+				val_str = val_json_obj.toString();
 			}
 			else if (val_obj instanceof JSONArray) {
 				JSONArray val_json_array = (JSONArray)val_obj;
-				sb.append(val_json_array.toString());
+				val_str = val_json_array.toString();
 			}
 			else {
 				// primitive type
-				String val_str = val_obj.toString(); //json_obj.getString(key);
-				sb.append(val_str);
+				val_str = val_obj.toString(); //json_obj.getString(key);
 			}
-			
+			if (sep.equals(",")) {
+				// ensure the string is escaped: enclose in double quotes, change any existing " to ""
+				val_str = val_str.replace("\"","\"\"");
+				val_str = "\"" + val_str + "\"";
+			}
+			sb.append(val_str);
+
 			if (key_iterator.hasNext()) {
 				sb.append(sep);
 			}
@@ -240,8 +245,6 @@ public class DownloadJSONAction extends BaseAction
 					json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
 				}
 				// Otherwise, leave full volume JSON content alone
-				
-
 				pw.append(json_content_str);
 				
 				if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
