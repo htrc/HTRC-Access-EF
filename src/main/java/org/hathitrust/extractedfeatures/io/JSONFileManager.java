@@ -12,6 +12,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.logging.Logger;
+
 import javax.servlet.ServletConfig;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
@@ -27,6 +29,7 @@ import org.hathitrust.extractedfeatures.VolumeUtils;
 public class JSONFileManager
 {
 	//private static final long serialVersionUID = 1L;
+	protected static Logger logger = Logger.getLogger(JSONFileManager.class.getName()); // org.hathitrust.extractedfeatures.io.
 	
 	protected static final String rsync_base = "data.analytics.hathitrust.org::features/";
 	
@@ -245,7 +248,9 @@ public class JSONFileManager
 			// Store in cache for next time
 			id_cache_.put("json-id-" + json_filename_tail, json_content);
 		}
-	
+		else {
+			logger.info("Retrieving '" + json_filename_tail + "' from cache"); 
+		}
 		return json_content;
 	}
 	
