@@ -26,7 +26,7 @@ import org.json.JSONObject;
 /**
  * Servlet implementation class VolumeCheck
  */
-public class DownloadJSONAction extends BaseAction
+public class DownloadJSONAction extends URLShortenerAction
 {
 	public enum OutputFormat { JSON, ZIP, CSV, TSV };
 	protected static String[] OutputFormatFieldSeparator_ = new String[] { null, null, ",", "\t" };
@@ -46,7 +46,7 @@ public class DownloadJSONAction extends BaseAction
 	{
 		String[]  mess =
 			{ "Download HTRC Extracted Features JSON files for the given IDs.",
-					"Required parameter: 'id' or 'ids'\n"
+					"Required parameter: 'id', 'ids' or 'key'\n"
 				   +"Optional parameter: 'output=json|zip|csv|tsv (defaults to 'json')",
 					"Returns:            Uncompressed JSON Extracted Feature file content for given id(s);\n"
 				    + "                    or a zipped up version, when output=zipfile."
@@ -415,12 +415,18 @@ public class DownloadJSONAction extends BaseAction
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException
 	{
+		String cgi_key = request.getParameter("key");
 		String cgi_download_id = request.getParameter("id");
 		String cgi_download_ids = request.getParameter("ids");
 		String cgi_output = request.getParameter("output");
 		
 		if (cgi_output == null) {
 			cgi_output = "json";
+		}
+		
+		if (cgi_key != null) {
+			// Retrieve IDs from MongoDB
+			cgi_download_ids = expandKey(cgi_key);
 		}
 		
 		String[] download_ids = null;
