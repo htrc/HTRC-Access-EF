@@ -151,8 +151,6 @@ public abstract class BaseAction
 
 	public boolean exists(String id)
 	{
-		//return true; // ****
-	
 		if (CheckIDMode_ == CheckIDOperationMode.MongoDB){
 			MongoCursor<Document> cursor = mongo_exists_col_.find(Filters.eq("_id",id)).iterator();
 			return cursor.hasNext();
@@ -160,7 +158,6 @@ public abstract class BaseAction
 		else {
 			return id_check_.containsKey(id);
 		}
-		
 	}
 	
 	public int size() {
@@ -196,6 +193,11 @@ public abstract class BaseAction
 		return volume_id;
 	}
 	
+	public boolean validityCheckIDOptimistic(HttpServletResponse response, String id) throws IOException
+	{
+		return true;
+	}
+	
 	public boolean validityCheckID(HttpServletResponse response, String id) throws IOException
 	{
 		String volume_id = getVolumeID(id);
@@ -207,6 +209,11 @@ public abstract class BaseAction
 		}
 		
 		return exists;
+	}
+	
+	public boolean validityCheckIDsOptimistic(HttpServletResponse response, String[] ids) throws IOException
+	{
+		return true;	
 	}
 	
 	public boolean validityCheckIDs(HttpServletResponse response, String[] ids) throws IOException

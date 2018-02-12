@@ -428,9 +428,9 @@ public class DownloadJSONAction extends BaseAction
 		else {
 			download_ids = new String[] {cgi_download_id};
 		}
-			
 
-		if (validityCheckIDs(response, download_ids)) {
+		// ****	Assume calls are make for only valid IDs
+		if (validityCheckIDsOptimistic(response, download_ids)) {
 			
 			if (cgi_output.equals("zip")) {
 				outputZippedVolumes(response,download_ids);
