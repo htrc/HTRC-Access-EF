@@ -207,7 +207,7 @@ public class DownloadJSONAction extends URLShortenerAction
 			String seq_num_str = null;
 			int seq_num = 0;
 
-			Matcher seq_matcher = seq_patt_.matcher(download_id);
+			Matcher seq_matcher = IdentiferRegExp.SeqPattern.matcher(download_id);
 			if (seq_matcher.matches()) {
 				has_seq_num = true;
 				volume_id = seq_matcher.group(1);
@@ -215,7 +215,7 @@ public class DownloadJSONAction extends URLShortenerAction
 				seq_num = Integer.parseInt(seq_num_str);
 			}
 			else {
-				Matcher md_matcher = metadata_patt_.matcher(download_id);
+				Matcher md_matcher = IdentiferRegExp.MetadataPattern.matcher(download_id);
 				if (md_matcher.matches()) {
 					volume_id = md_matcher.group(1);
 					has_metadata = true;

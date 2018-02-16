@@ -19,6 +19,7 @@ import org.hathitrust.extractedfeatures.action.CollectionToWorksetAction;
 import org.hathitrust.extractedfeatures.action.GuessLanguageAction;
 import org.hathitrust.extractedfeatures.action.DownloadJSONAction;
 import org.hathitrust.extractedfeatures.action.ICUTokenizeAction;
+import org.hathitrust.extractedfeatures.action.ShoppingcartAction;
 import org.hathitrust.extractedfeatures.action.URLShortenerAction;
 
 
@@ -35,6 +36,7 @@ public class AccessServlet extends HttpServlet
 	protected static ICUTokenizeAction icu_tokenize_ = null;
 	protected static GuessLanguageAction guess_language_ = null;
 	protected static URLShortenerAction url_shortener_ = null;
+	protected static ShoppingcartAction shoppingcart_ = null;
 	
 	protected static ArrayList<BaseAction> action_list_ = null;
 
@@ -73,6 +75,10 @@ public class AccessServlet extends HttpServlet
 			url_shortener_ = new URLShortenerAction(context);
 		}
 		
+		if (shoppingcart_ == null) {
+			shoppingcart_ = new ShoppingcartAction(context);
+		}
+		
 		if (action_list_ == null) {
 			action_list_ = new ArrayList<BaseAction>();
 			action_list_.add(check_exists_);
@@ -81,6 +87,7 @@ public class AccessServlet extends HttpServlet
 			action_list_.add(icu_tokenize_);
 			action_list_.add(guess_language_);
 			action_list_.add(url_shortener_);
+			action_list_.add(shoppingcart_);
 		}		
 	}	
 
