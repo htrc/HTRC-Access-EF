@@ -46,10 +46,6 @@ public abstract class BaseAction
 	protected static MongoDatabase mongo_db_    = null;
 	protected static MongoCollection<Document> mongo_exists_col_ = null;
 	
-	//Pattern static page_patt_ = Pattern.compile("^(.*)\\.page-(\\d+)$");
-	protected static Pattern seq_patt_ = Pattern.compile("^(.*)-seq-(\\d+)$");	
-	protected static Pattern metadata_patt_ = Pattern.compile("^(.*)-metadata$");	
-	
 	public BaseAction(ServletContext servletContext ) 
 	{
 		
@@ -179,12 +175,12 @@ public abstract class BaseAction
 	{
 		String volume_id = id;
 		
-		Matcher seq_matcher = seq_patt_.matcher(volume_id);
+		Matcher seq_matcher = IdentiferRegExp.SeqPattern.matcher(volume_id);
 		if (seq_matcher.matches()) {
 		  volume_id = seq_matcher.group(1);
 		}
 		else {
-			Matcher metadata_matcher = metadata_patt_.matcher(volume_id);
+			Matcher metadata_matcher = IdentiferRegExp.MetadataPattern.matcher(volume_id);
 			if (metadata_matcher.matches()) {
 			  volume_id = metadata_matcher.group(1);
 			}
