@@ -64,7 +64,7 @@
 <!--
 			<init-param>
 				<param-name>pairtreeRoot</param-name>
-				<param-value>/data/features/ef-full</param-value>
+				<param-value>/data/local/data//ef-full</param-value>
 			</init-param>
 -->
 	</servlet>
