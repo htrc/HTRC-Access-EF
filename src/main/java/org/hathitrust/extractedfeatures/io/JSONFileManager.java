@@ -241,6 +241,7 @@ public class JSONFileManager
 					
 				} catch (Exception e) {
 					e.printStackTrace();
+					logger.warning("Rsync command run was: " + String.join(" ",rsync_command));
 					json_content = null;
 				}			
 
