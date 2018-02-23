@@ -20,7 +20,14 @@ if [ $ids_len = "1" ] ; then
     id=$ids
     echo
     echo "++++"
-    echo "+ kill $id"
+    echo "+ running: kill $id"
+    echo "++++"
+    echo
+    kill $id
+else
+    echo
+    echo "++++"
+    echo "+ More than one candidate found: $ids"
     echo "++++"
     echo
 fi
