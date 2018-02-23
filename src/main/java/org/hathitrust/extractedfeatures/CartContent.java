@@ -130,10 +130,10 @@ public class CartContent {
 		Set<String> vol_ids_set = vol_ids_.keySet();
 		Set<String> seq_ids_set = seq_ids_.keySet();
 		
-		String cart_json_str = "{ vol_ids_: " + setToJSONArray(vol_ids_set)
-							 + ", seq_ids_: " + setToJSONArray(seq_ids_set) + "}";
+		String cart_json_str = "{ \"vol_ids_\": " + setToJSONArray(vol_ids_set)
+							 + ", \"seq_ids_\": " + setToJSONArray(seq_ids_set) + "}";
 		
-		String doc_str = "{ _id: \"" + key +"\" , cart:" + cart_json_str + "}";
+		String doc_str = "{ \"_id\": \"" + key +"\" , \"cart\":" + cart_json_str + "}";
 		
 		//System.err.println("**** doc str = " + doc_str);
 		
