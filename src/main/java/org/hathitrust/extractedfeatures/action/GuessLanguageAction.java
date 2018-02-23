@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -38,9 +39,9 @@ public class GuessLanguageAction extends BaseAction
 	}
 
     
-	public GuessLanguageAction(ServletContext context)
+	public GuessLanguageAction(ServletContext context, ServletConfig config)
 	{
-		super(context);
+		super(context,config);
 		
 		try {
 			String lang_profiles_dir = context.getRealPath("/WEB-INF/classes/" + "language-detection-profiles");
@@ -50,6 +51,11 @@ public class GuessLanguageAction extends BaseAction
 			e.printStackTrace();
 
 		}
+	}
+	
+	public boolean isOperational() 
+	{
+		return true;
 	}
 
 	public String detect(String text) throws LangDetectException {

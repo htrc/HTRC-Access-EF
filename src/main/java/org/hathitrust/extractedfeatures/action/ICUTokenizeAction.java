@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -39,11 +40,16 @@ public class ICUTokenizeAction extends BaseAction
 	}
 
     
-	public ICUTokenizeAction(ServletContext context) 
+	public ICUTokenizeAction(ServletContext context, ServletConfig config) 
 	{
-		super(context);
+		super(context,config);
 	}
 
+	public boolean isOperational() 
+	{
+		return true;
+	}
+	
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException
 	{

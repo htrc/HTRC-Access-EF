@@ -52,7 +52,7 @@ public class AccessServlet extends HttpServlet
 		ServletContext context = getServletContext();
 
 		if (check_exists_ == null) {	
-			check_exists_ = new CheckExistsAction(context);
+			check_exists_ = new CheckExistsAction(context,config);
 		}
 
 		if (download_json_ == null) {
@@ -60,34 +60,48 @@ public class AccessServlet extends HttpServlet
 		}
 
 		if (col2workset_ == null) {
-			col2workset_ = new CollectionToWorksetAction(context);
+			col2workset_ = new CollectionToWorksetAction(context,config);
 		}
 
 		if (icu_tokenize_ == null) {
-			icu_tokenize_ = new ICUTokenizeAction(context);
+			icu_tokenize_ = new ICUTokenizeAction(context,config);
 		}
 
 		if (guess_language_ == null) {
-			guess_language_ = new GuessLanguageAction(context);
+			guess_language_ = new GuessLanguageAction(context,config);
 		}
 		
 		if (url_shortener_ == null) {
-			url_shortener_ = new URLShortenerAction(context);
+			url_shortener_ = new URLShortenerAction(context,config);
 		}
 		
 		if (shoppingcart_ == null) {
-			shoppingcart_ = new ShoppingcartAction(context);
+			shoppingcart_ = new ShoppingcartAction(context,config);
 		}
 		
 		if (action_list_ == null) {
 			action_list_ = new ArrayList<BaseAction>();
-			action_list_.add(check_exists_);
-			action_list_.add(download_json_);
-			action_list_.add(col2workset_);
-			action_list_.add(icu_tokenize_);
-			action_list_.add(guess_language_);
-			action_list_.add(url_shortener_);
-			action_list_.add(shoppingcart_);
+			if (check_exists_.isOperational()) {
+				action_list_.add(check_exists_);
+			}
+			if (download_json_.isOperational()) {
+				action_list_.add(download_json_);
+			}
+			if (col2workset_.isOperational()) {
+				action_list_.add(col2workset_);
+			}
+			if (icu_tokenize_.isOperational()) {
+				action_list_.add(icu_tokenize_);
+			}
+			if (guess_language_.isOperational()) {
+				action_list_.add(guess_language_);
+			}
+			if (url_shortener_.isOperational()) {
+				action_list_.add(url_shortener_);
+			}
+			if (shoppingcart_.isOperational()) {
+				action_list_.add(shoppingcart_);
+			}
 		}		
 	}	
 

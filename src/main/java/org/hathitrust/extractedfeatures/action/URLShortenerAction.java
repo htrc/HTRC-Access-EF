@@ -11,12 +11,14 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Random;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bson.Document;
+import org.hathitrust.extractedfeatures.action.BaseAction.CheckIDOperationMode;
 import org.hathitrust.extractedfeatures.action.BaseAction.MongoDBState;
 
 import static com.mongodb.client.model.Filters.*;
@@ -61,9 +63,9 @@ public class URLShortenerAction extends BaseAction
 		return mess;
 	}
 	
-	public URLShortenerAction(ServletContext context) 
+	public URLShortenerAction(ServletContext context, ServletConfig config) 
 	{
-		super(context);
+		super(context,config);
 	
 		key_map_ = new HashMap<String, String>();
 		value_map_ = new HashMap<String, String>();
@@ -84,6 +86,11 @@ public class URLShortenerAction extends BaseAction
 		
 	}
 
+	public  boolean isOperational()
+	{
+		return mongo_key_and_val_col_ != null;
+	}
+	
 	protected String generateKey() 
 	{
 		String key = null;

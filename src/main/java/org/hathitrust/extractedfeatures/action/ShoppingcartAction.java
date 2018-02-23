@@ -6,6 +6,8 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
+
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -45,9 +47,9 @@ public class ShoppingcartAction extends BaseAction
 		return mess;
 	}
 
-	public ShoppingcartAction(ServletContext context) 
+	public ShoppingcartAction(ServletContext context, ServletConfig config) 
 	{
-		super(context);
+		super(context,config);
 
 		cart_map_ = new HashMap<String, CartContent>();
 
@@ -60,6 +62,11 @@ public class ShoppingcartAction extends BaseAction
 
 	}
 
+	public  boolean isOperational()
+	{
+		return mongo_shoppingcart_col_ != null;
+	}
+	
 	protected void replaceCart(String key, CartContent cart) 
 	{		
 		cart_map_.put(key, cart);

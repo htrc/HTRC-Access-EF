@@ -67,6 +67,18 @@
 				<param-value>/data/local/data//ef-full</param-value>
 			</init-param>
 -->
+			<init-param>
+				<param-name>mongodbHost</param-name>
+				<param-value>localhost</param-value>
+			</init-param>
+			<init-param>
+				<param-name>mongodbPort</param-name>
+				<param-value>27017</param-value>
+			</init-param>
+			<init-param>
+				<param-name>checkIDMode</param-name>
+				<param-value>Auto</param-value>
+			</init-param>
 	</servlet>
 
 	<servlet-mapping>

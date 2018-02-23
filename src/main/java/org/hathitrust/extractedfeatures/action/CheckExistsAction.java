@@ -2,6 +2,8 @@ package org.hathitrust.extractedfeatures.action;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -25,9 +27,9 @@ public class CheckExistsAction extends BaseAction
 		return mess;
 	}
 	
-	public CheckExistsAction(ServletContext context) 
+	public CheckExistsAction(ServletContext context, ServletConfig config) 
 	{
-		super(context);
+		super(context,config);
 	}
 	
 	public void outputJSON(HttpServletResponse response, String[] ids) throws IOException

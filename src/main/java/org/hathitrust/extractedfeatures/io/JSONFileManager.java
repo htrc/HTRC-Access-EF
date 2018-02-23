@@ -44,6 +44,7 @@ public class JSONFileManager
 	{	
 		try {
 			tmp_dir_ = Files.createTempDirectory("rsync").toFile();
+			logger.info("Created temporary directory: " + tmp_dir_.getAbsolutePath());
 		} catch (IOException e) {
 			String message = String.format("Error creating temporary directcory: %s", e.getMessage());
 			System.err.println(message);

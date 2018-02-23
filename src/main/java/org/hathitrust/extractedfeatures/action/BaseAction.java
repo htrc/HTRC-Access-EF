@@ -1,13 +1,18 @@
 package org.hathitrust.extractedfeatures.action;
 
+import static com.mongodb.client.model.Filters.eq;
+
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -15,6 +20,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bson.Document;
 import org.hathitrust.extractedfeatures.VolumeUtils;
+import org.hathitrust.extractedfeatures.io.FileUtils;
+import org.hathitrust.extractedfeatures.io.JSONFileManager;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -24,15 +31,22 @@ import com.mongodb.MongoClient;
 
 public abstract class BaseAction
 {
-	//private static final long serialVersionUID = 1L;
-
-	enum CheckIDOperationMode { OnlyHashmap, HashmapTransition, MongoDB };
+	enum CheckIDOperationMode { OnlyHashmap, HashmapTransition, MongoDB, Auto };
 	
 	enum MongoDBState { Unconnected, FailedStartup, Connected };
 	
+	protected static Logger logger = Logger.getLogger(BaseAction.class.getName());
+	
+	private final String  DefaultMongoDBHost = "localhost";
+	private final Integer DefaultMongoDbPort = 27017;
+	private final CheckIDOperationMode  DefaultCheckIDMode = CheckIDOperationMode.Auto;
+	
+	private final String IDListTextResource = "/WEB-INF/classes/htrc-ef-all-files.txt";
+	
 	//protected static OperationMode CheckIDMode_ = OperationMode.OnlyHashmap;
 	//protected static OperationMode CheckIDMode_ = OperationMode.HashmapTransition;
-	protected static CheckIDOperationMode CheckIDMode_ = CheckIDOperationMode.MongoDB;
+	//protected static CheckIDOperationMode CheckIDMode_ = CheckIDOperationMode.MongoDB;
+	protected static CheckIDOperationMode CheckIDMode_ = null;
 	
 	protected static int HASHMAP_INIT_SIZE = 16000000;
 	protected static HashMap<String, Boolean> id_check_ = null;
@@ -46,19 +60,64 @@ public abstract class BaseAction
 	protected static MongoDatabase mongo_db_    = null;
 	protected static MongoCollection<Document> mongo_exists_col_ = null;
 	
-	public BaseAction(ServletContext servletContext ) 
+	protected CheckIDOperationMode getConfigCheckIDMode(ServletConfig config)
 	{
+		CheckIDOperationMode check_id_mode;
 		
-		// Set up mongoDB connection regardless of 'mode' we are in as other actions reply on it
-		if (mongo_state_ != MongoDBState.FailedStartup) {
+		// determine its state from the config init-param
+		String check_id_mode_str = config.getInitParameter("checkIDMode");
+		if ((check_id_mode_str == null) || (check_id_mode_str.equals(""))) {
+			logger.info("checkIDMode defaulting to: " + DefaultCheckIDMode);
+			check_id_mode_str = DefaultCheckIDMode.name();	
+		}
 
-			if (mongo_client_ == null) {
-				mongo_client_ = new MongoClient("localhost",27017);
+		if (check_id_mode_str.equals("Auto")) {
+			check_id_mode = CheckIDOperationMode.Auto;
+		}
+		else if (check_id_mode_str.equals("OnlyHashmap")) {
+			check_id_mode = CheckIDOperationMode.OnlyHashmap;
+		}
+		else if (check_id_mode_str.equals("HashmapTransition")) {
+			check_id_mode = CheckIDOperationMode.HashmapTransition;
+		}
+		else if (check_id_mode_str.equals("MongoDB")) {
+			check_id_mode = CheckIDOperationMode.MongoDB;
+		}
+		else {
+			logger.info("checkIDMode '" + check_id_mode_str + "' not recognized, defaulting to: " + DefaultCheckIDMode);
+			check_id_mode = DefaultCheckIDMode; 	
+		}
+		
+		return check_id_mode;
+	}
+	
+	protected void connectToMongoDB(ServletConfig config)
+	{
+		if (mongo_client_ == null) {
+			
+			String mongo_host = config.getInitParameter("mongodbHost");
+			if ((mongo_host == null) || (mongo_host.equals(""))) {
+				mongo_host = DefaultMongoDBHost; 
 			}
+			String mongo_port_str = config.getInitParameter("mongodbPort");
+			if ((mongo_port_str == null) || (mongo_port_str.equals(""))) {
+				mongo_port_str = DefaultMongoDbPort.toString(); 
+			}
+
+			int mongo_port;
+			try {
+				mongo_port = Integer.parseInt(mongo_port_str);
+			}
+			catch (Exception e) {
+				e.printStackTrace();;
+				mongo_port = DefaultMongoDbPort;
+			}
+		
+			mongo_client_ = new MongoClient(mongo_host,mongo_port); 
 
 			try {
 				// Check connection opened OK
-				mongo_client_.getAddress(); // throws exception is not connected
+				mongo_client_.getAddress(); // throws exception if not connected
 				mongo_state_ = MongoDBState.Connected;
 
 				if (mongo_db_ == null) {
@@ -69,37 +128,105 @@ public abstract class BaseAction
 				}
 			}
 			catch (Exception e) {
-				System.err.println("Unable to open connection to MongoDB on port 27017.  Is it running?");
+				System.err.println("Unable to open connection to MongoDB on " + mongo_host + ":" + mongo_port 
+						+ ".  Is it running?");
 				mongo_state_ = MongoDBState.FailedStartup;
 				mongo_client_.close();
 				mongo_client_ = null;
-			}
-		}
-		
-		if (CheckIDMode_ == CheckIDOperationMode.OnlyHashmap || CheckIDMode_ == CheckIDOperationMode.HashmapTransition) {
-			if (id_check_ == null) {
-				id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
 
-				String htrc_list_fname = "htrc-ef-all-files.txt";
-				InputStream is = servletContext.getResourceAsStream("/WEB-INF/classes/" + htrc_list_fname);
-
-				try {
-					System.err.println("INFO: Loading in volume IDS: " + htrc_list_fname);
-
-					InputStreamReader isr = new InputStreamReader(is, "UTF-8");
-					BufferedReader br = new BufferedReader(isr);
-
-					storeIDs(br);
-					br.close();
-				} catch (Exception e) {
-					e.printStackTrace();
+				if (CheckIDMode_ == CheckIDOperationMode.Auto) {
+					// Switch mode to using OnlyHashmap and work off the text-file list of IDs
+					CheckIDMode_ = CheckIDOperationMode.OnlyHashmap; 
 				}
 			}
+		}
+	}
+	
+	protected CheckIDOperationMode checkMongoDBUpToDate(ServletContext servletContext)
+	{
+		// If text file present => check how many lines it has 
+		// If different to number of records in MongoDB, trigger Transition, otherwise become MongoDB mode 
+		
+		CheckIDOperationMode resulting_mode = CheckIDOperationMode.MongoDB;;
+				
+		InputStream is = servletContext.getResourceAsStream(IDListTextResource);
+		BufferedInputStream bis = new BufferedInputStream(is);
+		
+		try {
+			long num_txt_lines = FileUtils.countLines(bis);
+			long num_mongo_exists_lines = mongo_exists_col_.count();
+
+			if (num_txt_lines > num_mongo_exists_lines) {
+				// => trigger transition
+				resulting_mode = CheckIDOperationMode.HashmapTransition;
+			}
+			else  if (num_txt_lines < num_mongo_exists_lines) {
+				logger.warning("The ID List Text Resource '"+IDListTextResource+"' has fewer entries than in the MongoDB");
+			}
+		}
+		catch (IOException ioe) {
+			// No text file to base comparison, so soldier on in MongoDB mode
+			logger.info("Web resource text file '" + IDListTextResource + "' not present. Assuming MongoDB is up to date");
+			CheckIDMode_ = CheckIDOperationMode.MongoDB;
+		}
+		
+		return resulting_mode;
+	}
+	
+	protected void processIDListResource(ServletContext context)
+	{
+		if (id_check_ == null) {
+			id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
+
+			InputStream is = context.getResourceAsStream(IDListTextResource);
+
+			try {
+				System.err.println("INFO: Loading in web resource volume IDS: " + IDListTextResource);
+
+				InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+				BufferedReader br = new BufferedReader(isr);
+
+				storeIDs(br);
+				br.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public BaseAction(ServletContext context, ServletConfig config) 
+	{
+		if (CheckIDMode_ == null) {
+			CheckIDMode_ = getConfigCheckIDMode(config);
+		}
+		
+		// Need a mongoDB connection regardless of 'mode' we are in, as various actions rely on it
+		if (mongo_state_ != MongoDBState.FailedStartup) {
+			connectToMongoDB(config);
+		}
+		
+		if ((mongo_state_ != MongoDBState.FailedStartup) && (CheckIDMode_ == CheckIDOperationMode.Auto)) {
+			CheckIDMode_ = checkMongoDBUpToDate(context);
+		}
+		// Past this point, if CheckIDMode_ was initially 'Auto' it will now be fixed to one of the other modes
+		
+		if ((CheckIDMode_ == CheckIDOperationMode.OnlyHashmap) || (CheckIDMode_ == CheckIDOperationMode.HashmapTransition)) {
+			processIDListResource(context);
 		}
 	}
 
 	public abstract String getHandle();
 	public abstract String[] getDescription();
+
+	public  boolean isOperational()
+	{
+		if (CheckIDMode_ == CheckIDOperationMode.MongoDB) {
+			return mongo_client_ != null;
+		}
+		else {
+			return id_check_ != null;
+		}
+	}
 	
 	public abstract void doAction(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException;
@@ -120,14 +247,22 @@ public abstract class BaseAction
 				id_check_.put(id, true);
 
 				if (CheckIDMode_ == CheckIDOperationMode.HashmapTransition) {
-					Document doc = new Document("_id", id);
+					
 					if (mongo_state_ == MongoDBState.Connected) {
-						mongo_exists_col_.insertOne(doc);
+						Document doc = new Document("_id", id);
+						
+						Document prev_doc = mongo_exists_col_.find(eq("_id", id)).first();
+						if (prev_doc == null) {
+							mongo_exists_col_.insertOne(doc);
+						}
 					}
 				}
 				
 				if ((line_num % 100000) == 0) {
 					System.err.print(".");
+				}
+				if ((line_num % 40*100000) == 0) {
+					System.err.println();
 				}
 				line_num++;
 				

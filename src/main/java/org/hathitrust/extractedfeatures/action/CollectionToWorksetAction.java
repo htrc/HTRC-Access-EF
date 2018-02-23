@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -18,8 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 public class CollectionToWorksetAction extends BaseAction
 {
 	protected static final String ht_col_url = "https://babel.hathitrust.org/cgi/mb";
-	
-	//VolumeCheckAction vol_check_;
 	
 	public String getHandle() 
 	{
@@ -37,15 +36,9 @@ public class CollectionToWorksetAction extends BaseAction
 		return mess;
 	}
 	
-	/*
-	public CollectionToWorksetAction(VolumeCheckAction vol_check)
+	public CollectionToWorksetAction(ServletContext context, ServletConfig config) 
 	{
-		vol_check_ = vol_check;
-	}
-	*/
-	public CollectionToWorksetAction(ServletContext context) 
-	{
-		super(context);
+		super(context,config);
 	}
 	
 	public void outputWorkset(HttpServletResponse response, String cgi_convert_col, String cgi_col_title,
@@ -136,8 +129,6 @@ public class CollectionToWorksetAction extends BaseAction
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException
 	{
-		
-		
 		String cgi_convert_col = request.getParameter("convert-col");
 		if (cgi_convert_col != null) {
 			String cgi_col_title = request.getParameter("col-title");

@@ -58,7 +58,8 @@ public class DownloadJSONAction extends URLShortenerAction
 	}
 	
 	public DownloadJSONAction(ServletContext context, ServletConfig config)
-	{	super(context);
+	{	
+		super(context,config);
 		json_file_manager_ = JSONFileManager.getInstance(config);
 	}
 
