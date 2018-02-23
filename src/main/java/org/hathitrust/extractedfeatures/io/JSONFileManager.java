@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
@@ -28,7 +27,6 @@ import org.hathitrust.extractedfeatures.VolumeUtils;
 
 public class JSONFileManager
 {
-	//private static final long serialVersionUID = 1L;
 	protected static Logger logger = Logger.getLogger(JSONFileManager.class.getName()); // org.hathitrust.extractedfeatures.io.
 	
 	protected static final String rsync_base = "data.analytics.hathitrust.org::features/";
@@ -74,7 +72,6 @@ public class JSONFileManager
 	protected BufferedReader getBufferedReaderForCompressedFile(BufferedInputStream bis) 
 			throws IOException, CompressorException 
 	{
-	    //BufferedInputStream bis = getBufferedInputStream(fileIn);
 	    CompressorInputStream cis = new CompressorStreamFactory().createCompressorInputStream(bis);
 	    BufferedReader br = new BufferedReader(new InputStreamReader(cis,"UTF8"));
 	    return br;
