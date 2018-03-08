@@ -77,8 +77,14 @@
 			</init-param>
 			<init-param>
 				<param-name>checkIDMode</param-name>
-				<param-value>Auto</param-value>
+				<param-value>Auto</param-value> <!-- Alternative values:  OnlyHashmap, HashmapTransition, MongoDB -->
 			</init-param>
+<!-- 
+			<init-param>
+				<param-name>java.io.tmpdir</param-name>
+				<param-value>/tmp/htrc-access-ef</param-value>
+			</init-param>
+-->
 	</servlet>
 
 	<servlet-mapping>

@@ -31,6 +31,8 @@ public class JSONFileManager
 	
 	protected static final String rsync_base = "data.analytics.hathitrust.org::features/";
 	
+	protected static Boolean uses_custom_tmpdir_ = null;
+	
 	protected File tmp_dir_;
 	protected File local_pairtree_root_;
 
@@ -42,9 +44,46 @@ public class JSONFileManager
 	
 	private JSONFileManager(ServletConfig config)
 	{	
+		if (uses_custom_tmpdir_ == null) {
+			// haven't previously checked for config parameter being set
+			String java_io_tmpdir_str = config.getInitParameter("java.io.tmpdir");
+			if ((java_io_tmpdir_str != null) && (!java_io_tmpdir_str.equals(""))) {
+				logger.info("Servlet specifies custom java.io.tmpdir: " + java_io_tmpdir_str);
+				File java_io_tmpdir = new File(java_io_tmpdir_str);
+				
+				boolean update_java_prop = true;
+				
+				if (!java_io_tmpdir.exists()) {
+					boolean made_dir = java_io_tmpdir.mkdir();
+					if (made_dir) {
+						logger.info("Successfully created directory");
+					}
+					else {
+						update_java_prop = false;
+					}
+				}
+				else {
+					logger.info("Checking directory: existsD");
+					
+				}
+				
+				if (update_java_prop) {
+					logger.info("Updated Java property java.io.tmpdir to: " + java_io_tmpdir_str);
+					System.setProperty("java.io.tmpdir", java_io_tmpdir_str);
+					uses_custom_tmpdir_ = true;
+				}
+				else {
+					uses_custom_tmpdir_ = false;
+				}
+			}
+			else {
+				uses_custom_tmpdir_ = false;
+			}
+		}
+		
 		try {
 			tmp_dir_ = Files.createTempDirectory("rsync").toFile();
-			logger.info("Created temporary directory: " + tmp_dir_.getAbsolutePath());
+			logger.info("Created temporary directory for rsynced JSON files: " + tmp_dir_.getAbsolutePath());
 		} catch (IOException e) {
 			String message = String.format("Error creating temporary directcory: %s", e.getMessage());
 			System.err.println(message);
