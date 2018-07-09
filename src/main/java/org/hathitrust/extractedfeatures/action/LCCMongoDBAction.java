@@ -54,14 +54,15 @@ public abstract class LCCMongoDBAction extends BaseAction
 	protected static HashMap<String, LCCOutlineHashRec> lcc_hashmap_lookup_ = null;
 	protected static HashMap<String,LCCOutlinePrefixRootToplevel> lcc_prefix_root_toplevel_ = null;
 	
-	protected static int TEST_LIMIT = 100000;
+	//protected static int TEST_LIMIT = 100000;
 	//protected static boolean APPLY_TEST_LIMIT = true;
-	protected static boolean APPLY_TEST_LIMIT = false;
+	//protected static boolean APPLY_TEST_LIMIT = false;
 	
 	protected static MongoCollection<Document> mongo_lcc_col_ = null;
 	
 	protected StoreAccessOperationMode checkMongoDBUpToDate(ServletContext servletContext)
 	{
+		System.err.println("***** checkMongoDBUpToDate() placeholder called.  Returning null");
 		/*
 		// If text file present => check how many lines it has 
 		// If different to number of records in MongoDB, trigger Transition, otherwise become MongoDB mode 
@@ -94,26 +95,6 @@ public abstract class LCCMongoDBAction extends BaseAction
 		return null;
 	}
 	
-	/*
-	protected void updatePrefixRootRange(LCCOutlineHashRec lcc_hash_rec)
-	{
-		String curr_prefix = lcc_hash_rec.prefix;
-		Double min = lcc_hash_rec.start;
-		Double max = lcc_hash_rec.stop;
-		
-		LCCOutlinePrefixRootToplevel curr_range = lcc_prefix_root_toplevel_.get(curr_prefix);
-		if ((curr_range.min_start==null) || (min < curr_range.min_start)) {
-			curr_range.min_start = min;
-			curr_range.min_start_str = lcc_hash_rec.start_str;
-		}
-		if ((curr_range.max_stop==null) || (max > curr_range.max_stop)) {
-			curr_range.max_stop = max;
-			curr_range.max_stop_str = lcc_hash_rec.stop_str;
-		}
-		
-	}
-	*/
-	
 	protected void storeLCCHashRec(LCCOutlineHashRec lcc_hash_rec)
 	{
 		final String curr_key = lcc_hash_rec.id;
@@ -125,8 +106,6 @@ public abstract class LCCMongoDBAction extends BaseAction
 			// Brand new entry
 			lcc_hashmap_lookup_.put(curr_key, lcc_hash_rec);
 			curr_hash_rec = lcc_hash_rec;
-			
-			//updatePrefixRootRange(lcc_hash_rec); // ****
 		}
 		else {
 			// Looking to add the main entry to a location in the hashmap where some back-ref parent info already exists
@@ -151,44 +130,10 @@ public abstract class LCCMongoDBAction extends BaseAction
 				lcc_hashmap_lookup_.put(parent_key,parent_rec);
 			}
 			else {
-							
-				boolean made_new_connection = LCCOutlineHashRec.connect(parent_rec,curr_hash_rec);
-/*
-				if (!made_new_connection) {
-					// The parent node already knows about this child node,
-					// => so no more chaining up needed
-					break;
-				}*/
+				LCCOutlineHashRec.connect(parent_rec,curr_hash_rec);
 			}
 		}
-		/*
-		LCCOutlineHashRec child_rec = curr_hash_rec; // ****
-
-		for (int i=parents_len-1; i>=0; i--) {
-			String parent_key = lcc_hash_rec.parents.get(i);
-
-			LCCOutlineHashRec parent_rec = lcc_hashmap_lookup_.get(parent_key);
-
-			if (parent_rec == null) {
-				// The parent's full entry has not been processed yet,
-				// => create a stub
-				parent_rec = new LCCOutlineHashRec(parent_key,child_rec);
-				lcc_hashmap_lookup_.put(parent_key,parent_rec);
-			}
-			else {
-				boolean made_new_connection = LCCOutlineHashRec.connect(parent_rec,child_rec);
-
-				if (!made_new_connection) {
-					// The parent node already knows about this child node,
-					// => so no more chaining up needed
-					break;
-				}
-			}
-			//child_key = parent_key;
-			child_rec = parent_rec;
-		}
-	*/
-		
+				
 		if (parents_len == 0) {
 			// Top-level entry for the given prefix
 			String curr_prefix = curr_hash_rec.prefix;
@@ -221,8 +166,6 @@ public abstract class LCCMongoDBAction extends BaseAction
 	
 	protected int countPrefixRootToplevelTraverse(LCCOutlinePrefixRootToplevel prefix_root_toplevel) 
 	{
-		// ****
-		//String root_key = prefix_root_range.prefix + prefix_root_range.min_start_str + "-" + prefix_root_range.max_stop_str;
 		int count = 0;
 		
 		Collection<LCCOutlineHashRec> toplevel_hash_recs = prefix_root_toplevel.getTopLevelRecEntries();
@@ -236,7 +179,6 @@ public abstract class LCCMongoDBAction extends BaseAction
 		}
 		
 		return count;
-		//return countHashRecTraverse(lcc_hashmap_lookup_.get(root_key));
 	}
 	
 
@@ -329,24 +271,6 @@ public abstract class LCCMongoDBAction extends BaseAction
 						+ " root count/json count = " + count + "/" + json_count);
 			}
 		}
-		
-		/*
-		LCCOutlinePrefixRootToplevel ap_root = lcc_prefix_root_toplevel_.get("AP");
-		Collection<LCCOutlineHashRec> ap_toplevel_vals = ap_root.toplevel_ids_.values();
-		Iterator<LCCOutlineHashRec> ap_toplevel_hash_rec_iterator = ap_toplevel_vals.iterator();
-		while (ap_toplevel_hash_rec_iterator.hasNext()) {
-			LCCOutlineHashRec curr_toplevel_hash_rec = ap_toplevel_hash_rec_iterator.next();
-			System.err.println("****     'AP' root toplevel values: " + curr_toplevel_hash_rec.id);
-			
-			HashMap<String,LCCOutlineHashRec> child_ids = curr_toplevel_hash_rec.child_ids;
-			Collection<LCCOutlineHashRec> child_hash_recs = child_ids.values();
-			Iterator<LCCOutlineHashRec> child_hash_iterator = child_hash_recs.iterator();
-			while (child_hash_iterator.hasNext()) {
-				LCCOutlineHashRec child_hash_rec = child_hash_iterator.next();
-				System.err.println("****       'AP' root child values: " + child_hash_rec.id);
-			}
-		}
-		*/
 		
 		System.err.println("**** Number of entries in hashmap:                     " + lcc_hashmap_lookup_len);
 		System.err.println("**** Number of entries in prefix root recursive count: " + lcc_prefix_root_recursive_count);
