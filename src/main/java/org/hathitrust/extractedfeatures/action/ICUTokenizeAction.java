@@ -22,7 +22,7 @@ import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 
-public class ICUTokenizeAction extends BaseAction
+public class ICUTokenizeAction extends IdMongoDBAction
 {
 	public String getHandle() 
 	{

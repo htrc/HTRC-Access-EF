@@ -16,7 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class CollectionToWorksetAction extends BaseAction
+public class CollectionToWorksetAction extends IdMongoDBAction
 {
 	protected static final String ht_col_url = "https://babel.hathitrust.org/cgi/mb";
 	

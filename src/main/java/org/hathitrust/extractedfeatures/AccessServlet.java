@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.hathitrust.extractedfeatures.action.IdMongoDBAction;
+import org.hathitrust.extractedfeatures.action.LCCLookupAction;
 import org.hathitrust.extractedfeatures.action.BaseAction;
 import org.hathitrust.extractedfeatures.action.CheckExistsAction;
 import org.hathitrust.extractedfeatures.action.CollectionToWorksetAction;
@@ -32,6 +34,8 @@ public class AccessServlet extends HttpServlet
 
 	protected static CheckExistsAction check_exists_ = null;
 	protected static DownloadJSONAction download_json_ = null;
+	protected static LCCLookupAction lcc_lookup_ = null;
+	
 	protected static CollectionToWorksetAction col2workset_ = null;
 	protected static ICUTokenizeAction icu_tokenize_ = null;
 	protected static GuessLanguageAction guess_language_ = null;
@@ -57,6 +61,10 @@ public class AccessServlet extends HttpServlet
 
 		if (download_json_ == null) {
 			download_json_ = new DownloadJSONAction(context,config);
+		}
+		
+		if (lcc_lookup_ == null) {
+			lcc_lookup_ = new LCCLookupAction(context,config);
 		}
 
 		if (col2workset_ == null) {
@@ -86,6 +94,9 @@ public class AccessServlet extends HttpServlet
 			}
 			if (download_json_.isOperational()) {
 				action_list_.add(download_json_);
+			}
+			if (lcc_lookup_.isOperational()) {
+				action_list_.add(lcc_lookup_);
 			}
 			if (col2workset_.isOperational()) {
 				action_list_.add(col2workset_);

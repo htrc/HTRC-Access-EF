@@ -21,7 +21,7 @@ import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.cybozu.labs.langdetect.Language;
 
-public class GuessLanguageAction extends BaseAction
+public class GuessLanguageAction extends IdMongoDBAction
 {
 	public String getHandle() 
 	{

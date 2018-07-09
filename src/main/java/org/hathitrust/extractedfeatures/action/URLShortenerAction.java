@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bson.Document;
-import org.hathitrust.extractedfeatures.action.BaseAction.CheckIDOperationMode;
+import org.hathitrust.extractedfeatures.action.BaseAction.StoreAccessOperationMode;
 import org.hathitrust.extractedfeatures.action.BaseAction.MongoDBState;
 
 import static com.mongodb.client.model.Filters.*;
@@ -30,7 +30,7 @@ import com.mongodb.client.model.Indexes;
 // The following class based loosely on details at:
 //   https://gist.github.com/rakeshsingh/64918583972dd5a08012
 
-public class URLShortenerAction extends BaseAction
+public class URLShortenerAction extends IdMongoDBAction
 {
 	// Storage for generated keys
 	protected HashMap<String, String> key_map_;   // key-value map

@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 import org.bson.Document;
-import org.hathitrust.extractedfeatures.action.BaseAction;
+import org.hathitrust.extractedfeatures.action.IdMongoDBAction;
 import org.hathitrust.extractedfeatures.action.IdentiferRegExp;
 import org.hathitrust.extractedfeatures.action.ShoppingcartAction;
 

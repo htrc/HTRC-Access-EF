@@ -20,7 +20,7 @@ import static com.mongodb.client.model.Filters.*;
 
 import com.mongodb.client.MongoCollection;
 
-public class ShoppingcartAction extends BaseAction
+public class ShoppingcartAction extends IdMongoDBAction
 {
 	protected static Logger logger = Logger.getLogger(ShoppingcartAction.class.getName()); 
 	

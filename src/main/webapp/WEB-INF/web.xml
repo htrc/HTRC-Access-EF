@@ -79,6 +79,10 @@
 				<param-name>checkIDMode</param-name>
 				<param-value>Auto</param-value> <!-- Alternative values:  OnlyHashmap, HashmapTransition, MongoDB -->
 			</init-param>
+				<init-param>
+				<param-name>lookupLCCMode</param-name>
+				<param-value>Auto</param-value> <!-- Alternative values:  OnlyHashmap, HashmapTransition, MongoDB -->
+			</init-param>
 <!-- 
 			<init-param>
 				<param-name>java.io.tmpdir</param-name>
