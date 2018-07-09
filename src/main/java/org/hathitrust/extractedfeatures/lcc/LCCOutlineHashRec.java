@@ -33,8 +33,8 @@ public class LCCOutlineHashRec
 	public ArrayList<String> parents = null;		
 	public HashMap<String,LCCOutlineHashRec> child_ids = null;
 
-	public LCCOutlineHashRec(String stub_id, LCCOutlineHashRec child_rec) {
-		prefix = child_rec.prefix;
+	public LCCOutlineHashRec(String stub_prefix, String stub_id, LCCOutlineHashRec child_rec) {
+		prefix = stub_prefix;
 		id = stub_id;
 		child_ids = new HashMap<String,LCCOutlineHashRec>();
 		child_ids.put(child_rec.id, child_rec);

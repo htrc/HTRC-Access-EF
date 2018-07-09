@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -52,7 +53,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 	
 	//protected static int HASHMAP_INIT_SIZE = 16000000; // ****
 	protected static HashMap<String, LCCOutlineHashRec> lcc_hashmap_lookup_ = null;
-	protected static HashMap<String,LCCOutlinePrefixRootToplevel> lcc_prefix_root_toplevel_ = null;
+	protected static HashSet<String> lcc_prefix_set_ = null;
 	
 	//protected static int TEST_LIMIT = 100000;
 	//protected static boolean APPLY_TEST_LIMIT = true;
@@ -116,30 +117,53 @@ public abstract class LCCMongoDBAction extends BaseAction
 			curr_hash_rec = existing_hash_rec;
 		}
 
-		// Now follow the parent information, and make sure 'forward direction' child links are formed
-
+		
 		if (parents_len>0) {
-			String parent_key = lcc_hash_rec.parents.get(parents_len-1);
+			// Non-trivial parent chain => hook up the most immediate parent to child
+			// i.e. last entry in the parents array
 			
-			LCCOutlineHashRec parent_rec = lcc_hashmap_lookup_.get(parent_key);
+			String parent_id = lcc_hash_rec.parents.get(parents_len-1);
+			
+			LCCOutlineHashRec parent_rec = lcc_hashmap_lookup_.get(parent_id);
 
 			if (parent_rec == null) {
 				// The parent's full entry has not been processed yet,
 				// => create a stub
-				parent_rec = new LCCOutlineHashRec(parent_key,curr_hash_rec);
-				lcc_hashmap_lookup_.put(parent_key,parent_rec);
+				parent_rec = new LCCOutlineHashRec(curr_hash_rec.prefix,parent_id,curr_hash_rec);
+				lcc_hashmap_lookup_.put(parent_id,parent_rec);
 			}
 			else {
+				// entry already exists
+				// => link in the current child
 				LCCOutlineHashRec.connect(parent_rec,curr_hash_rec);
 			}
 		}
 				
-		if (parents_len == 0) {
-			// Top-level entry for the given prefix
+		else { // parents_len == 0
 			String curr_prefix = curr_hash_rec.prefix;
+			String curr_id = curr_hash_rec.id;
 			
-			LCCOutlinePrefixRootToplevel prefix_root_entry = lcc_prefix_root_toplevel_.get(curr_prefix);
-			prefix_root_entry.addTopLevelRecEntry(curr_hash_rec);
+			// Create/update Top-level entry for the given prefix
+			// But watch out for rec entries that already describe to top-level prefix
+			
+			if (!curr_id.equals(curr_prefix)) {
+				if (!lcc_hashmap_lookup_.containsKey(curr_prefix)) {
+					// Brand new prefix entry
+					LCCOutlineHashRec prefix_rec = new LCCOutlineHashRec(curr_prefix,curr_prefix,curr_hash_rec); // use prefix as id also
+					lcc_hashmap_lookup_.put(curr_prefix, prefix_rec);
+					lcc_prefix_set_.add(curr_prefix);
+				}
+				else {
+					// Looking to add a top-level prefix entry where one already exits
+					// => merge with existing info
+					LCCOutlineHashRec existing_prefix_hash_rec = lcc_hashmap_lookup_.get(curr_prefix);
+					LCCOutlineHashRec.connect(existing_prefix_hash_rec,curr_hash_rec);
+				}
+			}
+			else {
+				// Have an rec entry on our hands that defines the top-level prefix
+				lcc_prefix_set_.add(curr_prefix);
+			}
 		}
 		
 	}
@@ -164,6 +188,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 		return 1+child_count; //  this node + child_count 
 	}
 	
+	/*
 	protected int countPrefixRootToplevelTraverse(LCCOutlinePrefixRootToplevel prefix_root_toplevel) 
 	{
 		int count = 0;
@@ -180,6 +205,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 		
 		return count;
 	}
+	*/
 	
 
 	protected void processTreemapResource(ServletContext context)
@@ -207,7 +233,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 		JSONObject json_treemap = new JSONObject(json_sb.toString());    
 	    
 		lcc_hashmap_lookup_ = new HashMap<String, LCCOutlineHashRec>(json_treemap.length()*2);
-		lcc_prefix_root_toplevel_ = new HashMap<String, LCCOutlinePrefixRootToplevel>();
+		lcc_prefix_set_ = new HashSet<String>();
 		
 		Iterator<String> treemap_keys = json_treemap.keys();
 		
@@ -215,10 +241,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 		
 		while (treemap_keys.hasNext()) {
 			String prefix_key = treemap_keys.next();
-			
-			LCCOutlinePrefixRootToplevel prefix_root_range_stub = new  LCCOutlinePrefixRootToplevel(prefix_key);
-			lcc_prefix_root_toplevel_.put(prefix_key, prefix_root_range_stub);
-			
+					
 			JSONArray prefix_key_entries = json_treemap.getJSONArray(prefix_key);
 			for (int i=0; i<prefix_key_entries.length(); i++) {
 				JSONObject lcc_entry_rec_json = prefix_key_entries.getJSONObject(i);
@@ -236,20 +259,29 @@ public abstract class LCCMongoDBAction extends BaseAction
 		
 		int lcc_hashmap_lookup_len = lcc_hashmap_lookup_.size();
 		
-		Collection<LCCOutlinePrefixRootToplevel> prefix_root_toplevel_vals = lcc_prefix_root_toplevel_.values();
-		Iterator<LCCOutlinePrefixRootToplevel> prtlv_iterator = prefix_root_toplevel_vals.iterator();
+		Iterator<String> prefix_iterator = lcc_prefix_set_.iterator();
 		
 		int prefix_toplevel_count = 0;
 		
 		int lcc_prefix_root_recursive_count = 0;
 		
-		while (prtlv_iterator.hasNext()) {			
-			LCCOutlinePrefixRootToplevel curr_prefix_root = prtlv_iterator.next();
+		while (prefix_iterator.hasNext()) {			
+			String curr_prefix = prefix_iterator.next();
 
-			int curr_root_prefix_count = countPrefixRootToplevelTraverse(curr_prefix_root);
-			System.err.println("Count for root prefix '" + curr_prefix_root.prefix + "' = " + curr_root_prefix_count);
+			LCCOutlineHashRec prefix_rec = lcc_hashmap_lookup_.get(curr_prefix);
 			
-			lcc_prefix_root_recursive_count += curr_root_prefix_count;
+			int curr_prefix_count = countHashRecTraverse(prefix_rec);
+			curr_prefix_count--; // ignore top-level prefix, e.g. "AP" entry, from count
+			
+			System.err.println("Count for root prefix '" + prefix_rec.prefix + "' = " + curr_prefix_count);
+			
+			int json_count = json_treemap.getJSONArray(curr_prefix).length();
+			if (json_count != curr_prefix_count) {
+				System.err.println("*** Prefix cout comparison mismatch, prefix="+curr_prefix 
+						+ " root count/json count = " + curr_prefix_count + "/" + json_count);
+			}
+			
+			lcc_prefix_root_recursive_count += curr_prefix_count;
 			
 			prefix_toplevel_count++;
 		}
@@ -257,6 +289,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 		System.err.println("******* Number of prefixes in JSON:          " + json_prefix_count);
 		System.err.println("******* Number of prefixes in toplevel root: " + prefix_toplevel_count);
 		
+		/*
 		// Debug checking
 		//Collection<LCCOutlinePrefixRootToplevel> prefix_root_toplevel_vals = lcc_prefix_root_toplevel_.values();
 		Iterator<LCCOutlinePrefixRootToplevel> prefix_root_toplevel_iterator = prefix_root_toplevel_vals.iterator();
@@ -271,6 +304,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 						+ " root count/json count = " + count + "/" + json_count);
 			}
 		}
+		*/
 		
 		System.err.println("**** Number of entries in hashmap:                     " + lcc_hashmap_lookup_len);
 		System.err.println("**** Number of entries in prefix root recursive count: " + lcc_prefix_root_recursive_count);

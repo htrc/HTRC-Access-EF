@@ -6,10 +6,6 @@ import java.util.HashMap;
 public class LCCOutlinePrefixRootToplevel 
 {
 	public final String prefix; 
-	//public Double min_start = null;
-	//public Double max_stop  = null;
-	//public String min_start_str = null;
-	//public String max_stop_str  = null;
 	
 	protected HashMap<String,LCCOutlineHashRec> toplevel_ids_ = null;
 	
