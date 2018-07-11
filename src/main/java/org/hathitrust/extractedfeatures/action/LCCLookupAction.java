@@ -19,9 +19,9 @@ public class LCCLookupAction extends LCCMongoDBAction
 	public String[] getDescription() 
 	{
 		String[] mess = 
-			{ "Provides the text description for the specified Library of Congress Classification (LCC) code(s).",
-					"Required parameter: 'code' or 'codes'",
-					"Returns:            a JSON record giving text description for each code given."
+			{ "Provides the text description for the specified Library of Congress Classification (LCC) id(s).",
+					"Required parameter: 'id' or 'ids'",
+					"Returns:            a JSON record giving text description for each id given."
 			};
 		
 		return mess;
@@ -32,24 +32,24 @@ public class LCCLookupAction extends LCCMongoDBAction
 		super(context,config);
 	}
 	
-	public void outputJSON(HttpServletResponse response, String[] codes) throws IOException
+	public void outputJSON(HttpServletResponse response, String[] ids) throws IOException
 	{
 		response.setContentType("application/json");
 		PrintWriter pw = response.getWriter();
 		
-		int codes_len = codes.length;
+		int ids_len = ids.length;
 
 		pw.append("{");
 
-		for (int i = 0; i < codes_len; i++) {
-			String code = codes[i];
+		for (int i = 0; i < ids_len; i++) {
+			String id = ids[i];
 
-			//boolean description = exists(id);
+			String subject = this.getLCCSubject(id);
 
 			if (i > 0) {
 				pw.append(",");
 			}
-			pw.append("\"" + code + "\":" + "fake desc for now");
+			pw.append("\"" + id + "\":\"" + subject + "\"");
 		}
 		pw.append("}");
 	}
@@ -57,19 +57,19 @@ public class LCCLookupAction extends LCCMongoDBAction
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException
 	{
-		String cgi_codes = request.getParameter("codes");
+		String cgi_ids = request.getParameter("ids");
 
-		if (cgi_codes == null) {
-			String cgi_code = request.getParameter("code");
-			if (cgi_code != null) {
+		if (cgi_ids == null) {
+			String cgi_id = request.getParameter("id");
+			if (cgi_id != null) {
 				// if cgi_id in play then upgrade to cgi_ids (one item in it) to simplify later code
-				cgi_codes = cgi_code;
+				cgi_ids = cgi_id;
 			}
 		}
 
-		if (cgi_codes != null) {
-			String[] codes = cgi_codes.split(",");
-			outputJSON(response,codes);
+		if (cgi_ids != null) {
+			String[] ids = cgi_ids.split(",");
+			outputJSON(response,ids);
 		}
 		else {
 			
