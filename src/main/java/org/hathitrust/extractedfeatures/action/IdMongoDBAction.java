@@ -45,8 +45,8 @@ public abstract class IdMongoDBAction extends BaseAction
 	protected static HashMap<String, Boolean> id_check_ = null;
 
 	protected static int TEST_LIMIT = 100000;
-	protected static boolean APPLY_TEST_LIMIT = true;
-	//protected static boolean APPLY_TEST_LIMIT = false;
+	//protected static boolean APPLY_TEST_LIMIT = true;
+	protected static boolean APPLY_TEST_LIMIT = false;
 	
 	protected static MongoCollection<Document> mongo_exists_col_ = null;
 	

@@ -43,8 +43,8 @@ public abstract class BaseAction
 	private final Integer DefaultMongoDbPort = 27017;
 	private final StoreAccessOperationMode  DefaultCheckIDMode = StoreAccessOperationMode.Auto;
 		
-	//protected static MongoDBState mongo_state_  = MongoDBState.Unconnected;
-	protected static MongoDBState mongo_state_  = MongoDBState.ForceUnused;
+	protected static MongoDBState mongo_state_  = MongoDBState.Unconnected;
+	//protected static MongoDBState mongo_state_  = MongoDBState.ForceUnused;
 	protected static MongoClient mongo_client_  = null;
 	protected static MongoDatabase mongo_db_    = null;
 	//protected static MongoCollection<Document> mongo_exists_col_ = null;
