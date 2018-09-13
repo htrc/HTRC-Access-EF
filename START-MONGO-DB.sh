@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ready_to_go=0
-#ready_to_go=1
+#ready_to_go=0
+ready_to_go=1
 
 if [ $ready_to_go = "0" ] ; then
     
@@ -10,7 +10,7 @@ if [ $ready_to_go = "0" ] ; then
   echo "Some different ways to start MongoDB:"
   echo ""
 
-  echo "  sudo system mongodb start"
+  echo "  sudo service mongodb start"
   echo "  /usr/bin/mongod --config /etc/mongodb.conf"
   echo "  /usr/local/mongodb/bin/mongod --dbpath /usr/local/mongodb/db/"
   
@@ -19,7 +19,7 @@ if [ $ready_to_go = "0" ] ; then
   echo "  ... then change 'ready_to_go' to '1' and run the script again"
   echo "******"
 else
-   sudo system mongodb start
+   sudo service mongodb start
 #   /usr/bin/mongod --config /etc/mongodb.conf
 #   /usr/local/mongodb/bin/mongod --dbpath /usr/local/mongodb/db/
 fi
