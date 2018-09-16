@@ -22,53 +22,7 @@ You'll also need mongodb:
 ```bash
 sudo apt-get install mongodb
 
+For further details on installation, see:
 
-While control is ultimately provided through Maven, to be consistent
-with other source code projects in the Solr-EF search 'stack'
-some top-level bash scripts are also provided.
-
-To compile:
-```bash
-./COMPILE.sh
-
-Then download the list of bzip2 JSON files from the rsync server:
-
-```bash
-./DOWNLOAD-LATEST-RSYNC-JSON-LIST.sh
-
-
-Next, check if mongodb is running:
-```bash
-ps auxww | grep mongo
-
-And if not present, start it with:
-
-./START-MONGO-DB.sh
-
-
-./START-SERVER
-
-
-======
-Additional info:
-
-# Run locally (on port 8080)
-```bash
-mvn jetty:run
-```
-# Package as WAR file
-```bash
-mvn package
-```
-...then find `htrc-mashup.war` in the `target/` folder.
-
-If you need to start up mongodb manually, this can be done with a command
-of the form:
-```bash
-/usr/local/bin/mongod --dbpath /usr/local/mongodb/db/
-
-
-Obsolete:
-
-The compile step will download (if necessary) the Extracted Features file listing which is quite big, so it might take a while.
+  docs/INSTALL.txt
 
