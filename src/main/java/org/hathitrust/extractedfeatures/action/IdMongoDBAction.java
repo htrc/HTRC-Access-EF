@@ -176,7 +176,7 @@ public abstract class IdMongoDBAction extends BaseAction
 					System.err.print(".");
 				}
 				if ((line_num % (40*100000)) == 0) {
-					System.err.println();
+					System.err.println(" [Processed " + line_num + " entries]");
 				}
 				line_num++;
 				

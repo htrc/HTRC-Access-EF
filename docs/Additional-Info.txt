@@ -1,0 +1,48 @@
+
+======
+Additional info:
+
+# Run locally (on port 8080)
+```bash
+mvn jetty:run
+```
+# Package as WAR file
+```bash
+mvn package
+```
+...then find `htrc-mashup.war` in the `target/` folder.
+
+If you need to start up mongodb manually, this can be done with a command
+of the form:
+```bash
+/usr/local/bin/mongod --dbpath /usr/local/mongodb/db/
+
+====
+
+Adding HTTPS support to an Apache web server:
+
+  wget https://dl.eff.org/certbot-auto
+  chmod a+x certbot-auto
+  sudo ./certbot-auto --apache
+
+  [answer questions asked to setup domain name for https, http redirected to http]
+
+Add a cron-job for automated renewal, e.g.:
+
+contab -e
+
+  15 7 * * * /usr/bin/certbot renew --quiet
+
+
+=====
+
+Untested:
+
+For Debian Jessy:
+  sudo apt-get install python-certbot-apache -t jessie-backports
+  sudo certbot --authenticator webroot --installer apache
+
+  /etc/apache2/sites-available/000-default-le-ssl.conf
+
+
+
