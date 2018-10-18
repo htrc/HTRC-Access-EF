@@ -54,10 +54,10 @@ public class URLShortenerAction extends IdMongoDBAction
 		String[] mess = 
 			{ "Shorten or Expand the provided argument",
 					"Required parameter: 'value' or 'key'",
-					"    If provided 'value' then returned shorten key\n"
-				   +"    If provided 'key' then returns expand value\n"
-				   +"    Add additional argument 'redirect=true' to 'key' for the output\n"
-				   +"      generated to be redirect to the key interpreted as a URL"
+					"    If provided 'value' then returns shortened key\n"
+				   +"    If provided 'key' then returns expanded value\n"
+				   +"    Add the additional argument 'redirect=true' to 'key' for the value\n"
+				   +"      produced to be interpreted as a URL"
 			};
 		
 		return mess;

@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.hathitrust.extractedfeatures.action.IdMongoDBAction;
+import org.hathitrust.extractedfeatures.action.KeyValueStorageAction;
 import org.hathitrust.extractedfeatures.action.LCCLookupAction;
 import org.hathitrust.extractedfeatures.action.BaseAction;
 import org.hathitrust.extractedfeatures.action.CheckExistsAction;
@@ -40,6 +41,7 @@ public class AccessServlet extends HttpServlet
 	protected static ICUTokenizeAction icu_tokenize_ = null;
 	protected static GuessLanguageAction guess_language_ = null;
 	protected static URLShortenerAction url_shortener_ = null;
+	protected static KeyValueStorageAction key_value_storage_ = null;
 	protected static ShoppingcartAction shoppingcart_ = null;
 	
 	protected static ArrayList<BaseAction> action_list_ = null;
@@ -82,6 +84,9 @@ public class AccessServlet extends HttpServlet
 		if (url_shortener_ == null) {
 			url_shortener_ = new URLShortenerAction(context,config);
 		}
+		if (key_value_storage_ == null) {
+			key_value_storage_ = new KeyValueStorageAction(context,config);
+		}
 		
 		if (shoppingcart_ == null) {
 			shoppingcart_ = new ShoppingcartAction(context,config);
@@ -109,6 +114,9 @@ public class AccessServlet extends HttpServlet
 			}
 			if (url_shortener_.isOperational()) {
 				action_list_.add(url_shortener_);
+			}
+			if (key_value_storage_.isOperational()) {
+				action_list_.add(key_value_storage_);
 			}
 			if (shoppingcart_.isOperational()) {
 				action_list_.add(shoppingcart_);
