@@ -185,17 +185,16 @@ public class ShoppingcartAction extends IdMongoDBAction
 		Document doc = mongo_shoppingcart_col_.find(eq("_id", key)).first();
 		if (doc != null) {
 			// Found it in mongoDB
-			CartContent cart = CartContent.DocumentToCart(doc);
 			
-			// Re-populate the hashmap
-			cart_map_.remove(key);
+			// Remove it from the DB
+			mongo_shoppingcart_col_.deleteOne(doc);
 		}
 		else {
 			// Failed to find the cart key in DB
 			status = false;
 		}
 		
-		// Remove it from cache
+		// Remove it from cache (even if not found in DB, could still be handing around cache)
 		CartContent cached_cart = cart_map_.get(key);
 
 		if (cached_cart != null) {
