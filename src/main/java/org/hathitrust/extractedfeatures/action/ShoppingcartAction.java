@@ -241,7 +241,7 @@ public class ShoppingcartAction extends IdMongoDBAction
 				delFromCart(key,ids_str);
 			}
 			else if (mode.equals("del")) {
-				delCart(key);
+				pw.append("Delete key, status = "  + delCart(key));
 			}
 			else {
 				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' and/or 'mode' parameters to " + getHandle());
