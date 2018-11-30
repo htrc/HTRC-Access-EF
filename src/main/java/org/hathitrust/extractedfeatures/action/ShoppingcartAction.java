@@ -39,9 +39,9 @@ public class ShoppingcartAction extends IdMongoDBAction
 		String[] mess = 
 			{ "Create, retrieve, add and remove items to a specified shopping-cart",
 					"Required parameter: 'key'\n"
-							+"                    mode=set|add-ids|del-ids|get\n",
+							+"                    mode=set|add-ids|del-ids|get|del\n",
 							"Further parameter: 'ids' (used with 'set', 'add-ids' and 'del-ids')\n"
-									+"Returns:           'status ok' for 'set', 'add-ids' and 'del-ids'; returns ids list for 'get'"
+									+"Returns:           'status ok' for 'set', 'add-ids', 'del-ids' and 'del'; returns ids list for 'get'"
 			};
 
 		return mess;
@@ -177,6 +177,35 @@ public class ShoppingcartAction extends IdMongoDBAction
 		return cart;
 	}
 
+	protected boolean delCart(String key) 
+	{
+		boolean status = true;
+		
+		// Remove it from DB
+		Document doc = mongo_shoppingcart_col_.find(eq("_id", key)).first();
+		if (doc != null) {
+			// Found it in mongoDB
+			CartContent cart = CartContent.DocumentToCart(doc);
+			
+			// Re-populate the hashmap
+			cart_map_.remove(key);
+		}
+		else {
+			// Failed to find the cart key in DB
+			status = false;
+		}
+		
+		// Remove it from cache
+		CartContent cached_cart = cart_map_.get(key);
+
+		if (cached_cart != null) {
+			cart_map_.remove(key);
+		}
+
+		
+		return status;
+	}
+	
 	public void doAction(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException
 	{
@@ -210,6 +239,9 @@ public class ShoppingcartAction extends IdMongoDBAction
 			}
 			else if (mode.equals("del-ids")) {
 				delFromCart(key,ids_str);
+			}
+			else if (mode.equals("del")) {
+				delCart(key);
 			}
 			else {
 				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' and/or 'mode' parameters to " + getHandle());
