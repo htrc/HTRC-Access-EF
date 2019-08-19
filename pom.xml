@@ -90,6 +90,10 @@
 				<configuration>
 				  <stopKey>htrcaccess</stopKey>
 				  <stopPort>8079</stopPort>
+				  <httpConnector>
+					<host>127.0.0.1</host>
+					<port>8080</port>
+				  </httpConnector>
 				</configuration>
 			</plugin>
 			<!--
