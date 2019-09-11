@@ -63,6 +63,90 @@ public class DownloadJSONAction extends URLShortenerAction
 		json_file_manager_ = JSONFileManager.getInstance(config);
 	}
 
+    protected static class VolumeMetadataByLookup {
+
+	// Extracted Feature JSON file format originally had:
+	//   htBibUrl,lastUpdateDate,isbn,imprint,accessProfile,language,typeOfResource,title,lccn,dateCreated,enumerationChronology,genre,pubPlace,hathitrustRecordNumber,schemaVersion,sourceInstitutionRecordNumber,volumeIdentifier,rightsAttributes,classification,pubDate,governmentDocument,sourceInstitution,bibliographicFormat,names,issn,handleUrl,oclc,issuance
+	
+	// But has now been extended to:
+	//   htBibUrl,lastUpdateDate,imprint,isbn,accessProfile,language,typeOfResource,title,lccn,dateCreated,enumerationChronology,genre,pubPlace,hathitrustRecordNumber,subjectName,schemaVersion,sourceInstitutionRecordNumber,volumeIdentifier,rightsAttributes,classification,pubDate,governmentDocument,subjectTemporal,bibliographicFormat,sourceInstitution,names,issn,handleUrl,issuance,oclc,subjectGenre,subjectTopic,subjectTitleInfo,subjectGeographic,subjectOccupation,subjectCartographics
+	
+	// **Both types of files are in the archive **
+	// Next 2 methods make use of the following list of metadata names
+	protected static final String[] volume_metadata_lookup = new String[]
+	    { "htBibUrl", "schemaVersion", "volumeIdentifier", "rightsAttributes", "title", "genre",
+	      "pubDate", "pubPlace", "typeOfResource", "bibliographicFormat", "language",
+	      "dateCreated", "lastUpdateDate", "imprint", "isbn", "issn", "oclc", "lccn", "classification", 
+	      "handleUrl", "hathitrustRecordNumber", "sourceInstitutionRecordNumber", "sourceInstitution",
+	      "accessProfile", "enumerationChronology", "governmentDocument", "names", "issuance", 
+	      "subjectGenre", "subjectTopic", "subjectName", "subjectTitleInfo", "subjectTemporal",
+	      "subjectGeographic", "subjectOccupation","subjectCartographics" };
+	
+	public static String jsonToFieldSeparatedFileKeys(JSONObject json_obj, String sep)
+	{
+	    
+	    StringBuilder sb = new StringBuilder();
+	    
+	    for (int i=0; i<volume_metadata_lookup.length; i++) {
+		if (i>0) {
+		    sb.append(sep);
+		}
+
+		String key = volume_metadata_lookup[i];
+		sb.append(key);
+		
+	    }
+	    
+	    sb.append("\n");
+	
+	    return sb.toString();
+	}
+	
+        public static String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
+	{
+	    // Screen more carefully in code below for chars that need escaping? // ****
+	    
+	    StringBuilder sb = new StringBuilder();
+	    
+	    for (int i=0; i<volume_metadata_lookup.length; i++) {
+		if (i>0) {
+		    sb.append(sep);
+		}
+		
+		String key = volume_metadata_lookup[i];
+
+		if (json_obj.has(key)) {
+		    Object val_obj = json_obj.get(key);
+
+		    String val_str = null;
+
+		    if (val_obj instanceof JSONObject) {
+			JSONObject val_json_obj = (JSONObject)val_obj;
+			val_str = val_json_obj.toString();
+		    }
+		    else if (val_obj instanceof JSONArray) {
+			JSONArray val_json_array = (JSONArray)val_obj;
+			val_str = val_json_array.toString();
+		    }
+		    else {
+			// primitive type
+			val_str = val_obj.toString(); //json_obj.getString(key);
+		    }
+		    if (sep.equals(",")) {
+			// ensure the string is escaped: enclose in double quotes, change any existing " to ""
+			val_str = val_str.replace("\"","\"\"");
+			val_str = "\"" + val_str + "\"";
+		    }
+		    sb.append(val_str);
+		}
+	    }
+	    
+	    sb.append("\n");
+	    
+	    return sb.toString();
+	}
+    }
+    
 	protected String jsonToFieldSeparatedFileKeys(JSONObject json_obj, String sep)
 	{
 		StringBuilder sb = new StringBuilder();
@@ -79,10 +163,11 @@ public class DownloadJSONAction extends URLShortenerAction
 		sb.append("\n");
 		return sb.toString();
 	}
-	
+
+
 	protected String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
 	{
-		// Needs escaping added in! // ****
+		// Screen more carefully in code below for chars that need escaping? // ****
 		
 		StringBuilder sb = new StringBuilder();
 		
@@ -131,13 +216,13 @@ public class DownloadJSONAction extends URLShortenerAction
 			String field_sep = OutputFormatFieldSeparator_[output_format.ordinal()];
 
 			if (first_entry) {
-				json_content_str_out = jsonToFieldSeparatedFileKeys(json_ef_metadata,field_sep);
+				json_content_str_out = VolumeMetadataByLookup.jsonToFieldSeparatedFileKeys(json_ef_metadata,field_sep);
 			}
 			else {
 				json_content_str_out = "";
 			}
 		
-			json_content_str_out += jsonToFieldSeparatedFileValues(json_ef_metadata,field_sep);
+			json_content_str_out += VolumeMetadataByLookup.jsonToFieldSeparatedFileValues(json_ef_metadata,field_sep);
 		}
 		else {
 			json_content_str_out = json_ef_metadata.toString();
