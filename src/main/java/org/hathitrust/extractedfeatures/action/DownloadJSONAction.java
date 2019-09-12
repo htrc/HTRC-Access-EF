@@ -276,7 +276,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		else {
 		    response.setContentType("text/plain");
 		}
-
+	    
 		response.setCharacterEncoding("UTF-8");
 
 		String file_ext = "."+cgi_output;
@@ -376,7 +376,6 @@ public class DownloadJSONAction extends URLShortenerAction
 			// Output needs to be zipped up
 			response.setContentType("application/zip");
 			setHeaderDownloadFilename(response,"htrc-ef-export",opt_cgi_key,".zip");
-			//response.setHeader("Content-Disposition","attachment; filename=htrc-ef-export.zip"); // ****
 
 			OutputStream ros = response.getOutputStream();
 			BufferedOutputStream bros = new BufferedOutputStream(ros);
@@ -413,9 +412,7 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 				else {
 					response.setContentType("application/x-bzip2");
-					setHeaderDownloadFilename(response,json_filename_tail); // ****
-					//response.setHeader("Content-Disposition",
-					//		"attachment; filename=\"" + json_filename_tail + "\"");
+					setHeaderDownloadFilename(response,json_filename_tail); 
 
 					OutputStream ros = response.getOutputStream();
 					download_os = new BufferedOutputStream(ros);
