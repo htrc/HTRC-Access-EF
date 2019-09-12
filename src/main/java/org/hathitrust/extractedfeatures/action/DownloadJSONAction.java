@@ -266,11 +266,21 @@ public class DownloadJSONAction extends URLShortenerAction
 	}
 	
 	
-	public void outputVolume(HttpServletResponse response, String[] download_ids, OutputFormat output_format) 
+        public void outputVolume(HttpServletResponse response, String[] download_ids, OutputFormat output_format,
+				 String opt_cgi_key, String cgi_output) 
 			throws ServletException, IOException
-	{	
-		response.setContentType("text/plain");
+        {
+	        if (output_format == OutputFormat.JSON) {
+		    response.setContentType("application/json");
+		}
+		else {
+		    response.setContentType("text/plain");
+		}
+
 		response.setCharacterEncoding("UTF-8");
+
+		String file_ext = "."+cgi_output;
+		setHeaderDownloadFilename(response, "htrc-metadata-export", opt_cgi_key, file_ext);
 		
 		PrintWriter pw = response.getWriter();
 		
@@ -322,12 +332,12 @@ public class DownloadJSONAction extends URLShortenerAction
 			}
 			else {
 				if (has_seq_num) {
-					// consider having a page-level cache
+					// consider having a page-level cache // ****
 					json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
 				
 				}			
 				else if (has_metadata) {
-					// consider having a metadata cache
+					// consider having a metadata cache // ****
 					json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
 				}
 				// Otherwise, leave full volume JSON content alone
@@ -350,9 +360,11 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 	}
 	
-	protected void outputZippedVolumesAdaptive(HttpServletResponse response, String[] download_ids) 
+        protected void outputZippedVolumesAdaptive(HttpServletResponse response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
+	    // This version adaptively works out if it can download a single file or else needs
+	    // to zip things up
 		int download_ids_len = download_ids.length;
 
 		ZipOutputStream zbros = null;
@@ -363,7 +375,8 @@ public class DownloadJSONAction extends URLShortenerAction
 		if (output_as_zip) {
 			// Output needs to be zipped up
 			response.setContentType("application/zip");
-			response.setHeader("Content-Disposition","attachment; filename=htrc-ef-export.zip");
+			setHeaderDownloadFilename(response,"htrc-ef-export",opt_cgi_key,".zip");
+			//response.setHeader("Content-Disposition","attachment; filename=htrc-ef-export.zip"); // ****
 
 			OutputStream ros = response.getOutputStream();
 			BufferedOutputStream bros = new BufferedOutputStream(ros);
@@ -400,8 +413,9 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 				else {
 					response.setContentType("application/x-bzip2");
-					response.setHeader("Content-Disposition",
-							"attachment; filename=\"" + json_filename_tail + "\"");
+					setHeaderDownloadFilename(response,json_filename_tail); // ****
+					//response.setHeader("Content-Disposition",
+					//		"attachment; filename=\"" + json_filename_tail + "\"");
 
 					OutputStream ros = response.getOutputStream();
 					download_os = new BufferedOutputStream(ros);
@@ -436,14 +450,40 @@ public class DownloadJSONAction extends URLShortenerAction
 			download_os.close();
 		}
 	}
-	
-	public void outputZippedVolumes(HttpServletResponse response, String[] download_ids) 
+
+    protected void setHeaderDownloadFilename(HttpServletResponse response, String filename_root, String opt_cgi_key, String opt_file_ext)
+    {
+	String output_filename = filename_root;
+	if (opt_cgi_key != null) {
+	    output_filename += "-" + opt_cgi_key;
+	}
+
+	if (opt_file_ext != null) {
+	    output_filename += opt_file_ext;
+	}
+
+	response.setHeader("Content-Disposition","attachment; filename=\""+output_filename+"\"");
+    }
+    
+    protected void setHeaderDownloadFilename(HttpServletResponse response, String filename) {
+	setHeaderDownloadFilename(response,filename,null,null);
+    }
+    
+    public void outputZippedVolumes(HttpServletResponse response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
 		int download_ids_len = download_ids.length;
 
+		/*
+		String output_filename_root = "htrc-ef-export";
+		if (opt_cgi_key != null) {
+		    output_filename_root += "-" + opt_cgi_key;
+		}
+		String output_filename = output_filename_root + ".zip";
+		*/
 		response.setContentType("application/zip");
-		response.setHeader("Content-Disposition","attachment; filename=htrc-ef-export.zip");
+		setHeaderDownloadFilename(response,"htrc-ef-export",opt_cgi_key,".zip");
+		//response.setHeader("Content-Disposition","attachment; filename="+output_filename);
 
 		OutputStream ros = response.getOutputStream();
 		BufferedOutputStream bros = new BufferedOutputStream(ros);
@@ -528,7 +568,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		if (validityCheckIDsOptimistic(response, download_ids)) {
 			
 			if (cgi_output.equals("zip")) {
-				outputZippedVolumes(response,download_ids);
+			    outputZippedVolumes(response,download_ids,cgi_key);
 			}
 			else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
 				OutputFormat output_format = null;
@@ -541,7 +581,7 @@ public class DownloadJSONAction extends URLShortenerAction
 				if (cgi_output.equals("tsv") ) {
 					output_format = OutputFormat.TSV;
 				}
-				outputVolume(response,download_ids,output_format);
+				outputVolume(response,download_ids,output_format,cgi_key,cgi_output);
 			}
 			else {
 				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()

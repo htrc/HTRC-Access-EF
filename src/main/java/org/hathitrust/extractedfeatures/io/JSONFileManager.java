@@ -180,12 +180,14 @@ public class JSONFileManager
 	{
 		String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
 		File tmp_full_json_file = new File(tmp_dir_, json_filename_tail);
-		
+
 		String json_content = id_cache_.get("json-id-" + json_filename_tail);
 		
 		if (json_content == null) {
 			// Not in cache
-		
+
+		    logger.info("Did not find '" + json_filename_tail + "' in cache"); 
+
 			// Usage of HTRC rsync server:
 			//   rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
 			
@@ -201,6 +203,8 @@ public class JSONFileManager
 				}
 
 				json_content = readCompressedTextFile(tmp_full_json_file);
+				logger.info("doRsyncDownload() Storing '" + json_filename_tail + "' in cache"); 
+
 				id_cache_.put("json-id-" + json_filename_tail, json_content);
 
 				
@@ -284,6 +288,7 @@ public class JSONFileManager
 
 			}
 			// Store in cache for next time
+			logger.info("Storing '" + json_filename_tail + "' in cache"); 
 			id_cache_.put("json-id-" + json_filename_tail, json_content);
 		}
 		else {
