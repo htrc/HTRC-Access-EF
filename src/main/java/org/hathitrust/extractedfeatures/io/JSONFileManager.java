@@ -30,7 +30,9 @@ public class JSONFileManager
 	protected static Logger logger = Logger.getLogger(JSONFileManager.class.getName()); // org.hathitrust.extractedfeatures.io.
 	
 	protected static final String rsync_base = "data.analytics.hathitrust.org::features/";
-	
+        // When there was a server outage at Illinois, the following was used as a backup for the rsyc-server
+        //protected static final String rsync_base = "magnolia.soic.indiana.edu::features/";
+	    
 	protected static Boolean uses_custom_tmpdir_ = null;
 	
 	protected File tmp_dir_;
