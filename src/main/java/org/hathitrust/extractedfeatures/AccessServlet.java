@@ -156,14 +156,14 @@ public class AccessServlet extends HttpServlet
 
 			if (check_exists_.validityCheckID(response, cgi_download_id)) {
 				String [] download_ids = new String[] {cgi_download_id};
-				download_json_.outputVolume(response,download_ids,DownloadJSONAction.OutputFormat.JSON);
+				download_json_.outputVolume(response,download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json");
 			}
 		} 
 		else if (cgi_download_ids != null) {
 			String[] download_ids = cgi_download_ids.split(",");
 
 			if (check_exists_.validityCheckIDs(response, download_ids)) {
-				download_json_.outputZippedVolumes(response,download_ids);
+			    download_json_.outputZippedVolumes(response,download_ids,null);
 			}
 		} 
 		else if (cgi_convert_col != null) {
