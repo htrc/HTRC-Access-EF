@@ -223,10 +223,17 @@ public class ShoppingcartAction extends IdMongoDBAction
 			if (mode.equals("set")) {
 				setCart(key,ids_str);
 			}
-			else if (mode.equals("get")) {
+			else if (mode.equals("get") || mode.equals("get-silentfail")) {
 				CartContent cart = getCart(key);
 				if (cart == null) {
+				    if (mode.equals("get")) {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No shopping-cart entry for key="+key);
+				    }
+				    else {
+					// get-silentfail
 					pw.append("");
+				    }
+
 				}
 				else {
 					String cart_json_str = cart.toJSON(key);					
@@ -243,11 +250,22 @@ public class ShoppingcartAction extends IdMongoDBAction
 				pw.append("Delete key, status = "  + delCart(key));
 			}
 			else {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' and/or 'mode' parameters to " + getHandle());
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized 'mode' parameter value '" + mode + "' to " + getHandle());
 			}
 		}
 		else {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' and/or 'mode' parameters to " + getHandle());
+		    if ((key == null) && (mode == null)) {
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' and 'mode' parameters to " + getHandle());
+		    }
+		    else {
+			if (mode == null) {
+			    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'mode' parameters to " + getHandle());
+			}
+			else {
+			    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' parameters to " + getHandle());
+			}
+			
+		    }
 		}
 	}
 }
