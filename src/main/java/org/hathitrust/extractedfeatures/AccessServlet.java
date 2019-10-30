@@ -13,6 +13,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.server.WebSocketHandler;
+import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
+
 import org.hathitrust.extractedfeatures.action.IdMongoDBAction;
 import org.hathitrust.extractedfeatures.action.KeyValueStorageAction;
 import org.hathitrust.extractedfeatures.action.LCCLookupAction;
@@ -29,7 +39,8 @@ import org.hathitrust.extractedfeatures.action.URLShortenerAction;
 /**
  * Servlet implementation class VolumeCheck
  */
-public class AccessServlet extends HttpServlet 
+@WebSocket
+public class AccessServlet extends WebSocketServlet
 {
 	private static final long serialVersionUID = 1L;
 
@@ -49,12 +60,21 @@ public class AccessServlet extends HttpServlet
 	public AccessServlet() {
 	}
 
+    
+	@Override
+	public void configure(WebSocketServletFactory factory) {
+	    // Useful reference:
+	    //   https://examples.javacodegeeks.com/enterprise-java/jetty/jetty-websocket-example/
+	    factory.getPolicy().setIdleTimeout(10000);
+	    factory.register(AccessServlet.class);
+	}
+    
 	/**
 	 * @see Servlet#init(ServletConfig)
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-
+		
 		ServletContext context = getServletContext();
 
 		if (check_exists_ == null) {	
@@ -247,4 +267,24 @@ public class AccessServlet extends HttpServlet
 		doGet(request, response);
 	}
 
+
+
+        @OnWebSocketMessage
+	public void onText(Session session, String message) throws IOException {
+	    System.out.println("Message received:" + message);
+	    if (session.isOpen()) {
+		String response = message.toUpperCase();
+		session.getRemote().sendString(response);
+	    }
+	}
+
+        @OnWebSocketConnect
+	public void onConnect(Session session) throws IOException {
+	    System.out.println(session.getRemoteAddress().getHostString() + " connected!");
+	}
+
+        @OnWebSocketClose
+	public void onClose(Session session, int status, String reason) {
+	    System.out.println(session.getRemoteAddress().getHostString() + " closed!");
+	}
 }
