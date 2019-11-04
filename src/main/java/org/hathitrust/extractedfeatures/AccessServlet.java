@@ -3,6 +3,8 @@ package org.hathitrust.extractedfeatures;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.List;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
@@ -13,8 +15,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.json.JSONObject;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.UpgradeRequest;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
@@ -269,22 +274,45 @@ public class AccessServlet extends WebSocketServlet
 
 
 
-        @OnWebSocketMessage
-	public void onText(Session session, String message) throws IOException {
-	    System.out.println("Message received:" + message);
-	    if (session.isOpen()) {
-		String response = message.toUpperCase();
-		session.getRemote().sendString(response);
-	    }
-	}
 
         @OnWebSocketConnect
 	public void onConnect(Session session) throws IOException {
 	    System.out.println(session.getRemoteAddress().getHostString() + " connected!");
+
+	    UpgradeRequest upgrade_request = session.getUpgradeRequest();
+	    Map<String,List<String>> param_map =upgrade_request.getParameterMap();
+
+	    String remote_host = session.getRemoteAddress().getHostString();						    
+	    System.out.println("WebSocket AccessServet.onConnect() from " + remote_host + " for: " + param_map.toString());
+	}
+
+        @OnWebSocketMessage
+	public void onText(Session session, String in_message) throws IOException {
+	    System.out.println("Message received:" + in_message);
+	    if (session.isOpen()) {
+		
+		UpgradeRequest upgrade_request = session.getUpgradeRequest();
+		Map<String,List<String>> param_map =upgrade_request.getParameterMap();
+		String key = param_map.get("key").get(0);
+	    
+		JSONObject response_json = new JSONObject();
+		if (in_message.equals("monitor-status")) {
+		    response_json.put("status",200);		    
+		    response_json.put("key",key);
+		}
+		else {
+		    response_json.put("status",200);
+		    response_json.put("message","Failed to recognize in-coming command: " + in_message);
+		}
+		String response = response_json.toString();
+		session.getRemote().sendString(response);
+
+	    }
 	}
 
         @OnWebSocketClose
 	public void onClose(Session session, int status, String reason) {
-	    System.out.println(session.getRemoteAddress().getHostString() + " closed!");
+	    String remote_host = session.getRemoteAddress().getHostString();						    
+	    System.out.println("WebSocket AccessServet.onClose() from " + remote_host);
 	}
 }
