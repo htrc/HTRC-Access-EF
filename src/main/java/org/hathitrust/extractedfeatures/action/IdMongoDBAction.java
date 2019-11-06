@@ -300,7 +300,7 @@ public abstract class IdMongoDBAction extends BaseAction
 		
 		String [] opt_trans_ids_array = null;
 		if (opt_trans_ids_list.size() > 0) {
-			opt_trans_ids_array = (String [])opt_trans_ids_list.toArray();
+			opt_trans_ids_array = opt_trans_ids_list.toArray(new String[0]);
 		}
 		
 		return opt_trans_ids_array;
