@@ -385,6 +385,9 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 
+			double prog_perc = i / (double)download_ids_len;
+			flexi_response.sendProgress(prog_perc);
+			
 			String download_id = download_ids[i];
 		
 			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
@@ -488,6 +491,9 @@ public class DownloadJSONAction extends URLShortenerAction
 		
 		for (int i=0; i<download_ids_len; i++) {
 
+			double prog_perc = i / (double)download_ids_len;
+			flexi_response.sendProgress(prog_perc);
+		
 			String download_id = download_ids[i];
 		
 			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
@@ -527,7 +533,7 @@ public class DownloadJSONAction extends URLShortenerAction
 				if (json_file_manager_.usingRsync()) {
 					// remove file retrieved over rsync
 					file.delete(); // ****
-				}
+				}				
 			}
 		}
 

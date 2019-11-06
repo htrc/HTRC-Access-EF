@@ -28,6 +28,9 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
+import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 
 import org.hathitrust.extractedfeatures.action.IdMongoDBAction;
@@ -51,7 +54,8 @@ import org.hathitrust.extractedfeatures.io.WebSocketResponse;
  * Servlet implementation class VolumeCheck
  */
 @WebSocket
-public class AccessServlet extends WebSocketServlet
+public class AccessServlet extends WebSocketServlet 
+/* implements WebSocketCreator */ // ****
 {
 	private static final long serialVersionUID = 1L;
 
@@ -328,25 +332,35 @@ public class AccessServlet extends WebSocketServlet
 	    // Useful reference:
 	    //   https://examples.javacodegeeks.com/enterprise-java/jetty/jetty-websocket-example/
 	    factory.getPolicy().setIdleTimeout(10000);
+	    // factory.setCreator(this); // ****
 	    factory.register(AccessServlet.class);
+	    
 	}
-
+/*
+	@Override
+    public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp)
+    {
+        HttpSession httpSession = req.getSession();
+        
+        MySessionSocket mss = new MySessionSocket(httpSession);
+        return mss;
+    }
+	*/
+	
+	// https://stackoverflow.com/questions/26910094/is-using-system-identityhashcodeobj-reliable-to-return-unique-id/26910329#26910329
+	
+	private WebSocketResponse ws_flexi_response_ = null;
+	
 	@OnWebSocketConnect
 	public void onConnect(Session session) throws IOException {
 		System.out.println(session.getRemoteAddress().getHostString() + " connected!");
-
+		
 		UpgradeRequest upgrade_request = session.getUpgradeRequest();
 		Map<String,List<String>> param_map =upgrade_request.getParameterMap();
 
-		WebSocketResponse ws_flexi_response = new WebSocketResponse(session);
-		
-		//UpgradeRequest upgrade_request = session.getUpgradeRequest();
-		
-		HttpServletRequest http_servlet_request = (HttpServletRequest) upgrade_request.getSession();
-		System.out.println("***** http_servlet_request = " + http_servlet_request);
-		
-		//session.getUserProperties().get("CRASHID");
-		
+		ws_flexi_response_ = new WebSocketResponse(session);
+			
+		/*
 		try {
 			// spawn off in a thread
 			//doFlexiGet(param_map,websocket_flexi_response);
@@ -358,7 +372,7 @@ public class AccessServlet extends WebSocketServlet
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+		*/
 		
 		String remote_host = session.getRemoteAddress().getHostString();						    
 		System.out.println("WebSocket AccessServet.onConnect() from " + remote_host + " for: " + param_map.toString());
@@ -369,31 +383,52 @@ public class AccessServlet extends WebSocketServlet
 	}
 
 	@OnWebSocketMessage
-	public void onText(Session session, String in_message) throws IOException {
-		System.out.println("WebSocket AccessServet.onText() Message received:" + in_message);
-		String thread_name = Thread.currentThread().getName();
-		System.out.println("WebSocket AccessServet.onText(): thread_name = " + thread_name);
-		System.out.println("WebSocket AccessServet.onText(): session = " + session);
+	public void onText(Session session, String command) throws IOException {
+		System.out.println("WebSocket AccessServet.onText() Message received:" + command);
+		//String thread_name = Thread.currentThread().getName();
+		//System.out.println("WebSocket AccessServet.onText(): thread_name = " + thread_name);
+		//System.out.println("WebSocket AccessServet.onText(): session = " + session);
 	
 		if (session.isOpen()) {
 
 			UpgradeRequest upgrade_request = session.getUpgradeRequest();
 			Map<String,List<String>> param_map =upgrade_request.getParameterMap();
+			
+			if (command.equals("start-download")) {
+				try {
+					doFlexiGet(param_map, ws_flexi_response_);
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+					ws_flexi_response_.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+				}
+			}
+			else {
+				ws_flexi_response_.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Failed to recognize command: " + command);
+			}
+			
+			JSONObject json_response = ws_flexi_response_.generateOKMessageTemplate(command);
+			ws_flexi_response_.sendMessage(json_response);
+			
+			/*
 			String key = param_map.get("key").get(0);
 
 			// Using synchronized block, get current 'progress' value from websocket_flexi_reponse
 			
 			JSONObject response_json = new JSONObject();
-			if (in_message.equals("monitor-status")) {
+			if (command.equals("monitor-status")) {
 				response_json.put("status",200);		    
 				response_json.put("key",key);
 			}
 			else {
 				response_json.put("status",200);
-				response_json.put("message","Failed to recognize in-coming command: " + in_message);
+				response_json.put("message","Failed to recognize in-coming command: " + command);
 			}
+			
+			
 			String response = response_json.toString();
 			session.getRemote().sendString(response);
+			*/
 
 		}
 	}

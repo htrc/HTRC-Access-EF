@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.UpgradeRequest;
 import org.eclipse.jetty.websocket.api.UpgradeResponse;
 import org.json.JSONObject;
 
@@ -32,11 +33,14 @@ public class WebSocketResponse implements FlexiResponse
 	        ws_session_ = websocket_session;
 		ws_endpoint_ = websocket_session.getRemote();
 		
-		//UpgradeResponse upgrade_response = ws_session_.getUpgradeResponse();
+		// UpgradeResponse upgrade_response = ws_session_.getUpgradeResponse();
+		
+	
+		
 	}
 	
 	
-	protected JSONObject generateOKMessageTemplate(String action)
+	public JSONObject generateOKMessageTemplate(String action)
 	{
 		JSONObject response_json = new JSONObject();
 		
@@ -57,7 +61,7 @@ public class WebSocketResponse implements FlexiResponse
 		return response_json;
 	}
 	
-	protected void sendMessage(JSONObject response_json)
+	public void sendMessage(JSONObject response_json)
 	{
 		String response_json_str = response_json.toString();
 
@@ -104,6 +108,19 @@ public class WebSocketResponse implements FlexiResponse
 		sendMessage(response_json);
 	}
 	
+	
+	public void sendProgress(double percentage)
+	{
+		String percentage_formatted = String.format("%.2f", percentage);
+		
+		String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted;
+		
+		JSONObject response_json = generateOKMessageTemplate("progress");
+		response_json.put("percentage",percentage);	
+		response_json.put("message",mess);	
+		
+		sendMessage(response_json);
+	}
 	
 
 	public void sendError(int http_status_code, String message) throws IOException
