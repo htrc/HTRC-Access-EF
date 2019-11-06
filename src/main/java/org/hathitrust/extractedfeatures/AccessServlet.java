@@ -210,16 +210,20 @@ public class AccessServlet extends WebSocketServlet
 		}
 		else if (cgi_download_id != null) {
 
-			if (check_exists_.validityCheckID(flexi_response, cgi_download_id)) {
-				String [] download_ids = new String[] {cgi_download_id};
-				download_json_.outputVolume(flexi_response,download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json");
+			String valid_cgi_download_id = check_exists_.validityCheckID(flexi_response, cgi_download_id);
+			
+			if (valid_cgi_download_id != null) {
+				String [] valid_download_ids = new String[] {valid_cgi_download_id};
+				download_json_.outputVolume(flexi_response,valid_download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json");
 			}
 		} 
 		else if (cgi_download_ids != null) {
 			String[] download_ids = cgi_download_ids.split(",");
-
-			if (check_exists_.validityCheckIDs(flexi_response, download_ids)) {
-			    download_json_.outputZippedVolumes(flexi_response,download_ids,null);
+			
+			String [] valid_download_ids = check_exists_.validityCheckIDs(flexi_response, download_ids);
+					
+			if (valid_download_ids != null) {
+			    download_json_.outputZippedVolumes(flexi_response,valid_download_ids,null);
 			}
 		} 
 		else if (cgi_convert_col != null) {
