@@ -351,13 +351,20 @@ public class AccessServlet extends WebSocketServlet
 			e.printStackTrace();
 		}
 		
+		
 		String remote_host = session.getRemoteAddress().getHostString();						    
 		System.out.println("WebSocket AccessServet.onConnect() from " + remote_host + " for: " + param_map.toString());
+
+		String thread_name = Thread.currentThread().getName();
+		System.out.println("WebSocket AccessServet.onConnect(): thread_name = " + thread_name);
 	}
 
 	@OnWebSocketMessage
 	public void onText(Session session, String in_message) throws IOException {
-		System.out.println("Message received:" + in_message);
+		System.out.println("WebSocket AccessServet.onText() Message received:" + in_message);
+		String thread_name = Thread.currentThread().getName();
+		System.out.println("WebSocket AccessServet.onText(): thread_name = " + thread_name);
+	
 		if (session.isOpen()) {
 
 			UpgradeRequest upgrade_request = session.getUpgradeRequest();
