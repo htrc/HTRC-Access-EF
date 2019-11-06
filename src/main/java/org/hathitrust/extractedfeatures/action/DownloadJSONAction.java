@@ -569,32 +569,48 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 
 		if (download_ids != null) {
-		    if (validityCheckIDs(flexi_response, download_ids)) {
+			String [] valid_download_ids = validityCheckIDs(flexi_response, download_ids);
+							
+		    if (valid_download_ids != null) {
 			
-		    	if (cgi_output.equals("zip")) {
-		    		outputZippedVolumes(flexi_response,download_ids,cgi_key);
-		    	}
-		    	else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
-		    		OutputFormat output_format = null;
-		    		if (cgi_output.equals("json") ) {
-		    			output_format = OutputFormat.JSON;
+		    	if (valid_download_ids.length == download_ids.length) {
+		    		if (cgi_output.equals("zip")) {
+		    			outputZippedVolumes(flexi_response,valid_download_ids,cgi_key);
 		    		}
-		    		else if (cgi_output.equals("csv") ) {
-		    			output_format = OutputFormat.CSV;
+		    		else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
+		    			OutputFormat output_format = null;
+		    			if (cgi_output.equals("json") ) {
+		    				output_format = OutputFormat.JSON;
+		    			}
+		    			else if (cgi_output.equals("csv") ) {
+		    				output_format = OutputFormat.CSV;
+		    			}
+		    			if (cgi_output.equals("tsv") ) {
+		    				output_format = OutputFormat.TSV;
+		    			}
+		    			outputVolume(flexi_response,valid_download_ids,output_format,cgi_key,cgi_output);
 		    		}
-		    		if (cgi_output.equals("tsv") ) {
-		    			output_format = OutputFormat.TSV;
+		    		else {
+		    			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
+		    			+"' -- 'output' parameter must be 'json' or 'zip'.");	
 		    		}
-		    		outputVolume(flexi_response,download_ids,output_format,cgi_key,cgi_output);
 		    	}
 		    	else {
-		    		flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
-		    		+"' -- 'output' parameter must be 'json' or 'zip'.");	
+		    		flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
+			    	+"' -- either parameter 'id' does not exist or is invalid, or parameter 'ids' sepcifies one or more value that does not exist or is invalid.");
+			   
 		    	}
 		    }
 		    else {
-		    	flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
-		    	+"' -- either parameter 'id' is invalid, or parameter 'ids' sepcifies one or more invalid values.");
+		    	if (download_ids.length == 1) {
+		    		flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id '" + getHandle()
+		    		+"' -- specified id does not exist or is invalid.");
+		    	}
+		    	else {
+			    	flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
+			    	+"' -- either parameter 'id' does not exist or is invalid, or all the ids specified in parameter 'ids' do not exist or are invalid.");
+
+		    	}
 		    }
 		}
 		else {

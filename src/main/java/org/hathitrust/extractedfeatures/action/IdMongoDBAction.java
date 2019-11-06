@@ -7,7 +7,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -211,49 +213,68 @@ public abstract class IdMongoDBAction extends BaseAction
 		}
 	}
 	
-	
+	/*
 	public boolean validityCheckIDOptimistic(FlexiResponse flexi_response, String id) throws IOException
 	{
 		return true;
 	}
+	*/
 	
-	public boolean validityCheckID(FlexiResponse flexi_response, String id) throws IOException
+	public String validityCheckID(FlexiResponse flexi_response, String id) throws IOException
 	{
 		String volume_id = getVolumeID(id);
+		String opt_trans_id = null;
 		
 		boolean exists = exists(volume_id);
 		
-		if (!exists && volume_id.matches(".*[,+=].*")) {
-		    // See if there are any 'special/reserved' chars in the ID
+		if (exists) {
+			// Simple case, no actual change
+			opt_trans_id = id; 
+		}
+		else {
+			// did not exist
+			if (volume_id.matches(".*[,+=].*")) {
+				// If the given volume ID doesn't exist, 
+				// and there are 'special/reserved' chars in the ID
+				// => See if substituting those chars gives us a valid ID
 
-		    volume_id = volume_id.replaceAll(",", ".").replaceAll("\\+", ":").replaceAll("=", "/");
-		    exists = exists(volume_id);
+				String trans_volume_id = volume_id.replaceAll(",", ".").replaceAll("\\+", ":").replaceAll("=", "/");
+				String trans_id = id.replaceAll(",", ".").replaceAll("\\+", ":").replaceAll("=", "/");
+				exists = exists(trans_volume_id);
 
-		    //		    if (!exists) {
-		    //			// a '+' might have ending up as a ' '
-		    //			volume_id = volume_id.replaceAll(" ", ":");
-		    //			exists = exists(volume_id);
-		    //		    }
+				if (!exists) {
+					// a '+' might have ending up as a ' '
+					trans_volume_id = trans_volume_id.replaceAll(" ", ":");
+					trans_id = trans_id.replaceAll(" ", ":");
+					exists = exists(trans_volume_id);
+				}
+				
+				if (exists) {
+					opt_trans_id = trans_id;
+				}
+			}
 		}
 		
 		if (!exists) {
 			// Error
-			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested volume id '" + volume_id + "' does not exist.");
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested id '" + opt_trans_id + "' does not exist.");
 		}
 		
-		return exists;
+		return opt_trans_id; // null if none of the IDs variations tried out existed
 	}
 	
+	/*
 	public boolean validityCheckIDsOptimistic(FlexiResponse flexi_response, String[] ids) throws IOException
 	{
 		return true;	
 	}
+	*/
 	
-	public boolean validityCheckIDs(FlexiResponse flexi_response, String[] ids) throws IOException
+	public String[] validityCheckIDs(FlexiResponse flexi_response, String[] ids) throws IOException
 	{
+		List<String> opt_trans_ids_list = new ArrayList<String>();
+		
 		int ids_len = ids.length;
-	
-		boolean check = true;
 		
 		// If backed by MongoDB, the following (with appropriate find expression)
 		// might provide more efficient way to check
@@ -271,13 +292,18 @@ public abstract class IdMongoDBAction extends BaseAction
 		for (int i=0; i<ids_len; i++) {
 
 			String id = ids[i];
-			if (!validityCheckID(flexi_response,id)) {
-				check = false;
-				break;
+			String checked_id = validityCheckID(flexi_response,id);
+			if (checked_id != null) {
+				opt_trans_ids_list.add(checked_id);
 			}
 		}
 		
-		return check;
+		String [] opt_trans_ids_array = null;
+		if (opt_trans_ids_list.size() > 0) {
+			opt_trans_ids_array = (String [])opt_trans_ids_list.toArray();
+		}
+		
+		return opt_trans_ids_array;
 	}
 	
 }
