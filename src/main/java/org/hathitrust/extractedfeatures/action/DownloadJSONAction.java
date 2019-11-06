@@ -6,18 +6,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.hathitrust.extractedfeatures.VolumeUtils;
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
 import org.hathitrust.extractedfeatures.io.JSONFileManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -266,101 +267,99 @@ public class DownloadJSONAction extends URLShortenerAction
 	}
 	
 	
-        public void outputVolume(HttpServletResponse response, String[] download_ids, OutputFormat output_format,
+        public void outputVolume(FlexiResponse flexi_response, String[] download_ids, OutputFormat output_format,
 				 String opt_cgi_key, String cgi_output) 
 			throws ServletException, IOException
         {
-	        if (output_format == OutputFormat.JSON) {
-		    response.setContentType("application/json");
-		}
-		else {
-		    response.setContentType("text/plain");
-		}
-	    
-		response.setCharacterEncoding("UTF-8");
+        	if (output_format == OutputFormat.JSON) {
+        		flexi_response.setContentType("application/json");
+        	}
+        	else {
+        		flexi_response.setContentType("text/plain");
+        	}
 
-		String file_ext = "."+cgi_output;
-		setHeaderDownloadFilename(response, "htrc-metadata-export", opt_cgi_key, file_ext);
-		
-		PrintWriter pw = response.getWriter();
-		
-		int download_ids_len = download_ids.length;
-		if (download_ids_len > 1) {
-			if (output_format == OutputFormat.JSON) {
-				pw.append("[");
-			}
-		}
-		
-		boolean first_entry = true;
-		
-		for (int i=0; i<download_ids_len; i++) {
-			String download_id = download_ids[i];
+        	flexi_response.setCharacterEncoding("UTF-8");
 
-			String volume_id = download_id;
-			boolean has_seq_num = false;
-			boolean has_metadata = false;
+        	String file_ext = "."+cgi_output;
+        	setHeaderDownloadFilename(flexi_response, "htrc-metadata-export", opt_cgi_key, file_ext);
 
-			String seq_num_str = null;
-			int seq_num = 0;
+        	int download_ids_len = download_ids.length;
+        	if (download_ids_len > 1) {
+        		if (output_format == OutputFormat.JSON) {
+        			flexi_response.append("[");
+        		}
+        	}
 
-			Matcher seq_matcher = IdentiferRegExp.SeqPattern.matcher(download_id);
-			if (seq_matcher.matches()) {
-				has_seq_num = true;
-				volume_id = seq_matcher.group(1);
-				seq_num_str = seq_matcher.group(2);
-				seq_num = Integer.parseInt(seq_num_str);
-			}
-			else {
-				Matcher md_matcher = IdentiferRegExp.MetadataPattern.matcher(download_id);
-				if (md_matcher.matches()) {
-					volume_id = md_matcher.group(1);
-					has_metadata = true;
-				}
-			}
+        	boolean first_entry = true;
 
-			String json_content_str = json_file_manager_.getVolumeContent(volume_id);
+        	for (int i=0; i<download_ids_len; i++) {
+        		String download_id = download_ids[i];
 
-			if (json_content_str == null) {
-				if (json_file_manager_.usingRsync()) {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
-					break;
-				}
-				else {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
-					break;
-				}
-			}
-			else {
-				if (has_seq_num) {
-					// consider having a page-level cache // ****
-					json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
-				
-				}			
-				else if (has_metadata) {
-					// consider having a metadata cache // ****
-					json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
-				}
-				// Otherwise, leave full volume JSON content alone
-				pw.append(json_content_str);
-				
-				if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
-					if (output_format == OutputFormat.JSON) {
-						pw.append(",");
-					}
-				}
-			}
-			
-			first_entry = false;
-		}
-		
-		if (download_ids_len > 1) {
-			if (output_format == OutputFormat.JSON)  {
-				pw.append("]");
-			}
-		}
-	}
+        		String volume_id = download_id;
+        		boolean has_seq_num = false;
+        		boolean has_metadata = false;
+
+        		String seq_num_str = null;
+        		int seq_num = 0;
+
+        		Matcher seq_matcher = IdentiferRegExp.SeqPattern.matcher(download_id);
+        		if (seq_matcher.matches()) {
+        			has_seq_num = true;
+        			volume_id = seq_matcher.group(1);
+        			seq_num_str = seq_matcher.group(2);
+        			seq_num = Integer.parseInt(seq_num_str);
+        		}
+        		else {
+        			Matcher md_matcher = IdentiferRegExp.MetadataPattern.matcher(download_id);
+        			if (md_matcher.matches()) {
+        				volume_id = md_matcher.group(1);
+        				has_metadata = true;
+        			}
+        		}
+
+        		String json_content_str = json_file_manager_.getVolumeContent(volume_id);
+
+        		if (json_content_str == null) {
+        			if (json_file_manager_.usingRsync()) {
+        				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
+        				break;
+        			}
+        			else {
+        				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
+        				break;
+        			}
+        		}
+        		else {
+        			if (has_seq_num) {
+        				// consider having a page-level cache // ****
+        				json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
+
+        			}			
+        			else if (has_metadata) {
+        				// consider having a metadata cache // ****
+        				json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
+        			}
+        			// Otherwise, leave full volume JSON content alone
+        			flexi_response.append(json_content_str);
+
+        			if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
+        				if (output_format == OutputFormat.JSON) {
+        					flexi_response.append(",");
+        				}
+        			}
+        		}
+
+        		first_entry = false;
+        	}
+
+        	if (download_ids_len > 1) {
+        		if (output_format == OutputFormat.JSON)  {
+        			flexi_response.append("]");
+        		}
+        	}
+        }
 	
-        protected void outputZippedVolumesAdaptive(HttpServletResponse response, String[] download_ids, String opt_cgi_key) 
+        protected void outputZippedVolumesAdaptive(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
 	    // This version adaptively works out if it can download a single file or else needs
@@ -374,10 +373,10 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		if (output_as_zip) {
 			// Output needs to be zipped up
-			response.setContentType("application/zip");
-			setHeaderDownloadFilename(response,"htrc-ef-export",opt_cgi_key,".zip");
+			flexi_response.setContentType("application/zip");
+			setHeaderDownloadFilename(flexi_response,"htrc-ef-export",opt_cgi_key,".zip");
 
-			OutputStream ros = response.getOutputStream();
+			OutputStream ros = flexi_response.getOutputStream();
 			BufferedOutputStream bros = new BufferedOutputStream(ros);
 			zbros = new ZipOutputStream(bros);
 
@@ -394,10 +393,10 @@ public class DownloadJSONAction extends URLShortenerAction
 
 			if (file == null) {
 				if (json_file_manager_.usingRsync()) {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
 				}
 				else {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
 				}
 				break;
 			}
@@ -411,10 +410,10 @@ public class DownloadJSONAction extends URLShortenerAction
 					zbros.putNextEntry(zipentry);
 				}
 				else {
-					response.setContentType("application/x-bzip2");
-					setHeaderDownloadFilename(response,json_filename_tail); 
+					flexi_response.setContentType("application/x-bzip2");
+					setHeaderDownloadFilename(flexi_response,json_filename_tail); 
 
-					OutputStream ros = response.getOutputStream();
+					OutputStream ros = flexi_response.getOutputStream();
 					download_os = new BufferedOutputStream(ros);
 				}		
 
@@ -448,25 +447,25 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 	}
 
-    protected void setHeaderDownloadFilename(HttpServletResponse response, String filename_root, String opt_cgi_key, String opt_file_ext)
+    protected void setHeaderDownloadFilename(FlexiResponse flexi_response, String filename_root, String opt_cgi_key, String opt_file_ext)
     {
-	String output_filename = filename_root;
-	if (opt_cgi_key != null) {
-	    output_filename += "-" + opt_cgi_key;
-	}
+    	String output_filename = filename_root;
+    	if (opt_cgi_key != null) {
+    		output_filename += "-" + opt_cgi_key;
+    	}
 
-	if (opt_file_ext != null) {
-	    output_filename += opt_file_ext;
-	}
+    	if (opt_file_ext != null) {
+    		output_filename += opt_file_ext;
+    	}
 
-	response.setHeader("Content-Disposition","attachment; filename=\""+output_filename+"\"");
+    	flexi_response.setHeader("Content-Disposition","attachment; filename=\""+output_filename+"\"");
     }
     
-    protected void setHeaderDownloadFilename(HttpServletResponse response, String filename) {
-	setHeaderDownloadFilename(response,filename,null,null);
+    protected void setHeaderDownloadFilename(FlexiResponse flexi_response, String filename) {
+    	setHeaderDownloadFilename(flexi_response,filename,null,null);
     }
     
-    public void outputZippedVolumes(HttpServletResponse response, String[] download_ids, String opt_cgi_key) 
+    public void outputZippedVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
 		int download_ids_len = download_ids.length;
@@ -478,11 +477,11 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 		String output_filename = output_filename_root + ".zip";
 		*/
-		response.setContentType("application/zip");
-		setHeaderDownloadFilename(response,"htrc-ef-export",opt_cgi_key,".zip");
+		flexi_response.setContentType("application/zip");
+		setHeaderDownloadFilename(flexi_response,"htrc-ef-export",opt_cgi_key,".zip");
 		//response.setHeader("Content-Disposition","attachment; filename="+output_filename);
 
-		OutputStream ros = response.getOutputStream();
+		OutputStream ros = flexi_response.getOutputStream();
 		BufferedOutputStream bros = new BufferedOutputStream(ros);
 		ZipOutputStream zbros = new ZipOutputStream(bros);
 		OutputStream download_os = zbros;
@@ -497,10 +496,10 @@ public class DownloadJSONAction extends URLShortenerAction
 
 			if (file == null) {
 				if (json_file_manager_.usingRsync()) {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
 				}
 				else {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
 				}
 				break;
 			}
@@ -535,13 +534,13 @@ public class DownloadJSONAction extends URLShortenerAction
 		download_os.close();
 	}
 	
-	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+	public void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 
 			throws ServletException, IOException
 	{
-		String cgi_key = request.getParameter("key");
-		String cgi_download_id = request.getParameter("id");
-		String cgi_download_ids = request.getParameter("ids");
-		String cgi_output = request.getParameter("output");
+		String cgi_key = getParameter(param_map,"key");
+		String cgi_download_id = getParameter(param_map,"id");
+		String cgi_download_ids = getParameter(param_map,"ids");
+		String cgi_output = getParameter(param_map,"output");
 		
 		if (cgi_output == null) {
 			cgi_output = "json";
@@ -564,37 +563,36 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 
 		if (download_ids != null) {
-		    if (validityCheckIDs(response, download_ids)) {
+		    if (validityCheckIDs(flexi_response, download_ids)) {
 			
-			if (cgi_output.equals("zip")) {
-			    outputZippedVolumes(response,download_ids,cgi_key);
-			}
-			else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
-				OutputFormat output_format = null;
-				if (cgi_output.equals("json") ) {
-					output_format = OutputFormat.JSON;
-				}
-				else if (cgi_output.equals("csv") ) {
-					output_format = OutputFormat.CSV;
-				}
-				if (cgi_output.equals("tsv") ) {
-					output_format = OutputFormat.TSV;
-				}
-				outputVolume(response,download_ids,output_format,cgi_key,cgi_output);
-			}
-			else {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
-				+"' -- 'output' parameter must be 'json' or 'zip'.");	
-			}
+		    	if (cgi_output.equals("zip")) {
+		    		outputZippedVolumes(flexi_response,download_ids,cgi_key);
+		    	}
+		    	else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
+		    		OutputFormat output_format = null;
+		    		if (cgi_output.equals("json") ) {
+		    			output_format = OutputFormat.JSON;
+		    		}
+		    		else if (cgi_output.equals("csv") ) {
+		    			output_format = OutputFormat.CSV;
+		    		}
+		    		if (cgi_output.equals("tsv") ) {
+		    			output_format = OutputFormat.TSV;
+		    		}
+		    		outputVolume(flexi_response,download_ids,output_format,cgi_key,cgi_output);
+		    	}
+		    	else {
+		    		flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
+		    		+"' -- 'output' parameter must be 'json' or 'zip'.");	
+		    	}
 		    }
 		    else {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
-			+"' -- either parameter 'id' is invalid, or parameter 'ids' sepcifies one or more invalid values.");
+		    	flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
+		    	+"' -- either parameter 'id' is invalid, or parameter 'ids' sepcifies one or more invalid values.");
 		    }
-			
 		}
 		else {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter to action '" + getHandle()
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter to action '" + getHandle()
 			+"' -- either parameter 'id' or 'ids' must be specified.");
 		}
 	}

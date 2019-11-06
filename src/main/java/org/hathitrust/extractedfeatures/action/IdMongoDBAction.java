@@ -9,26 +9,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bson.Document;
 import org.hathitrust.extractedfeatures.VolumeUtils;
-import org.hathitrust.extractedfeatures.action.BaseAction.StoreAccessOperationMode;
 import org.hathitrust.extractedfeatures.io.FileUtils;
-import org.hathitrust.extractedfeatures.io.JSONFileManager;
-
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import com.mongodb.MongoClient;  
+import com.mongodb.client.model.Filters;  
 
 public abstract class IdMongoDBAction extends BaseAction
 {
@@ -221,12 +212,12 @@ public abstract class IdMongoDBAction extends BaseAction
 	}
 	
 	
-	public boolean validityCheckIDOptimistic(HttpServletResponse response, String id) throws IOException
+	public boolean validityCheckIDOptimistic(FlexiResponse flexi_response, String id) throws IOException
 	{
 		return true;
 	}
 	
-	public boolean validityCheckID(HttpServletResponse response, String id) throws IOException
+	public boolean validityCheckID(FlexiResponse flexi_response, String id) throws IOException
 	{
 		String volume_id = getVolumeID(id);
 		
@@ -247,18 +238,18 @@ public abstract class IdMongoDBAction extends BaseAction
 		
 		if (!exists) {
 			// Error
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested volume id '" + volume_id + "' does not exist.");
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested volume id '" + volume_id + "' does not exist.");
 		}
 		
 		return exists;
 	}
 	
-	public boolean validityCheckIDsOptimistic(HttpServletResponse response, String[] ids) throws IOException
+	public boolean validityCheckIDsOptimistic(FlexiResponse flexi_response, String[] ids) throws IOException
 	{
 		return true;	
 	}
 	
-	public boolean validityCheckIDs(HttpServletResponse response, String[] ids) throws IOException
+	public boolean validityCheckIDs(FlexiResponse flexi_response, String[] ids) throws IOException
 	{
 		int ids_len = ids.length;
 	
@@ -280,7 +271,7 @@ public abstract class IdMongoDBAction extends BaseAction
 		for (int i=0; i<ids_len; i++) {
 
 			String id = ids[i];
-			if (!validityCheckID(response,id)) {
+			if (!validityCheckID(flexi_response,id)) {
 				check = false;
 				break;
 			}

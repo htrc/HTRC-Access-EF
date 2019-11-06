@@ -5,16 +5,18 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
 
 public class CollectionToWorksetAction extends IdMongoDBAction
 {
@@ -41,20 +43,20 @@ public class CollectionToWorksetAction extends IdMongoDBAction
 		super(context,config);
 	}
 	
-	public void outputWorkset(HttpServletResponse response, String cgi_convert_col, String cgi_col_title,
+	public void outputWorkset(FlexiResponse flexi_response, String cgi_convert_col, String cgi_col_title,
 				String cgi_a, String cgi_format) throws IOException
 	{
 		if ((cgi_a == null) || (cgi_format == null)) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST,
 					"Malformed arguments.  Need 'a', and 'format'");
 		} else {
 			
-			doCollectionToWorkset(response, cgi_col_title, cgi_convert_col, cgi_a, cgi_format);
+			doCollectionToWorkset(flexi_response, cgi_col_title, cgi_convert_col, cgi_a, cgi_format);
 		}
 		
 	}
 	
-	protected void doCollectionToWorkset(HttpServletResponse response, String col_title,
+	protected void doCollectionToWorkset(FlexiResponse flexi_response, String col_title,
 			String c, String a, String format) throws IOException 
 	{
 		String post_url_params = "c=" + c + "&a=" + a + "&format=" + format;
@@ -106,43 +108,42 @@ public class CollectionToWorksetAction extends IdMongoDBAction
 			}
 
 			String col_title_filename = col_title + ".txt";
-			response.setContentType("text/plain");
-			response
+			flexi_response.setContentType("text/plain");
+			flexi_response
 			.setHeader("Content-Disposition", "attachment; filename=\"" + col_title_filename + "\"");
 
-			PrintWriter pw = response.getWriter();
-			pw.append(workset_friendly_sb.toString());
+			flexi_response.append(workset_friendly_sb.toString());
 
 			if (workset_unfriendly_sb.length() > 0) {
-				pw.append("## The following volumes were listed in the HT collection, but have been omitted "
+				flexi_response.append("## The following volumes were listed in the HT collection, but have been omitted "
 						+ "as they are not in the HTRC Extracted Feature dataset\n");
-				pw.append(workset_unfriendly_sb.toString());
+				flexi_response.append(workset_unfriendly_sb.toString());
 			}
-			pw.flush();
+			flexi_response.flush();
 		} catch (Exception e) {
 			e.printStackTrace();
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST,
 					"Failed to convert HT collection to HTRC workset");
 		}
 	}
 	
-	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+	public void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 
 			throws ServletException, IOException
 	{
-		String cgi_convert_col = request.getParameter("convert-col");
+		String cgi_convert_col = getParameter(param_map,"convert-col");
 		if (cgi_convert_col != null) {
-			String cgi_col_title = request.getParameter("col-title");
+			String cgi_col_title = getParameter(param_map,"col-title");
 			if (cgi_col_title == null) {
 				cgi_col_title = "htrc-workset-" + cgi_convert_col;
 			}
-			String cgi_a = request.getParameter("a");
-			String cgi_format = request.getParameter("format");
+			String cgi_a = getParameter(param_map,"a");
+			String cgi_format = getParameter(param_map,"format");
 			
-			outputWorkset(response, cgi_convert_col, cgi_col_title, cgi_a, cgi_format);
+			outputWorkset(flexi_response, cgi_convert_col, cgi_col_title, cgi_a, cgi_format);
 				
 		}
 		else {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter to action '" + getHandle()
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter to action '" + getHandle()
 			+"' -- parameter 'collection' must be specified.");	
 		}		
 	}

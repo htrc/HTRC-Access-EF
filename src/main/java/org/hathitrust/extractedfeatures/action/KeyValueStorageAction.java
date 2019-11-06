@@ -2,30 +2,21 @@ package org.hathitrust.extractedfeatures.action;
 
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.ConnectException;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.util.HashMap;
-import java.util.Random;
-
+import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import org.hathitrust.extractedfeatures.action.BaseAction.StoreAccessOperationMode;
-import org.hathitrust.extractedfeatures.action.BaseAction.MongoDBState;
-
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
 import static com.mongodb.client.model.Filters.*;
 
-import com.mongodb.MongoSocketOpenException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Indexes;
 
@@ -116,33 +107,31 @@ public class KeyValueStorageAction extends IdMongoDBAction
 		return value;
 	}
 	
-	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+	public void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 
 			throws ServletException, IOException
 	{
-		response.setContentType("text/plain");
-		response.setCharacterEncoding("UTF-8");
+		flexi_response.setContentType("text/plain");
+		flexi_response.setCharacterEncoding("UTF-8");
 		
-		String value = request.getParameter("value");
-		String key   = request.getParameter("key");
+		String value = getParameter(param_map,"value");
+		String key   = getParameter(param_map,"key");
 		
 		if ((key != null) && (value != null)) {
 			value = URLDecoder.decode(value,"UTF-8");
 			
 			setValue(key,value);
 			
-			PrintWriter pw = response.getWriter();
-			pw.append("Stored: "+ key + "='" + value+"'");
+			flexi_response.append("Stored: "+ key + "='" + value+"'");
 		}
 		else if (key != null) {
 			value = getValue(key);
 		
-			PrintWriter pw = response.getWriter();
-			pw.append(value);
+			flexi_response.append(value);
 
 		}
 		else {
 			
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' (and potentially 'value') parameter to " + getHandle());
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' (and potentially 'value') parameter to " + getHandle());
 		
 		}
 	}

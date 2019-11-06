@@ -2,46 +2,32 @@ package org.hathitrust.extractedfeatures.action;
 
 import static com.mongodb.client.model.Filters.eq;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
 
 import org.bson.Document;
-//import org.hathitrust.extractedfeatures.VolumeUtils;
-//import org.hathitrust.extractedfeatures.VolumeUtils;
-//import org.hathitrust.extractedfeatures.action.BaseAction.StoreAccessOperationMode;
-//import org.hathitrust.extractedfeatures.io.FileUtils;
-//import org.hathitrust.extractedfeatures.io.JSONFileManager;
 import org.hathitrust.extractedfeatures.lcc.LCCOutlineHashRec;
-import org.hathitrust.extractedfeatures.lcc.LCCOutlinePrefixRootToplevel;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.MongoClient;  
+
 
 
 public abstract class LCCMongoDBAction extends BaseAction
@@ -651,7 +637,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 	
 
 	/*
-	public String lookupClassifiction(HttpServletResponse response, String id) throws IOException
+	public String lookupClassifiction(FlexiResponse flexi_response, String id) throws IOException
 	{		
 		String subject = getLCCSubject(id);
 		if (subject == null) {
@@ -663,7 +649,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 	}
 	
 	
-	public String[] lookupClassifications(HttpServletResponse response, String[] ids) throws IOException
+	public String[] lookupClassifications(FlexiResponse flexi_response, String[] ids) throws IOException
 	{
 		int ids_len = ids.length;
 		String[] subjects = new String[ids_len];
@@ -671,7 +657,7 @@ public abstract class LCCMongoDBAction extends BaseAction
 		for (int i=0; i<ids_len; i++) {
 
 			String id = ids[i];
-			String subject = lookupClassifiction(response,id);
+			String subject = lookupClassifiction(flexi_response,id);
 			subjects[i] = subject;
 		}
 		

@@ -2,19 +2,15 @@ package org.hathitrust.extractedfeatures.action;
 
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
-
+import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
 
 import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
@@ -49,7 +45,6 @@ public class GuessLanguageAction extends IdMongoDBAction
 		}
 		catch (LangDetectException e) {
 			e.printStackTrace();
-
 		}
 	}
 	
@@ -70,12 +65,12 @@ public class GuessLanguageAction extends IdMongoDBAction
 		return detector.getProbabilities();
 	}
 	    
-	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+	public void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 
 			throws ServletException, IOException
 	{
 		ArrayList<Language> languages = null;
 
-		String text_in = request.getParameter("text-in");
+		String text_in = getParameter(param_map,"text-in");
 
 		if (text_in != null) {
 			try {
@@ -84,28 +79,30 @@ public class GuessLanguageAction extends IdMongoDBAction
 			}
 			catch (LangDetectException e) {
 				e.printStackTrace();
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Language detection error occured while processing 'text-in' parameter '" + text_in + "'");
+				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Language detection error occured while processing 'text-in' parameter '" + text_in + "'");
 			}
 		}
 		else {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'text-in' parameter to " + getHandle());
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'text-in' parameter to " + getHandle());
 		}
 
-		response.setContentType("application/json");
-		PrintWriter pw = response.getWriter();
+		flexi_response.setContentType("application/json");
 
-		pw.append("[");
+		flexi_response.append("[");
 
 		int i = 0;
 		
 		for (Language l: languages) {
 			if (i>0) {
-				pw.append(",");
+				flexi_response.append(",");
 			}
-			pw.append("{ \"lang\":\"" + l.lang + "\"," + "\"prob\":\"" + l.prob + "\"}" );
+			flexi_response.append("{ \"lang\":\"" + l.lang + "\"," + "\"prob\":\"" + l.prob + "\"}" );
 			i++;
 		}
-		pw.append("]");
+		flexi_response.append("]");
+		
+		// **** would this benefit from a \n to trigger a flush?
+		// Or a close()?
 	}
 }
 

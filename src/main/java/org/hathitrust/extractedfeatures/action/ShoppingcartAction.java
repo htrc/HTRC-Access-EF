@@ -2,19 +2,19 @@ package org.hathitrust.extractedfeatures.action;
 
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bson.Document;
 import org.hathitrust.extractedfeatures.CartContent;
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -205,20 +205,18 @@ public class ShoppingcartAction extends IdMongoDBAction
 		return status;
 	}
 	
-	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+	public void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 
 			throws ServletException, IOException
 	{
-		response.setContentType("text/plain");
-		response.setCharacterEncoding("UTF-8");
+		flexi_response.setContentType("text/plain");
+		flexi_response.setCharacterEncoding("UTF-8");
 
-		String key  = request.getParameter("key");
-		String mode = request.getParameter("mode");
+		String key  = getParameter(param_map,"key");
+		String mode = getParameter(param_map,"mode");
 		
 		if ((key != null) && (mode != null)) {
 
-			PrintWriter pw = response.getWriter();
-
-			String ids_str = request.getParameter("ids");
+			String ids_str = getParameter(param_map,"ids");
 
 			if (mode.equals("set")) {
 				setCart(key,ids_str);
@@ -227,17 +225,17 @@ public class ShoppingcartAction extends IdMongoDBAction
 				CartContent cart = getCart(key);
 				if (cart == null) {
 				    if (mode.equals("get")) {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No shopping-cart entry for key="+key);
+				    	flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "No shopping-cart entry for key="+key);
 				    }
 				    else {
-					// get-silentfail
-					pw.append("");
+				    	// get-silentfail
+				    	flexi_response.append("");
 				    }
 
 				}
 				else {
 					String cart_json_str = cart.toJSON(key);					
-					pw.append(cart_json_str);		
+					flexi_response.append(cart_json_str);		
 				}
 			}
 			else if (mode.equals("add-ids")) {
@@ -247,22 +245,22 @@ public class ShoppingcartAction extends IdMongoDBAction
 				delFromCart(key,ids_str);
 			}
 			else if (mode.equals("del")) {
-				pw.append("Delete key, status = "  + delCart(key));
+				flexi_response.append("Delete key, status = "  + delCart(key));
 			}
 			else {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized 'mode' parameter value '" + mode + "' to " + getHandle());
+				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized 'mode' parameter value '" + mode + "' to " + getHandle());
 			}
 		}
 		else {
 		    if ((key == null) && (mode == null)) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' and 'mode' parameters to " + getHandle());
+		    	flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' and 'mode' parameters to " + getHandle());
 		    }
 		    else {
 			if (mode == null) {
-			    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'mode' parameters to " + getHandle());
+				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'mode' parameters to " + getHandle());
 			}
 			else {
-			    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' parameters to " + getHandle());
+				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'key' parameters to " + getHandle());
 			}
 			
 		    }

@@ -3,6 +3,8 @@ package org.hathitrust.extractedfeatures;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
@@ -39,6 +41,10 @@ import org.hathitrust.extractedfeatures.action.DownloadJSONAction;
 import org.hathitrust.extractedfeatures.action.ICUTokenizeAction;
 import org.hathitrust.extractedfeatures.action.ShoppingcartAction;
 import org.hathitrust.extractedfeatures.action.URLShortenerAction;
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
+import org.hathitrust.extractedfeatures.io.HttpResponse;
+import org.hathitrust.extractedfeatures.io.JSONFileManager;
+import org.hathitrust.extractedfeatures.io.WebSocketResponse;
 
 
 /**
@@ -65,20 +71,43 @@ public class AccessServlet extends WebSocketServlet
 	public AccessServlet() {
 	}
 
-    
-	@Override
-	public void configure(WebSocketServletFactory factory) {
-	    // Useful reference:
-	    //   https://examples.javacodegeeks.com/enterprise-java/jetty/jetty-websocket-example/
-	    factory.getPolicy().setIdleTimeout(10000);
-	    factory.register(AccessServlet.class);
+	/*
+	protected static Map<String,String[]> convertParamMapListToMapArray(Map<String,List<String>> map_list)
+	{
+		Map<String,String[]> map_array = new HashMap<String,String[]>();
+		
+		for (String key: map_list.keySet()) {
+			String [] val_array = (String[]) map_list.get(key).toArray();
+			map_array.put(key, val_array );
+		}
+	
+		return map_array;
 	}
+	*/
+	
+	protected static Map<String,List<String>> convertParamMapArrayToMapList(Map<String,String []> map_array)
+	{
+		Map<String,List<String>> map_list = new HashMap<String,List<String>>();
+		
+		for (String key: map_array.keySet()) {
+			List<String> val_list = Arrays.asList(map_array.get(key));
+			
+			map_list.put(key, val_list);
+		}
+	
+		return map_list;
+	}
+    
+	
     
 	/**
 	 * @see Servlet#init(ServletConfig)
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+		
+		JSONFileManager json_file_manager = JSONFileManager.getInstance(config);
+		WebSocketResponse.setJSONFileManager(json_file_manager);
 		
 		ServletContext context = getServletContext();
 
@@ -149,22 +178,21 @@ public class AccessServlet extends WebSocketServlet
 		}		
 	}	
 
-	protected void doGetLegacy(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	protected void doFlexiGetLegacy(Map<String,List<String>> param_map, FlexiResponse flexi_response)
+			throws ServletException, IOException 
+	{
 
-		HttpSession http_session = request.getSession();
-
-		String cgi_ids = request.getParameter("check-ids");
+		String cgi_ids = BaseAction.getParameter(param_map,"check-ids");
 		if (cgi_ids == null) {
-			cgi_ids = request.getParameter("ids");
+			cgi_ids = BaseAction.getParameter(param_map,"ids");
 		}
-		String cgi_id = request.getParameter("check-id");
+		String cgi_id = BaseAction.getParameter(param_map,"check-id");
 		if (cgi_id == null) {
-			cgi_id = request.getParameter("id");
+			cgi_id = BaseAction.getParameter(param_map,"id");
 		}
-		String cgi_download_id = request.getParameter("download-id");
-		String cgi_download_ids = request.getParameter("download-ids");
-		String cgi_convert_col = request.getParameter("convert-col");
+		String cgi_download_id = BaseAction.getParameter(param_map,"download-id");
+		String cgi_download_ids = BaseAction.getParameter(param_map,"download-ids");
+		String cgi_convert_col = BaseAction.getParameter(param_map,"convert-col");
 
 		// if cgi_id in play then upgrade to cgi_ids (one item in it) to simplify later code
 		if (cgi_ids == null) {
@@ -175,92 +203,112 @@ public class AccessServlet extends WebSocketServlet
 
 		if (cgi_ids != null) {
 			String[] ids = cgi_ids.split(",");
-			check_exists_.outputJSON(response,ids);
+			check_exists_.outputJSON(flexi_response,ids);
 		}
 		else if (cgi_download_id != null) {
 
-			if (check_exists_.validityCheckID(response, cgi_download_id)) {
+			if (check_exists_.validityCheckID(flexi_response, cgi_download_id)) {
 				String [] download_ids = new String[] {cgi_download_id};
-				download_json_.outputVolume(response,download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json");
+				download_json_.outputVolume(flexi_response,download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json");
 			}
 		} 
 		else if (cgi_download_ids != null) {
 			String[] download_ids = cgi_download_ids.split(",");
 
-			if (check_exists_.validityCheckIDs(response, download_ids)) {
-			    download_json_.outputZippedVolumes(response,download_ids,null);
+			if (check_exists_.validityCheckIDs(flexi_response, download_ids)) {
+			    download_json_.outputZippedVolumes(flexi_response,download_ids,null);
 			}
 		} 
 		else if (cgi_convert_col != null) {
 
-			String cgi_col_title = request.getParameter("col-title");
+			String cgi_col_title = BaseAction.getParameter(param_map,"col-title");
 			if (cgi_col_title == null) {
 				cgi_col_title = "htrc-workset-" + cgi_convert_col;
 			}
-			String cgi_a = request.getParameter("a");
-			String cgi_format = request.getParameter("format");
+			String cgi_a = BaseAction.getParameter(param_map,"a");
+			String cgi_format = BaseAction.getParameter(param_map,"format");
 
-			col2workset_.outputWorkset(response, cgi_convert_col, cgi_col_title, cgi_a, cgi_format);
+			col2workset_.outputWorkset(flexi_response, cgi_convert_col, cgi_col_title, cgi_a, cgi_format);
 
 		} 
 		else {
-			PrintWriter pw = response.getWriter();
-
-			pw.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size() + "\n");
-			pw.append("Add '?action=' to URL get usage");
-
+			flexi_response.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size() + "\n");
+			flexi_response.append("Add '?action=' to URL get usage");
 		}
+	}
+	
+	protected void doGetLegacy(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+
+		//HttpSession http_session = request.getSession();
+
+		Map<String, String[]> param_map_array = request.getParameterMap();
+		Map<String, List<String>> param_map_list = convertParamMapArrayToMapList(param_map_array);
+		
+		HttpResponse http_flexi_response = new HttpResponse(response);
+		
+		doFlexiGetLegacy(param_map_list,http_flexi_response);
+		
 		//pw.close();
 
 	}
 
-	protected void displayUsage(PrintWriter pw)
+	protected void displayUsage(FlexiResponse flexi_response)
 	{
-		pw.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size() + "\n");
-		pw.append("\nSample id: mdp.39076000484811\n");
-		pw.append("====\n\n");
+		flexi_response.append("General Info: Number of HTRC Volumes in check-list = " + check_exists_.size() + "\n");
+		flexi_response.append("\nSample id: mdp.39076000484811\n");
+		flexi_response.append("====\n\n");
 
-		pw.append("Usage:\n");
+		flexi_response.append("Usage:\n");
 
 		for (BaseAction action: action_list_) {
 
-			pw.append("  action=" + action.getHandle() + "\n");
+			flexi_response.append("  action=" + action.getHandle() + "\n");
 			String[] mess = action.getDescription();
 			for (String sm: mess) {
-				pw.append("    " + sm + "\n");
+				flexi_response.append("    " + sm + "\n");
 			}
-			pw.append("\n");
+			flexi_response.append("\n");
 		}
-		pw.close();
-
+		flexi_response.close();
 	}
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+	protected void doFlexiGet(Map<String,List<String>> param_map_list, FlexiResponse flexi_response)
 			throws ServletException, IOException 
-	{
-		String action_handle = request.getParameter("action");
+	{	
+		String action_handle = BaseAction.getParameter(param_map_list,"action");
 		if (action_handle == null) {
-			doGetLegacy(request,response);
+			doFlexiGetLegacy(param_map_list,flexi_response);
 			return;
 		}
-
+		
 		boolean action_match = false;
 
 		for (BaseAction action: action_list_) {
 			if (action.getHandle().equals(action_handle)) {
 				action_match = true;
-				action.doAction(request,response);
+				
+				action.doAction(param_map_list,flexi_response);
 				break;
 			}
 		}
 
 		if (!action_match) {
 			// No action given => generate usage statement
-			response.setContentType("text/plain");
-			PrintWriter pw = response.getWriter();
-			displayUsage(pw);
+			flexi_response.setContentType("text/plain");
+			displayUsage(flexi_response);
 		}
 
+	}
+	
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException 
+	{
+		Map<String, String[]> param_map_array = request.getParameterMap();
+		Map<String, List<String>> param_map_list = convertParamMapArrayToMapList(param_map_array);
+		
+		HttpResponse http_flexi_response = new HttpResponse(response);
+		doFlexiGet(param_map_list,http_flexi_response);
 	}
 
 
@@ -273,46 +321,69 @@ public class AccessServlet extends WebSocketServlet
 	}
 
 
-
-
-        @OnWebSocketConnect
-	public void onConnect(Session session) throws IOException {
-	    System.out.println(session.getRemoteAddress().getHostString() + " connected!");
-
-	    UpgradeRequest upgrade_request = session.getUpgradeRequest();
-	    Map<String,List<String>> param_map =upgrade_request.getParameterMap();
-
-	    String remote_host = session.getRemoteAddress().getHostString();						    
-	    System.out.println("WebSocket AccessServet.onConnect() from " + remote_host + " for: " + param_map.toString());
+	/* WebSocket Section */
+	
+	@Override
+	public void configure(WebSocketServletFactory factory) {
+	    // Useful reference:
+	    //   https://examples.javacodegeeks.com/enterprise-java/jetty/jetty-websocket-example/
+	    factory.getPolicy().setIdleTimeout(10000);
+	    factory.register(AccessServlet.class);
 	}
 
-        @OnWebSocketMessage
-	public void onText(Session session, String in_message) throws IOException {
-	    System.out.println("Message received:" + in_message);
-	    if (session.isOpen()) {
-		
+	@OnWebSocketConnect
+	public void onConnect(Session session) throws IOException {
+		System.out.println(session.getRemoteAddress().getHostString() + " connected!");
+
 		UpgradeRequest upgrade_request = session.getUpgradeRequest();
 		Map<String,List<String>> param_map =upgrade_request.getParameterMap();
-		String key = param_map.get("key").get(0);
-	    
-		JSONObject response_json = new JSONObject();
-		if (in_message.equals("monitor-status")) {
-		    response_json.put("status",200);		    
-		    response_json.put("key",key);
-		}
-		else {
-		    response_json.put("status",200);
-		    response_json.put("message","Failed to recognize in-coming command: " + in_message);
-		}
-		String response = response_json.toString();
-		session.getRemote().sendString(response);
 
-	    }
+		WebSocketResponse ws_flexi_response = new WebSocketResponse(session);
+		try {
+			// spawn off in a thread
+			//doFlexiGet(param_map,websocket_flexi_response);
+			
+			// either learn how to store ws_flexi_reponse in 'session' or else
+			// do static hashmap on key+file type/extension if possible
+			
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		String remote_host = session.getRemoteAddress().getHostString();						    
+		System.out.println("WebSocket AccessServet.onConnect() from " + remote_host + " for: " + param_map.toString());
 	}
 
-        @OnWebSocketClose
+	@OnWebSocketMessage
+	public void onText(Session session, String in_message) throws IOException {
+		System.out.println("Message received:" + in_message);
+		if (session.isOpen()) {
+
+			UpgradeRequest upgrade_request = session.getUpgradeRequest();
+			Map<String,List<String>> param_map =upgrade_request.getParameterMap();
+			String key = param_map.get("key").get(0);
+
+			// Using synchronized block, get current 'progress' value from websocket_flexi_reponse
+			
+			JSONObject response_json = new JSONObject();
+			if (in_message.equals("monitor-status")) {
+				response_json.put("status",200);		    
+				response_json.put("key",key);
+			}
+			else {
+				response_json.put("status",200);
+				response_json.put("message","Failed to recognize in-coming command: " + in_message);
+			}
+			String response = response_json.toString();
+			session.getRemote().sendString(response);
+
+		}
+	}
+
+	@OnWebSocketClose
 	public void onClose(Session session, int status, String reason) {
-	    String remote_host = session.getRemoteAddress().getHostString();						    
-	    System.out.println("WebSocket AccessServet.onClose() from " + remote_host);
+		String remote_host = session.getRemoteAddress().getHostString();						    
+		System.out.println("WebSocket AccessServet.onClose() from " + remote_host);
 	}
 }

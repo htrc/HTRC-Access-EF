@@ -1,13 +1,15 @@
 package org.hathitrust.extractedfeatures.action;
 
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;  
+import javax.servlet.http.HttpServletResponse;
+
+import org.hathitrust.extractedfeatures.io.FlexiResponse;  
 
 public class CheckExistsAction extends IdMongoDBAction
 {	
@@ -32,14 +34,13 @@ public class CheckExistsAction extends IdMongoDBAction
 		super(context,config);
 	}
 	
-	public void outputJSON(HttpServletResponse response, String[] ids) throws IOException
+	public void outputJSON(FlexiResponse flexi_response, String[] ids) throws IOException
 	{
-		response.setContentType("application/json");
-		PrintWriter pw = response.getWriter();
+		flexi_response.setContentType("application/json");
 		
 		int ids_len = ids.length;
 
-		pw.append("{");
+		flexi_response.append("{");
 
 		for (int i = 0; i < ids_len; i++) {
 			String id = ids[i];
@@ -47,20 +48,20 @@ public class CheckExistsAction extends IdMongoDBAction
 			boolean exists = exists(id);
 
 			if (i > 0) {
-				pw.append(",");
+				flexi_response.append(",");
 			}
-			pw.append("\"" + id + "\":" + exists);
+			flexi_response.append("\"" + id + "\":" + exists);
 		}
-		pw.append("}");
+		flexi_response.append("}");
 	}
 	
-	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+	public void doAction(Map<String,List<String>> param_map, FlexiResponse response) 
 			throws ServletException, IOException
 	{
-		String cgi_ids = request.getParameter("ids");
+		String cgi_ids = getParameter(param_map,"ids");
 
 		if (cgi_ids == null) {
-			String cgi_id = request.getParameter("id");
+			String cgi_id = getParameter(param_map,"id");
 			if (cgi_id != null) {
 				// if cgi_id in play then upgrade to cgi_ids (one item in it) to simplify later code
 				cgi_ids = cgi_id;

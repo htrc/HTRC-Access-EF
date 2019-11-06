@@ -7,6 +7,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.servlet.ServletConfig;
@@ -20,6 +22,7 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.icu.segmentation.ICUTokenizer;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 
 public class ICUTokenizeAction extends IdMongoDBAction
@@ -50,13 +53,13 @@ public class ICUTokenizeAction extends IdMongoDBAction
 		return true;
 	}
 	
-	public void doAction(HttpServletRequest request, HttpServletResponse response) 
+	public void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 
 			throws ServletException, IOException
 	{
 	    boolean lowercase_filter = false;
 	    ArrayList<String> words = new ArrayList<String>();
 	    
-		String text_in = request.getParameter("text-in");
+		String text_in = getParameter(param_map,"text-in");
 		
 		if (text_in != null) {
 		    Reader reader = new StringReader(text_in);
@@ -92,16 +95,18 @@ public class ICUTokenizeAction extends IdMongoDBAction
 		    
 		}
 		else {
-		    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'text-in' parameter to " + getHandle());
+			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing 'text-in' parameter to " + getHandle());
 		}
 
-		response.setContentType("application/json");
-		PrintWriter pw = response.getWriter();
+		flexi_response.setContentType("application/json");
 		
-		pw.append("{");
+		flexi_response.append("{");
 		
-		pw.append("\"text_out\": \"" + String.join(" ", words) + "\"");
-		pw.append("}");
+		flexi_response.append("\"text_out\": \"" + String.join(" ", words) + "\"");
+		flexi_response.append("}");
+		
+		// ****
+		// \n to flush(), or close() ??
 	}
 }
 

@@ -1,34 +1,23 @@
 package org.hathitrust.extractedfeatures.action;
 
-import static com.mongodb.client.model.Filters.eq;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.io.FileUtils;
 import org.bson.Document;
 //import org.hathitrust.extractedfeatures.VolumeUtils;
 //import org.hathitrust.extractedfeatures.io.FileUtils;
 //import org.hathitrust.extractedfeatures.io.JSONFileManager;
+import org.hathitrust.extractedfeatures.io.FlexiResponse;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
 import com.mongodb.MongoClient;  
 
 public abstract class BaseAction
@@ -48,6 +37,20 @@ public abstract class BaseAction
 	protected static MongoClient mongo_client_  = null;
 	protected static MongoDatabase mongo_db_    = null;
 	//protected static MongoCollection<Document> mongo_exists_col_ = null;
+	
+	
+	public static String getParameter(Map<String,List<String>> param_map, String param)
+	{
+		List<String> param_vals = param_map.get(param);
+		int param_len = param_vals.size();
+		
+		// In the event the parameter has been specified multiple times as a (CGI) param
+		// return the last occurrence
+		
+		String last_val = (param_len>0) ? param_vals.get(param_len-1) : null;
+		
+		return last_val;
+	}
 	
 	protected static String readJSONFile(String filename) 
 	{
@@ -155,7 +158,7 @@ public abstract class BaseAction
 	public abstract String getHandle();
 	public abstract String[] getDescription();
 	
-	public abstract void doAction(HttpServletRequest request, HttpServletResponse response) 
+	public abstract void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 
 			throws ServletException, IOException;
 	
 	protected String getVolumeID(String id)

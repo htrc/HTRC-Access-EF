@@ -35,7 +35,8 @@ public class JSONFileManager
 	    
 	protected static Boolean uses_custom_tmpdir_ = null;
 	
-	protected File tmp_dir_;
+	protected File rsync_tmp_dir_;
+	protected File zip_tmp_dir_;
 	protected File local_pairtree_root_;
 
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
@@ -84,8 +85,12 @@ public class JSONFileManager
 		}
 		
 		try {
-			tmp_dir_ = Files.createTempDirectory("rsync").toFile();
-			logger.info("Created temporary directory for rsynced JSON files: " + tmp_dir_.getAbsolutePath());
+			rsync_tmp_dir_ = Files.createTempDirectory("rsync").toFile();
+			logger.info("Created temporary directory for rsynced JSON files: " + rsync_tmp_dir_.getAbsolutePath());
+			
+			zip_tmp_dir_ = Files.createTempDirectory("zip").toFile();
+			logger.info("Created temporary directory for zipped files: " + zip_tmp_dir_.getAbsolutePath());
+			
 		} catch (IOException e) {
 			String message = String.format("Error creating temporary directcory: %s", e.getMessage());
 			System.err.println(message);
@@ -177,11 +182,17 @@ public class JSONFileManager
 		return json_file_manager_;
 	}
 	
+	public File getFullZipFilename(String zip_filename_tail)
+	{
+		File tmp_full_zip_file = new File(zip_tmp_dir_, zip_filename_tail);
+		
+		return tmp_full_zip_file;
+	}
 	
 	protected File doRsyncDownload(String full_json_filename) throws IOException 
 	{
 		String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-		File tmp_full_json_file = new File(tmp_dir_, json_filename_tail);
+		File tmp_full_json_file = new File(rsync_tmp_dir_, json_filename_tail);
 
 		String json_content = id_cache_.get("json-id-" + json_filename_tail);
 		
@@ -194,7 +205,7 @@ public class JSONFileManager
 			//   rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
 			
 			Runtime runtime = Runtime.getRuntime();
-			String[] rsync_command = {"rsync", "-av", rsync_base + full_json_filename, tmp_dir_.getPath()};
+			String[] rsync_command = {"rsync", "-av", rsync_base + full_json_filename, rsync_tmp_dir_.getPath()};
 
 			try {
 				Process proc = runtime.exec(rsync_command);
@@ -254,7 +265,7 @@ public class JSONFileManager
 		
 		if (json_content == null) {
 
-			// Not in cache => work out if file is avaiable locally, or need to go through rsync
+			// Not in cache => work out if file is available locally, or need to go through rsync
 			if (local_pairtree_root_ != null) {
 				// Access the file locally
 				File file = new File(local_pairtree_root_, full_json_filename);
@@ -267,7 +278,7 @@ public class JSONFileManager
 				//   rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
 				
 				Runtime runtime = Runtime.getRuntime();
-				String[] rsync_command = {"rsync", "-av", rsync_base + full_json_filename, tmp_dir_.getPath()};
+				String[] rsync_command = {"rsync", "-av", rsync_base + full_json_filename, rsync_tmp_dir_.getPath()};
 
 				try {
 					Process proc = runtime.exec(rsync_command);
@@ -277,7 +288,7 @@ public class JSONFileManager
 						throw new Exception("rsync command failed with code " + retCode);
 					}
 
-					File tmp_full_json_file = new File(tmp_dir_, json_filename_tail);
+					File tmp_full_json_file = new File(rsync_tmp_dir_, json_filename_tail);
 					json_content = readCompressedTextFile(tmp_full_json_file);
 			
 					tmp_full_json_file.delete();
