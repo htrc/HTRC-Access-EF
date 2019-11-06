@@ -339,6 +339,14 @@ public class AccessServlet extends WebSocketServlet
 		Map<String,List<String>> param_map =upgrade_request.getParameterMap();
 
 		WebSocketResponse ws_flexi_response = new WebSocketResponse(session);
+		
+		//UpgradeRequest upgrade_request = session.getUpgradeRequest();
+		
+		HttpServletRequest http_servlet_request = (HttpServletRequest) upgrade_request.getSession();
+		System.out.println("***** http_servlet_request = " + http_servlet_request);
+		
+		//session.getUserProperties().get("CRASHID");
+		
 		try {
 			// spawn off in a thread
 			//doFlexiGet(param_map,websocket_flexi_response);
