@@ -55,7 +55,6 @@ import org.hathitrust.extractedfeatures.io.WebSocketResponse;
  */
 @WebSocket
 public class AccessServlet extends WebSocketServlet 
-/* implements WebSocketCreator */ // ****
 {
 	private static final long serialVersionUID = 1L;
 
@@ -332,23 +331,14 @@ public class AccessServlet extends WebSocketServlet
 	    // Useful reference:
 	    //   https://examples.javacodegeeks.com/enterprise-java/jetty/jetty-websocket-example/
 	    factory.getPolicy().setIdleTimeout(10000);
-	    // factory.setCreator(this); // ****
 	    factory.register(AccessServlet.class);
 	    
 	}
-/*
-	@Override
-    public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp)
-    {
-        HttpSession httpSession = req.getSession();
-        
-        MySessionSocket mss = new MySessionSocket(httpSession);
-        return mss;
-    }
-	*/
-	
+
+    // Some useful background, but ultimately none of the following was needed
 	// https://stackoverflow.com/questions/26910094/is-using-system-identityhashcodeobj-reliable-to-return-unique-id/26910329#26910329
-	
+        // https://stackoverflow.com/questions/27671162/accessing-httpsession-inside-an-annotated-websocket-class-on-embedded-jetty-9
+    
 	private WebSocketResponse ws_flexi_response_ = null;
 	
 	@OnWebSocketConnect
@@ -359,27 +349,13 @@ public class AccessServlet extends WebSocketServlet
 		Map<String,List<String>> param_map =upgrade_request.getParameterMap();
 
 		ws_flexi_response_ = new WebSocketResponse(session);
-			
-		/*
-		try {
-			// spawn off in a thread
-			//doFlexiGet(param_map,websocket_flexi_response);
-			
-			// either learn how to store ws_flexi_reponse in 'session' or else
-			// do static hashmap on key+file type/extension if possible
-			
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		*/
 		
 		String remote_host = session.getRemoteAddress().getHostString();						    
 		System.out.println("WebSocket AccessServet.onConnect() from " + remote_host + " for: " + param_map.toString());
 
-		String thread_name = Thread.currentThread().getName();
-		System.out.println("WebSocket AccessServet.onConnect(): thread_name = " + thread_name);
-		System.out.println("WebSocket AccessServet.onConnect(): session = " + session);
+		//String thread_name = Thread.currentThread().getName();
+		//System.out.println("WebSocket AccessServet.onConnect(): thread_name = " + thread_name);
+		//System.out.println("WebSocket AccessServet.onConnect(): session = " + session);
 	}
 
 	@OnWebSocketMessage
@@ -397,6 +373,9 @@ public class AccessServlet extends WebSocketServlet
 			if (command.equals("start-download")) {
 				try {
 					doFlexiGet(param_map, ws_flexi_response_);
+								
+					JSONObject json_response = ws_flexi_response_.generateOKMessageTemplate("download-complete");
+					ws_flexi_response_.sendMessage(json_response);
 				}
 				catch (Exception e) {
 					e.printStackTrace();
@@ -406,9 +385,7 @@ public class AccessServlet extends WebSocketServlet
 			else {
 				ws_flexi_response_.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Failed to recognize command: " + command);
 			}
-			
-			JSONObject json_response = ws_flexi_response_.generateOKMessageTemplate(command);
-			ws_flexi_response_.sendMessage(json_response);
+
 			
 			/*
 			String key = param_map.get("key").get(0);

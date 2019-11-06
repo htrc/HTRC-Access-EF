@@ -50,7 +50,7 @@ public class HttpResponse implements FlexiResponse
 	{
 		String percentage_formatted = String.format("%.2f", percentage);
 		
-		String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted;
+		String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted + "%";
 		System.out.println(mess);
 	}
 	

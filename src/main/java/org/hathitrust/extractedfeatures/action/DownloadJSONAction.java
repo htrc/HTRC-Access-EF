@@ -385,7 +385,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 
-			double prog_perc = i / (double)download_ids_len;
+			double prog_perc = 100 * i / (double)download_ids_len;
 			flexi_response.sendProgress(prog_perc);
 			
 			String download_id = download_ids[i];
@@ -491,7 +491,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		
 		for (int i=0; i<download_ids_len; i++) {
 
-			double prog_perc = i / (double)download_ids_len;
+			double prog_perc = 100 * i / (double)download_ids_len;
 			flexi_response.sendProgress(prog_perc);
 		
 			String download_id = download_ids[i];

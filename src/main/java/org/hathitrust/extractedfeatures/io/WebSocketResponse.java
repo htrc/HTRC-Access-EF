@@ -113,7 +113,7 @@ public class WebSocketResponse implements FlexiResponse
 	{
 		String percentage_formatted = String.format("%.2f", percentage);
 		
-		String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted;
+		String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted + "%";
 		
 		JSONObject response_json = generateOKMessageTemplate("progress");
 		response_json.put("percentage",percentage);	
