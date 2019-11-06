@@ -558,11 +558,13 @@ public class DownloadJSONAction extends URLShortenerAction
 			download_ids = cgi_download_ids.split(",");
 		}
 		else {
+		    if (cgi_download_id != null) {
 			download_ids = new String[] {cgi_download_id};
+		    }
 		}
 
-		// ****	Assume calls are make for only valid IDs
-		if (validityCheckIDsOptimistic(response, download_ids)) {
+		if (download_ids != null) {
+		    if (validityCheckIDs(response, download_ids)) {
 			
 			if (cgi_output.equals("zip")) {
 			    outputZippedVolumes(response,download_ids,cgi_key);
@@ -584,6 +586,12 @@ public class DownloadJSONAction extends URLShortenerAction
 				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
 				+"' -- 'output' parameter must be 'json' or 'zip'.");	
 			}
+		    }
+		    else {
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
+			+"' -- either parameter 'id' is invalid, or parameter 'ids' sepcifies one or more invalid values.");
+		    }
+			
 		}
 		else {
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter to action '" + getHandle()

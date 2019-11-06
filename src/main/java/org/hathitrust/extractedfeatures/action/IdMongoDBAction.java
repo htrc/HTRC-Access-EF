@@ -231,6 +231,20 @@ public abstract class IdMongoDBAction extends BaseAction
 		String volume_id = getVolumeID(id);
 		
 		boolean exists = exists(volume_id);
+		
+		if (!exists && volume_id.matches(".*[,+=].*")) {
+		    // See if there are any 'special/reserved' chars in the ID
+
+		    volume_id = volume_id.replaceAll(",", ".").replaceAll("\\+", ":").replaceAll("=", "/");
+		    exists = exists(volume_id);
+
+		    //		    if (!exists) {
+		    //			// a '+' might have ending up as a ' '
+		    //			volume_id = volume_id.replaceAll(" ", ":");
+		    //			exists = exists(volume_id);
+		    //		    }
+		}
+		
 		if (!exists) {
 			// Error
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested volume id '" + volume_id + "' does not exist.");
