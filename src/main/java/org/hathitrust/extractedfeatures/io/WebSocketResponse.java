@@ -29,7 +29,8 @@ public class WebSocketResponse implements FlexiResponse
 	
 	public WebSocketResponse(Session websocket_session)
 	{
-		ws_endpoint_ = ws_session_.getRemote();
+	        ws_session_ = websocket_session;
+		ws_endpoint_ = websocket_session.getRemote();
 		
 		//UpgradeResponse upgrade_response = ws_session_.getUpgradeResponse();
 	}
