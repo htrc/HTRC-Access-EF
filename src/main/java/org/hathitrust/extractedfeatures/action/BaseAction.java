@@ -41,13 +41,19 @@ public abstract class BaseAction
 	
 	public static String getParameter(Map<String,List<String>> param_map, String param)
 	{
+	        String last_val = null;
+
 		List<String> param_vals = param_map.get(param);
-		int param_len = param_vals.size();
+		if (param_vals != null) {
+		    int param_len = param_vals.size();
 		
-		// In the event the parameter has been specified multiple times as a (CGI) param
-		// return the last occurrence
-		
-		String last_val = (param_len>0) ? param_vals.get(param_len-1) : null;
+		    // In the event the parameter has been specified multiple times as a (CGI) param
+		    // return the last occurrence
+
+		    if (param_len>0) {
+			last_val = param_vals.get(param_len-1);
+		    }
+		}
 		
 		return last_val;
 	}
