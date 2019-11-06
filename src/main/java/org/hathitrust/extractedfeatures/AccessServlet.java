@@ -357,6 +357,7 @@ public class AccessServlet extends WebSocketServlet
 
 		String thread_name = Thread.currentThread().getName();
 		System.out.println("WebSocket AccessServet.onConnect(): thread_name = " + thread_name);
+		System.out.println("WebSocket AccessServet.onConnect(): session = " + session);
 	}
 
 	@OnWebSocketMessage
@@ -364,6 +365,7 @@ public class AccessServlet extends WebSocketServlet
 		System.out.println("WebSocket AccessServet.onText() Message received:" + in_message);
 		String thread_name = Thread.currentThread().getName();
 		System.out.println("WebSocket AccessServet.onText(): thread_name = " + thread_name);
+		System.out.println("WebSocket AccessServet.onText(): session = " + session);
 	
 		if (session.isOpen()) {
 
