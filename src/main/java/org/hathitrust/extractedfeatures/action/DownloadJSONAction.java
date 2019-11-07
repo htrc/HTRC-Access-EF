@@ -33,160 +33,161 @@ public class DownloadJSONAction extends URLShortenerAction
 	protected static String[] OutputFormatFieldSeparator_ = new String[] { null, null, ",", "\t" };
 
 	protected enum JsonExtractMode { Volume, Metadata, Seq };
-	
+
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
 
 	protected RsyncEFFileManager rsyncef_file_manager_;
-	
+
 	public String getHandle() 
 	{
 		return "download-ids";
 	}
-	
+
 	public String[] getDescription()
 	{
 		String[]  mess =
 			{ "Download HTRC Extracted Features JSON files for the given IDs.",
 					"Required parameter: 'id', 'ids' or 'key'\n"
-				   +"Optional parameter: 'output=json|zip|csv|tsv (defaults to 'json')",
-					"Returns:            Uncompressed JSON Extracted Feature file content for given id(s);\n"
-				    + "                    or a zipped up version, when output=zipfile."
-					+ "                  To return just the volume level metadata specify 'id' in the form mdp.123456789-metata"
-					+ "                  To return just the page level JSON specify 'id' in the form mdp.123456789-seq-000000"
+							+"Optional parameter: 'output=json|zip|csv|tsv (defaults to 'json')",
+							"Returns:            Uncompressed JSON Extracted Feature file content for given id(s);\n"
+									+ "                    or a zipped up version, when output=zipfile."
+									+ "                  To return just the volume level metadata specify 'id' in the form mdp.123456789-metata"
+									+ "                  To return just the page level JSON specify 'id' in the form mdp.123456789-seq-000000"
 			};
-		
+
 		return mess;
 	}
-	
+
 	public DownloadJSONAction(ServletContext context, ServletConfig config)
 	{	
 		super(context,config);
 		rsyncef_file_manager_ = RsyncEFFileManager.getInstance(config);
 	}
 
-    protected static class VolumeMetadataByLookup {
+	protected static class VolumeMetadataByLookup {
 
-	// Extracted Feature JSON file format originally had:
-	//   htBibUrl,lastUpdateDate,isbn,imprint,accessProfile,language,typeOfResource,title,lccn,dateCreated,enumerationChronology,genre,pubPlace,hathitrustRecordNumber,schemaVersion,sourceInstitutionRecordNumber,volumeIdentifier,rightsAttributes,classification,pubDate,governmentDocument,sourceInstitution,bibliographicFormat,names,issn,handleUrl,oclc,issuance
-	
-	// But has now been extended to:
-	//   htBibUrl,lastUpdateDate,imprint,isbn,accessProfile,language,typeOfResource,title,lccn,dateCreated,enumerationChronology,genre,pubPlace,hathitrustRecordNumber,subjectName,schemaVersion,sourceInstitutionRecordNumber,volumeIdentifier,rightsAttributes,classification,pubDate,governmentDocument,subjectTemporal,bibliographicFormat,sourceInstitution,names,issn,handleUrl,issuance,oclc,subjectGenre,subjectTopic,subjectTitleInfo,subjectGeographic,subjectOccupation,subjectCartographics
-	
-	// **Both types of files are in the archive **
-	// Next 2 methods make use of the following list of metadata names
-	protected static final String[] volume_metadata_lookup = new String[]
-	    { "htBibUrl", "schemaVersion", "volumeIdentifier", "rightsAttributes", "title", "genre",
-	      "pubDate", "pubPlace", "typeOfResource", "bibliographicFormat", "language",
-	      "dateCreated", "lastUpdateDate", "imprint", "isbn", "issn", "oclc", "lccn", "classification", 
-	      "handleUrl", "hathitrustRecordNumber", "sourceInstitutionRecordNumber", "sourceInstitution",
-	      "accessProfile", "enumerationChronology", "governmentDocument", "names", "issuance", 
-	      "subjectGenre", "subjectTopic", "subjectName", "subjectTitleInfo", "subjectTemporal",
-	      "subjectGeographic", "subjectOccupation","subjectCartographics" };
-	    
-	public static String jsonToFieldSeparatedFileKeys(JSONObject json_obj, String sep)
-	{
-	    
-	    StringBuilder sb = new StringBuilder();
-	    
-	    for (int i=0; i<volume_metadata_lookup.length; i++) {
-		if (i>0) {
-		    sb.append(sep);
+		// Extracted Feature JSON file format originally had:
+		//   htBibUrl,lastUpdateDate,isbn,imprint,accessProfile,language,typeOfResource,title,lccn,dateCreated,enumerationChronology,genre,pubPlace,hathitrustRecordNumber,schemaVersion,sourceInstitutionRecordNumber,volumeIdentifier,rightsAttributes,classification,pubDate,governmentDocument,sourceInstitution,bibliographicFormat,names,issn,handleUrl,oclc,issuance
+
+		// But has now been extended to:
+		//   htBibUrl,lastUpdateDate,imprint,isbn,accessProfile,language,typeOfResource,title,lccn,dateCreated,enumerationChronology,genre,pubPlace,hathitrustRecordNumber,subjectName,schemaVersion,sourceInstitutionRecordNumber,volumeIdentifier,rightsAttributes,classification,pubDate,governmentDocument,subjectTemporal,bibliographicFormat,sourceInstitution,names,issn,handleUrl,issuance,oclc,subjectGenre,subjectTopic,subjectTitleInfo,subjectGeographic,subjectOccupation,subjectCartographics
+
+		// **Both types of files are in the archive **
+		// Next 2 methods make use of the following list of metadata names
+		protected static final String[] volume_metadata_lookup = new String[]
+				{ "htBibUrl", "schemaVersion", "volumeIdentifier", "rightsAttributes", "title", "genre",
+						"pubDate", "pubPlace", "typeOfResource", "bibliographicFormat", "language",
+						"dateCreated", "lastUpdateDate", "imprint", "isbn", "issn", "oclc", "lccn", "classification", 
+						"handleUrl", "hathitrustRecordNumber", "sourceInstitutionRecordNumber", "sourceInstitution",
+						"accessProfile", "enumerationChronology", "governmentDocument", "names", "issuance", 
+						"subjectGenre", "subjectTopic", "subjectName", "subjectTitleInfo", "subjectTemporal",
+						"subjectGeographic", "subjectOccupation","subjectCartographics" };
+
+		public static String jsonToFieldSeparatedFileKeys(JSONObject json_obj, String sep)
+		{
+
+			StringBuilder sb = new StringBuilder();
+
+			for (int i=0; i<volume_metadata_lookup.length; i++) {
+				if (i>0) {
+					sb.append(sep);
+				}
+
+				String key = volume_metadata_lookup[i];
+				sb.append(key);
+
+			}
+
+			sb.append("\n");
+
+			return sb.toString();
 		}
 
-		String key = volume_metadata_lookup[i];
-		sb.append(key);
-		
-	    }
-	    
-	    sb.append("\n");
-	
-	    return sb.toString();
+		public static String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
+		{
+			// Screen more carefully in code below for chars that need escaping? // ****
+
+			StringBuilder sb = new StringBuilder();
+
+			for (int i=0; i<volume_metadata_lookup.length; i++) {
+				if (i>0) {
+					sb.append(sep);
+				}
+
+				String key = volume_metadata_lookup[i];
+
+				if (json_obj.has(key)) {
+					Object val_obj = json_obj.get(key);
+
+					String val_str = null;
+
+					if (val_obj instanceof JSONObject) {
+						JSONObject val_json_obj = (JSONObject)val_obj;
+						val_str = val_json_obj.toString();
+					}
+					else if (val_obj instanceof JSONArray) {
+						JSONArray val_json_array = (JSONArray)val_obj;
+						val_str = val_json_array.toString();
+					}
+					else {
+						// primitive type
+						val_str = val_obj.toString(); //json_obj.getString(key);
+					}
+					if (sep.equals(",")) {
+						// ensure the string is escaped: enclose in double quotes, change any existing " to ""
+						val_str = val_str.replace("\"","\"\"");
+						val_str = "\"" + val_str + "\"";
+					}
+					sb.append(val_str);
+				}
+			}
+
+			sb.append("\n");
+
+			return sb.toString();
+		}
 	}
-	
-        public static String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
+
+
+	protected String getDownloadFilename(String filename_root, String opt_cgi_key, String opt_file_ext)
 	{
-	    // Screen more carefully in code below for chars that need escaping? // ****
-	    
-	    StringBuilder sb = new StringBuilder();
-	    
-	    for (int i=0; i<volume_metadata_lookup.length; i++) {
-		if (i>0) {
-		    sb.append(sep);
+		String output_filename = filename_root;
+		if (opt_cgi_key != null) {
+			output_filename += "-" + opt_cgi_key;
 		}
-		
-		String key = volume_metadata_lookup[i];
 
-		if (json_obj.has(key)) {
-		    Object val_obj = json_obj.get(key);
-
-		    String val_str = null;
-
-		    if (val_obj instanceof JSONObject) {
-			JSONObject val_json_obj = (JSONObject)val_obj;
-			val_str = val_json_obj.toString();
-		    }
-		    else if (val_obj instanceof JSONArray) {
-			JSONArray val_json_array = (JSONArray)val_obj;
-			val_str = val_json_array.toString();
-		    }
-		    else {
-			// primitive type
-			val_str = val_obj.toString(); //json_obj.getString(key);
-		    }
-		    if (sep.equals(",")) {
-			// ensure the string is escaped: enclose in double quotes, change any existing " to ""
-			val_str = val_str.replace("\"","\"\"");
-			val_str = "\"" + val_str + "\"";
-		    }
-		    sb.append(val_str);
+		if (opt_file_ext != null) {
+			output_filename += opt_file_ext;
 		}
-	    }
-	    
-	    sb.append("\n");
-	    
-	    return sb.toString();
+
+		return output_filename;
 	}
-    }
-    
 
-    protected String getDownloadFilename(String filename_root, String opt_cgi_key, String opt_file_ext)
-    {
-    	String output_filename = filename_root;
-    	if (opt_cgi_key != null) {
-    		output_filename += "-" + opt_cgi_key;
-    	}
-
-    	if (opt_file_ext != null) {
-    		output_filename += opt_file_ext;
-    	}
-    	
-    	return output_filename;
-    }
-    
-    /*
+	/*
     protected String getFullDownloadFilename(String filename_root, String opt_cgi_key, String opt_file_ext)
     {
     	String output_filename_tail = getDownloadFilenameTail(filename_root,opt_cgi_key,opt_file_ext);
     	String full_output_file = json_file_manager_.getFullFilenameStr(output_filename_tail);
-    	
+
     	return full_output_filename;
     }
-    */
-    
-    protected void setHeaderDownloadFilename(FlexiResponse flexi_response, String output_filename)
-    {
-    	flexi_response.setHeader("Content-Disposition","attachment; filename=\""+output_filename+"\"");
-    }
-    
+	 */
+
+	protected void setHeaderDownloadFilename(FlexiResponse flexi_response, String output_filename)
+	{
+		flexi_response.setHeader("Content-Disposition","attachment; filename=\""+output_filename+"\"");
+	}
+
+
 	protected String jsonToFieldSeparatedFileKeys(JSONObject json_obj, String sep)
 	{
 		StringBuilder sb = new StringBuilder();
-		
+
 		Iterator<String> key_iterator = json_obj.keys();
 		while (key_iterator.hasNext()) {
 			String key = key_iterator.next();
 			sb.append(key);
-			
+
 			if (key_iterator.hasNext()) {
 				sb.append(sep);
 			}
@@ -199,16 +200,16 @@ public class DownloadJSONAction extends URLShortenerAction
 	protected String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
 	{
 		// Screen more carefully in code below for chars that need escaping? // ****
-		
+
 		StringBuilder sb = new StringBuilder();
-		
+
 		Iterator<String> key_iterator = json_obj.keys();
 		while (key_iterator.hasNext()) {
 			String key = key_iterator.next();
-			
+
 			Object val_obj = json_obj.get(key);
 			String val_str = null;
-			
+
 			if (val_obj instanceof JSONObject) {
 				JSONObject val_json_obj = (JSONObject)val_obj;
 				val_str = val_json_obj.toString();
@@ -235,14 +236,14 @@ public class DownloadJSONAction extends URLShortenerAction
 		sb.append("\n");
 		return sb.toString();
 	}
-	
+
 	protected String outputExtractVolumeMetadata(String json_content_str_in, OutputFormat output_format, boolean first_entry)
 	{
 		String json_content_str_out = null;
-		
+
 		JSONObject json_ef = new JSONObject(json_content_str_in);
 		JSONObject json_ef_metadata = json_ef.getJSONObject("metadata");
-		
+
 		if (output_format == OutputFormat.CSV || output_format == OutputFormat.TSV) {
 			String field_sep = OutputFormatFieldSeparator_[output_format.ordinal()];
 
@@ -252,7 +253,7 @@ public class DownloadJSONAction extends URLShortenerAction
 			else {
 				json_content_str_out = "";
 			}
-		
+
 			json_content_str_out += VolumeMetadataByLookup.jsonToFieldSeparatedFileValues(json_ef_metadata,field_sep);
 		}
 		else {
@@ -260,11 +261,11 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 		return json_content_str_out;
 	}
-	
+
 	protected String outputExtractPage(String json_content_str_in, int seq_num, OutputFormat output_format, boolean first_entry)
 	{
 		String json_content_str_out = null;
-		
+
 		JSONObject json_ef = new JSONObject(json_content_str_in);
 		JSONObject json_ef_features = json_ef.getJSONObject("features");
 		JSONArray json_ef_pages = json_ef_features.getJSONArray("pages");
@@ -274,9 +275,9 @@ public class DownloadJSONAction extends URLShortenerAction
 			JSONObject json_ef_page = json_ef_pages.getJSONObject(index_pos);
 
 			if (output_format == OutputFormat.CSV || output_format == OutputFormat.TSV) {
-				
+
 				String field_sep = OutputFormatFieldSeparator_[output_format.ordinal()];
-				
+
 				if (first_entry) {
 					json_content_str_out = jsonToFieldSeparatedFileKeys(json_ef_page,field_sep);
 				}
@@ -292,149 +293,149 @@ public class DownloadJSONAction extends URLShortenerAction
 		else {
 			json_content_str_out = "{ error: \"Seq number '" + seq_num + "' out of bounds\"}";
 		}
-		
+
 		return json_content_str_out;
 	}
-	
-	 protected void streamExistingVolumesFile(FlexiResponse flexi_response, File input_zip_file)
-	    		throws ServletException, IOException
-	    {
-	    	OutputStream ros = flexi_response.getOutputStream();
-			BufferedOutputStream bros = new BufferedOutputStream(ros);
-		
-	    	FileInputStream fis = new FileInputStream(input_zip_file);
-			BufferedInputStream bis = new BufferedInputStream(fis);
-		
-			int input_zip_filesize = (int) input_zip_file.length();
-			flexi_response.setContentLength(input_zip_filesize);
-			
-			byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
 
-			while (true) {
-				int num_bytes = bis.read(buf);
-				if (num_bytes == -1) {
-					break;
-				}
-				bros.write(buf, 0, num_bytes);
+	protected void streamExistingVolumesFile(FlexiResponse flexi_response, File input_zip_file)
+			throws ServletException, IOException
+	{
+		OutputStream ros = flexi_response.getOutputStream();
+		BufferedOutputStream bros = new BufferedOutputStream(ros);
+
+		FileInputStream fis = new FileInputStream(input_zip_file);
+		BufferedInputStream bis = new BufferedInputStream(fis);
+
+		int input_zip_filesize = (int) input_zip_file.length();
+		flexi_response.setContentLength(input_zip_filesize);
+
+		byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
+
+		while (true) {
+			int num_bytes = bis.read(buf);
+			if (num_bytes == -1) {
+				break;
 			}
+			bros.write(buf, 0, num_bytes);
+		}
 
-			bis.close();	    
-			bros.close();
-	    }
-	    
-	 
+		bis.close();	    
+		bros.close();
+	}
+
+
 	public void concatAndStreamVolumes(FlexiResponse flexi_response, String[] download_ids, OutputFormat output_format) 
 			throws ServletException, IOException
 	{
-	   	
-    	int download_ids_len = download_ids.length;
-    	if (download_ids_len > 1) {
-    		if (output_format == OutputFormat.JSON) {
-    			flexi_response.append("[");
-    		}
-    	}
 
-    	boolean first_entry = true;
+		int download_ids_len = download_ids.length;
+		if (download_ids_len > 1) {
+			if (output_format == OutputFormat.JSON) {
+				flexi_response.append("[");
+			}
+		}
 
-    	for (int i=0; i<download_ids_len; i++) {
-    		
-    		double prog_perc = 100 * i / (double)download_ids_len;
+		boolean first_entry = true;
+
+		for (int i=0; i<download_ids_len; i++) {
+
+			double prog_perc = 100 * i / (double)download_ids_len;
 			flexi_response.sendProgress(prog_perc);
-			
-    		String download_id = download_ids[i];
 
-    		String volume_id = download_id;
-    		boolean has_seq_num = false;
-    		boolean has_metadata = false;
+			String download_id = download_ids[i];
 
-    		String seq_num_str = null;
-    		int seq_num = 0;
+			String volume_id = download_id;
+			boolean has_seq_num = false;
+			boolean has_metadata = false;
 
-    		Matcher seq_matcher = IdentiferRegExp.SeqPattern.matcher(download_id);
-    		if (seq_matcher.matches()) {
-    			has_seq_num = true;
-    			volume_id = seq_matcher.group(1);
-    			seq_num_str = seq_matcher.group(2);
-    			seq_num = Integer.parseInt(seq_num_str);
-    		}
-    		else {
-    			Matcher md_matcher = IdentiferRegExp.MetadataPattern.matcher(download_id);
-    			if (md_matcher.matches()) {
-    				volume_id = md_matcher.group(1);
-    				has_metadata = true;
-    			}
-    		}
+			String seq_num_str = null;
+			int seq_num = 0;
 
-    		String json_content_str = rsyncef_file_manager_.getVolumeContent(volume_id);
+			Matcher seq_matcher = IdentiferRegExp.SeqPattern.matcher(download_id);
+			if (seq_matcher.matches()) {
+				has_seq_num = true;
+				volume_id = seq_matcher.group(1);
+				seq_num_str = seq_matcher.group(2);
+				seq_num = Integer.parseInt(seq_num_str);
+			}
+			else {
+				Matcher md_matcher = IdentiferRegExp.MetadataPattern.matcher(download_id);
+				if (md_matcher.matches()) {
+					volume_id = md_matcher.group(1);
+					has_metadata = true;
+				}
+			}
 
-    		if (json_content_str == null) {
-    			if (rsyncef_file_manager_.usingRsync()) {
-    				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
-    				break;
-    			}
-    			else {
-    				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
-    				break;
-    			}
-    		}
-    		else {
-    			if (has_seq_num) {
-    				// consider having a page-level cache // ****
-    				json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
+			String json_content_str = rsyncef_file_manager_.getVolumeContent(volume_id);
 
-    			}			
-    			else if (has_metadata) {
-    				// consider having a metadata cache // ****
-    				json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
-    			}
-    			// Otherwise, leave full volume JSON content alone
-    			flexi_response.append(json_content_str);
+			if (json_content_str == null) {
+				if (rsyncef_file_manager_.usingRsync()) {
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
+					break;
+				}
+				else {
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
+					break;
+				}
+			}
+			else {
+				if (has_seq_num) {
+					// consider having a page-level cache // ****
+					json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
 
-    			if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
-    				if (output_format == OutputFormat.JSON) {
-    					flexi_response.append(",");
-    				}
-    			}
-    		}
+				}			
+				else if (has_metadata) {
+					// consider having a metadata cache // ****
+					json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
+				}
+				// Otherwise, leave full volume JSON content alone
+				flexi_response.append(json_content_str);
 
-    		first_entry = false;
-    	}
+				if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
+					if (output_format == OutputFormat.JSON) {
+						flexi_response.append(",");
+					}
+				}
+			}
 
-    	if (download_ids_len > 1) {
-    		if (output_format == OutputFormat.JSON)  {
-    			flexi_response.append("]");
-    		}
-    	}	  
+			first_entry = false;
+		}
+
+		if (download_ids_len > 1) {
+			if (output_format == OutputFormat.JSON)  {
+				flexi_response.append("]");
+			}
+		}	  
 	}
 
-        public void outputVolumes(FlexiResponse flexi_response, String[] download_ids, OutputFormat output_format,
-				 String opt_cgi_key, String cgi_output) 
-			throws ServletException, IOException
-        {
-        	if (output_format == OutputFormat.JSON) {
-        		flexi_response.setContentType("application/json");
-        	}
-        	else {
-        		flexi_response.setContentType("text/plain");
-        	}
+	public void outputVolumes(FlexiResponse flexi_response, String[] download_ids, OutputFormat output_format,
+			String opt_cgi_key, String cgi_output) 
+					throws ServletException, IOException
+	{
+		if (output_format == OutputFormat.JSON) {
+			flexi_response.setContentType("application/json");
+		}
+		else {
+			flexi_response.setContentType("text/plain");
+		}
 
-        	flexi_response.setCharacterEncoding("UTF-8");
+		flexi_response.setCharacterEncoding("UTF-8");
 
-        	String file_ext = "."+cgi_output;
-        	String output_filename = getDownloadFilename("htrc-metadata-export",opt_cgi_key,file_ext);
-        	setHeaderDownloadFilename(flexi_response,output_filename);
-        	
-    		File input_file = rsyncef_file_manager_.getFullZipFilename(output_filename);
-    		
-    		if (input_file.exists()) {
-    			streamExistingVolumesFile(flexi_response, input_file);
-    			flexi_response.close();
-    		}
-    		else {
-    			concatAndStreamVolumes(flexi_response, download_ids, output_format);
-    		}
-        	
-    		/*
+		String file_ext = "."+cgi_output;
+		String output_filename = getDownloadFilename("htrc-metadata-export",opt_cgi_key,file_ext);
+		setHeaderDownloadFilename(flexi_response,output_filename);
+
+		File input_file = rsyncef_file_manager_.getFullZipFilename(output_filename);
+
+		if (input_file.exists()) {
+			streamExistingVolumesFile(flexi_response, input_file);
+			flexi_response.close();
+		}
+		else {
+			concatAndStreamVolumes(flexi_response, download_ids, output_format);
+		}
+
+		/*
         	int download_ids_len = download_ids.length;
         	if (download_ids_len > 1) {
         		if (output_format == OutputFormat.JSON) {
@@ -445,10 +446,10 @@ public class DownloadJSONAction extends URLShortenerAction
         	boolean first_entry = true;
 
         	for (int i=0; i<download_ids_len; i++) {
-        		
+
         		double prog_perc = 100 * i / (double)download_ids_len;
     			flexi_response.sendProgress(prog_perc);
-    			
+
         		String download_id = download_ids[i];
 
         		String volume_id = download_id;
@@ -513,14 +514,14 @@ public class DownloadJSONAction extends URLShortenerAction
         			flexi_response.append("]");
         		}
         	}
-        	*/
-        }
-	
-        protected void outputZippedVolumesAdaptive(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
+		 */
+	}
+
+	protected void outputZippedVolumesAdaptive(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
-	    // This version adaptively works out if it can download a single file or else needs
-	    // to zip things up
+		// This version adaptively works out if it can download a single file or else needs
+		// to zip things up
 		int download_ids_len = download_ids.length;
 
 		ZipOutputStream zbros = null;
@@ -545,9 +546,9 @@ public class DownloadJSONAction extends URLShortenerAction
 
 			double prog_perc = 100 * i / (double)download_ids_len;
 			flexi_response.sendProgress(prog_perc);
-			
+
 			String download_id = download_ids[i];
-		
+
 			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
 			String full_json_filename = VolumeUtils.idToPairtreeFilename(download_id);
 			File file = rsyncef_file_manager_.fileOpen(full_json_filename);
@@ -608,24 +609,24 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 	}
 
-   
-    public void zipUpAndStreamVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
+
+	public void zipUpAndStreamVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
 		int download_ids_len = download_ids.length;
-			
+
 		OutputStream ros = flexi_response.getOutputStream();
 		BufferedOutputStream bros = new BufferedOutputStream(ros);
 		ZipOutputStream zbros = new ZipOutputStream(bros);
 		OutputStream download_os = zbros;
-		
+
 		for (int i=0; i<download_ids_len; i++) {
 
 			double prog_perc = 100 * i / (double)download_ids_len;
 			flexi_response.sendProgress(prog_perc);
-		
+
 			String download_id = download_ids[i];
-		
+
 			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
 			String full_json_filename = VolumeUtils.idToPairtreeFilename(download_id);
 			File file = rsyncef_file_manager_.fileOpen(full_json_filename);
@@ -669,37 +670,37 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		download_os.close();
 	}
-	
-    
-    public void outputZippedVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
+
+
+	public void outputZippedVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
-    	flexi_response.setContentType("application/zip");
-    	String output_zip_filename = getDownloadFilename("htrc-ef-export",opt_cgi_key,".zip");
+		flexi_response.setContentType("application/zip");
+		String output_zip_filename = getDownloadFilename("htrc-ef-export",opt_cgi_key,".zip");
 		setHeaderDownloadFilename(flexi_response,output_zip_filename);
-		
+
 		File input_zip_file = rsyncef_file_manager_.getFullZipFilename(output_zip_filename);
-		
+
 		if (input_zip_file.exists()) {
 			streamExistingVolumesFile(flexi_response, input_zip_file);
 		}
 		else {
 			zipUpAndStreamVolumes(flexi_response, download_ids, opt_cgi_key);
 		}
-		
+
 		/*
 		OutputStream ros = flexi_response.getOutputStream();
 		BufferedOutputStream bros = new BufferedOutputStream(ros);
 		ZipOutputStream zbros = new ZipOutputStream(bros);
 		OutputStream download_os = zbros;
-		
+
 		for (int i=0; i<download_ids_len; i++) {
 
 			double prog_perc = 100 * i / (double)download_ids_len;
 			flexi_response.sendProgress(prog_perc);
-		
+
 			String download_id = download_ids[i];
-		
+
 			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
 			String full_json_filename = VolumeUtils.idToPairtreeFilename(download_id);
 			File file = json_file_manager_.fileOpen(full_json_filename);
@@ -742,10 +743,10 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 
 		download_os.close();
-*/		
-		
+		 */		
+
 	}
-	
+
 	public void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 
 			throws ServletException, IOException
 	{
@@ -753,71 +754,71 @@ public class DownloadJSONAction extends URLShortenerAction
 		String cgi_download_id = getParameter(param_map,"id");
 		String cgi_download_ids = getParameter(param_map,"ids");
 		String cgi_output = getParameter(param_map,"output");
-		
+
 		if (cgi_output == null) {
 			cgi_output = "json";
 		}
-		
+
 		if (cgi_key != null) {
 			// Retrieve IDs from MongoDB
 			cgi_download_ids = expandKey(cgi_key);
 		}
-		
+
 		String[] download_ids = null;
-		
+
 		if (cgi_download_ids != null) {
 			download_ids = cgi_download_ids.split(",");
 		}
 		else {
-		    if (cgi_download_id != null) {
-			download_ids = new String[] {cgi_download_id};
-		    }
+			if (cgi_download_id != null) {
+				download_ids = new String[] {cgi_download_id};
+			}
 		}
 
 		if (download_ids != null) {
 			String [] valid_download_ids = validityCheckIDs(flexi_response, download_ids);
-							
-		    if (valid_download_ids != null) {
-			
-		    	if (valid_download_ids.length == download_ids.length) {
-		    		if (cgi_output.equals("zip")) {
-		    			outputZippedVolumes(flexi_response,valid_download_ids,cgi_key);
-		    		}
-		    		else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
-		    			OutputFormat output_format = null;
-		    			if (cgi_output.equals("json") ) {
-		    				output_format = OutputFormat.JSON;
-		    			}
-		    			else if (cgi_output.equals("csv") ) {
-		    				output_format = OutputFormat.CSV;
-		    			}
-		    			if (cgi_output.equals("tsv") ) {
-		    				output_format = OutputFormat.TSV;
-		    			}
-		    			outputVolumes(flexi_response,valid_download_ids,output_format,cgi_key,cgi_output);
-		    		}
-		    		else {
-		    			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
-		    			+"' -- 'output' parameter must be 'json' or 'zip'.");	
-		    		}
-		    	}
-		    	else {
-		    		flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
-			    	+"' -- either parameter 'id' does not exist or is invalid, or parameter 'ids' sepcifies one or more value that does not exist or is invalid.");
-			   
-		    	}
-		    }
-		    else {
-		    	if (download_ids.length == 1) {
-		    		flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id '" + getHandle()
-		    		+"' -- specified id does not exist or is invalid.");
-		    	}
-		    	else {
-			    	flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
-			    	+"' -- either parameter 'id' does not exist or is invalid, or all the ids specified in parameter 'ids' do not exist or are invalid.");
 
-		    	}
-		    }
+			if (valid_download_ids != null) {
+
+				if (valid_download_ids.length == download_ids.length) {
+					if (cgi_output.equals("zip")) {
+						outputZippedVolumes(flexi_response,valid_download_ids,cgi_key);
+					}
+					else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
+						OutputFormat output_format = null;
+						if (cgi_output.equals("json") ) {
+							output_format = OutputFormat.JSON;
+						}
+						else if (cgi_output.equals("csv") ) {
+							output_format = OutputFormat.CSV;
+						}
+						if (cgi_output.equals("tsv") ) {
+							output_format = OutputFormat.TSV;
+						}
+						outputVolumes(flexi_response,valid_download_ids,output_format,cgi_key,cgi_output);
+					}
+					else {
+						flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
+						+"' -- 'output' parameter must be 'json' or 'zip'.");	
+					}
+				}
+				else {
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
+					+"' -- either parameter 'id' does not exist or is invalid, or parameter 'ids' sepcifies one or more value that does not exist or is invalid.");
+
+				}
+			}
+			else {
+				if (download_ids.length == 1) {
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id '" + getHandle()
+					+"' -- specified id does not exist or is invalid.");
+				}
+				else {
+					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to retrieve id(s) '" + getHandle()
+					+"' -- either parameter 'id' does not exist or is invalid, or all the ids specified in parameter 'ids' do not exist or are invalid.");
+
+				}
+			}
 		}
 		else {
 			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameter to action '" + getHandle()
