@@ -175,7 +175,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 	protected void setHeaderDownloadFilename(FlexiResponse flexi_response, String output_filename)
 	{
-		flexi_response.setHeader("Content-Disposition","attachment; filename=\""+output_filename+"\"");
+		flexi_response.setContentDispositionAttachment(output_filename);
 	}
 
 
@@ -430,8 +430,19 @@ public class DownloadJSONAction extends URLShortenerAction
 		File input_file = rsyncef_file_manager_.getTmpStoredFile(output_filename);
 		System.err.println("*** Testing for existence of: " + input_file.getAbsolutePath());
 		
+		if (flexi_response.isAsync()) {
+			
+		}
+		
 		if (input_file.exists()) {
-			streamExistingVolumesFile(flexi_response, input_file);
+			if (flexi_response.isAsync()) {
+				// Nothing to do => mark progress as 100
+				flexi_response.sendProgress(100.0);
+			}
+			else {
+				// Synchronous case => stream over file
+				streamExistingVolumesFile(flexi_response, input_file);
+			}
 			flexi_response.close();
 		}
 		else {

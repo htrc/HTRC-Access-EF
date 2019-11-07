@@ -15,6 +15,11 @@ public class HttpResponse implements FlexiResponse
 		http_response_ = http_response;
 	}
 	
+	public boolean isAsync() 
+	{
+		return false;
+	}
+	
 	public void setContentType(String content_type)
 	{
 		http_response_.setContentType(content_type);
@@ -52,6 +57,12 @@ public class HttpResponse implements FlexiResponse
 		http_response_.setHeader(header_name,header_value);
 	}
 
+	public void setContentDispositionAttachment(String filename)
+	{
+		setHeader("Content-Disposition","attachment; filename=\""+filename+"\"");
+	}
+	
+	
 	public void sendProgress(double percentage)
 	{
 		String percentage_formatted = String.format("%.2f", percentage);

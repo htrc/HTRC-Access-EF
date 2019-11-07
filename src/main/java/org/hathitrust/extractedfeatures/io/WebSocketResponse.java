@@ -40,6 +40,10 @@ public class WebSocketResponse implements FlexiResponse
 		ws_endpoint_ = websocket_session.getRemote();
 	}
 	
+	public boolean isAsync() 
+	{
+		return true;
+	}
 	
 	public JSONObject generateOKMessageTemplate(String action)
 	{
@@ -115,6 +119,12 @@ public class WebSocketResponse implements FlexiResponse
 		response_json.put("header-value",header_value);	
 
 		sendMessage(response_json);
+	}
+	
+	public void setContentDispositionAttachment(String filename)
+	{
+		output_filename_ = filename;
+		setHeader("Content-Disposition","attachment; filename=\""+filename+"\"");
 	}
 	
 	

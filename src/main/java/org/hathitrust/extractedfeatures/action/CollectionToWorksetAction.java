@@ -109,8 +109,7 @@ public class CollectionToWorksetAction extends IdMongoDBAction
 
 			String col_title_filename = col_title + ".txt";
 			flexi_response.setContentType("text/plain");
-			flexi_response
-			.setHeader("Content-Disposition", "attachment; filename=\"" + col_title_filename + "\"");
+			flexi_response.setContentDispositionAttachment(col_title_filename);
 
 			flexi_response.append(workset_friendly_sb.toString());
 
