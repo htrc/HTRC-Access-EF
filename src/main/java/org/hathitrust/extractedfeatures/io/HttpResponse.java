@@ -41,6 +41,12 @@ public class HttpResponse implements FlexiResponse
 		http_response_.setCharacterEncoding(encoding);
 	}
 	
+	public void setContentLength(int len)
+	{
+		http_response_.setContentLength(len);
+		
+	}
+	
 	public void setHeader(String header_name, String header_value)
 	{
 		http_response_.setHeader(header_name,header_value);

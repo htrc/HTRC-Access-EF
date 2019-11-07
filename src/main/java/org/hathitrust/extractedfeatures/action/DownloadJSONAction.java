@@ -477,17 +477,6 @@ public class DownloadJSONAction extends URLShortenerAction
     protected void setHeaderDownloadFilename(FlexiResponse flexi_response, String filename_root, String opt_cgi_key, String opt_file_ext)
     {
     	String output_filename = getDownloadFilenameTail(filename_root,opt_cgi_key,opt_file_ext);
-    	/*
-    	String output_filename = filename_root;
-    	if (opt_cgi_key != null) {
-    		output_filename += "-" + opt_cgi_key;
-    	}
-
-    	if (opt_file_ext != null) {
-    		output_filename += opt_file_ext;
-    	}
-*/
-    	
     	flexi_response.setHeader("Content-Disposition","attachment; filename=\""+output_filename+"\"");
     }
     
@@ -495,15 +484,18 @@ public class DownloadJSONAction extends URLShortenerAction
     	setHeaderDownloadFilename(flexi_response,filename,null,null);
     }
     
-    protected void outputExistingZippedVolumes(FlexiResponse flexi_response, File input_zip_file)
+    protected void streamExistingZippedVolumes(FlexiResponse flexi_response, File input_zip_file)
     		throws ServletException, IOException
     {
     	OutputStream ros = flexi_response.getOutputStream();
 		BufferedOutputStream bros = new BufferedOutputStream(ros);
-		
+	
     	FileInputStream fis = new FileInputStream(input_zip_file);
 		BufferedInputStream bis = new BufferedInputStream(fis);
 	
+		int input_zip_filesize = (int) input_zip_file.length();
+		flexi_response.setContentLength(input_zip_filesize);
+		
 		byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
 
 		while (true) {
@@ -590,7 +582,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		File input_zip_file = json_file_manager_.getFullZipFilename(output_filename);
 		
 		if (input_zip_file.exists()) {
-			outputExistingZippedVolumes(flexi_response, input_zip_file);
+			streamExistingZippedVolumes(flexi_response, input_zip_file);
 		}
 		else {
 			zipUpVolumes(flexi_response, download_ids, opt_cgi_key);

@@ -90,6 +90,14 @@ public class WebSocketResponse implements FlexiResponse
 
 	}
 	
+	public void setContentLength(int len)
+	{
+		JSONObject response_json = generateOKMessageTemplate("content-length");
+		response_json.put("length",len);
+		
+		sendMessage(response_json);
+	}
+	
 	public void setHeader(String header_name, String header_value)
 	{
 		if (header_name.equals("Content-Disposition")) {

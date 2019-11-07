@@ -7,6 +7,7 @@ public interface FlexiResponse
 {
 	public void setContentType(String content_type);
 	public void setCharacterEncoding(String encoding);
+	public void setContentLength(int len);
 	public void setHeader(String header_name, String header_value);
 
 	public void sendProgress(double percentage);
