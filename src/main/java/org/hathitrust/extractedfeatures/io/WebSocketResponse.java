@@ -110,10 +110,6 @@ public class WebSocketResponse implements FlexiResponse
 	
 	public void setHeader(String header_name, String header_value)
 	{
-		if (header_name.equals("Content-Disposition")) {
-			output_filename_ = header_value;
-		}
-		
 		JSONObject response_json = generateOKMessageTemplate("header");
 		response_json.put("header-name",header_name);	
 		response_json.put("header-value",header_value);	
