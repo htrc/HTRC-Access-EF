@@ -427,8 +427,9 @@ public class DownloadJSONAction extends URLShortenerAction
 		String output_filename = getDownloadFilename("htrc-metadata-export",opt_cgi_key,file_ext);
 		setHeaderDownloadFilename(flexi_response,output_filename);
 
-		File input_file = rsyncef_file_manager_.getFullZipFilename(output_filename);
-
+		File input_file = rsyncef_file_manager_.getTmpStoredFile(output_filename);
+		System.err.println("*** Testing for existence of: " + input_file.getAbsolutePath());
+		
 		if (input_file.exists()) {
 			streamExistingVolumesFile(flexi_response, input_file);
 			flexi_response.close();
@@ -681,7 +682,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		String output_zip_filename = getDownloadFilename("htrc-ef-export",opt_cgi_key,".zip");
 		setHeaderDownloadFilename(flexi_response,output_zip_filename);
 
-		File input_zip_file = rsyncef_file_manager_.getFullZipFilename(output_zip_filename);
+		File input_zip_file = rsyncef_file_manager_.getTmpStoredFile(output_zip_filename);
 
 		if (input_zip_file.exists()) {
 			streamExistingVolumesFile(flexi_response, input_zip_file);

@@ -182,7 +182,7 @@ public class WebSocketResponse implements FlexiResponse
 		// => candidate for refactoring!
 		
 		if (os_ == null) {
-			File output_file = rsyncef_file_manager_.getFullZipFilename(output_filename_);
+			File output_file = rsyncef_file_manager_.getTmpStoredFile(output_filename_);
 			full_output_filename_ = output_file.getAbsolutePath(); // not currently used, delete? // ****
 
 			os_ = new FileOutputStream(output_file);

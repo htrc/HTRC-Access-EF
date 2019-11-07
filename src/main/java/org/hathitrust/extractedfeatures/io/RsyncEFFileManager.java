@@ -182,11 +182,11 @@ public class RsyncEFFileManager
 		return rsyncef_file_manager_;
 	}
 	
-	public File getFullZipFilename(String zip_filename_tail)
+	public File getTmpStoredFile(String filename_tail)
 	{
-		File tmp_full_zip_file = new File(zip_tmp_dir_, zip_filename_tail);
+		File tmp_stored_file = new File(zip_tmp_dir_, filename_tail);
 		
-		return tmp_full_zip_file;
+		return tmp_stored_file;
 	}
 	
 	/*
