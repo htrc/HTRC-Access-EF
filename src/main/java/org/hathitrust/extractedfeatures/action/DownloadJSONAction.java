@@ -438,12 +438,12 @@ public class DownloadJSONAction extends URLShortenerAction
 			if (flexi_response.isAsync()) {
 				// Nothing to do => mark progress as 100
 				flexi_response.sendProgress(100.0);
+				flexi_response.close();
 			}
 			else {
 				// Synchronous case => stream over file
 				streamExistingVolumesFile(flexi_response, input_file);
 			}
-			flexi_response.close();
 		}
 		else {
 			concatAndStreamVolumes(flexi_response, download_ids, output_format);
@@ -696,7 +696,14 @@ public class DownloadJSONAction extends URLShortenerAction
 		File input_zip_file = rsyncef_file_manager_.getTmpStoredFile(output_zip_filename);
 
 		if (input_zip_file.exists()) {
-			streamExistingVolumesFile(flexi_response, input_zip_file);
+			if (flexi_response.isAsync()) {
+				// Nothing to do => mark progress as 100
+				flexi_response.sendProgress(100.0);
+				flexi_response.close();
+			}
+			else {
+				streamExistingVolumesFile(flexi_response, input_zip_file);
+			}
 		}
 		else {
 			zipUpAndStreamVolumes(flexi_response, download_ids, opt_cgi_key);
