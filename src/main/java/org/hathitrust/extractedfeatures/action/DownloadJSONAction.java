@@ -167,7 +167,7 @@ public class DownloadJSONAction extends URLShortenerAction
     protected String getFullDownloadFilename(String filename_root, String opt_cgi_key, String opt_file_ext)
     {
     	String output_filename_tail = getDownloadFilenameTail(filename_root,opt_cgi_key,opt_file_ext);
-    	String full_output_file = json_file_manager_.getFullFilenameStr(output_filename_tail);
+    	String full_output_file = rsyncef_file_manager_.getFullFilenameStr(output_filename_tail);
 
     	return full_output_filename;
     }
@@ -300,6 +300,8 @@ public class DownloadJSONAction extends URLShortenerAction
 	protected void streamExistingVolumesFile(FlexiResponse flexi_response, File input_zip_file)
 			throws ServletException, IOException
 	{
+		System.err.println("**** Streaming existing volumes file:" + input_zip_file.getAbsolutePath());
+		
 		OutputStream ros = flexi_response.getOutputStream();
 		BufferedOutputStream bros = new BufferedOutputStream(ros);
 
@@ -687,64 +689,6 @@ public class DownloadJSONAction extends URLShortenerAction
 		else {
 			zipUpAndStreamVolumes(flexi_response, download_ids, opt_cgi_key);
 		}
-
-		/*
-		OutputStream ros = flexi_response.getOutputStream();
-		BufferedOutputStream bros = new BufferedOutputStream(ros);
-		ZipOutputStream zbros = new ZipOutputStream(bros);
-		OutputStream download_os = zbros;
-
-		for (int i=0; i<download_ids_len; i++) {
-
-			double prog_perc = 100 * i / (double)download_ids_len;
-			flexi_response.sendProgress(prog_perc);
-
-			String download_id = download_ids[i];
-
-			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
-			String full_json_filename = VolumeUtils.idToPairtreeFilename(download_id);
-			File file = json_file_manager_.fileOpen(full_json_filename);
-
-			if (file == null) {
-				if (json_file_manager_.usingRsync()) {
-					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
-				}
-				else {
-					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
-				}
-				break;
-			}
-			else {
-				FileInputStream fis = new FileInputStream(file);
-				BufferedInputStream bis = new BufferedInputStream(fis);
-				String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-
-				ZipEntry zipentry = new ZipEntry(json_filename_tail);
-				zbros.putNextEntry(zipentry);
-
-				byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
-
-				while (true) {
-					int num_bytes = bis.read(buf);
-					if (num_bytes == -1) {
-						break;
-					}
-					download_os.write(buf, 0, num_bytes);
-				}
-
-				bis.close();	    
-				zbros.closeEntry();
-
-				if (json_file_manager_.usingRsync()) {
-					// remove file retrieved over rsync
-					file.delete(); // ****
-				}				
-			}
-		}
-
-		download_os.close();
-		 */		
-
 	}
 
 	public void doAction(Map<String,List<String>> param_map, FlexiResponse flexi_response) 

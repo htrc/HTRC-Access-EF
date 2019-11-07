@@ -42,7 +42,7 @@ public class RsyncEFFileManager
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
 
 	protected static CacheAccess<String, String> id_cache_ = null;
-	protected static RsyncEFFileManager json_file_manager_ = null;
+	protected static RsyncEFFileManager rsyncef_file_manager_ = null;
 	
 	
 	private RsyncEFFileManager(ServletConfig config)
@@ -175,11 +175,11 @@ public class RsyncEFFileManager
 	{
 		synchronized (RsyncEFFileManager.class)
 		{
-			if (json_file_manager_ == null) {
-				json_file_manager_ = new RsyncEFFileManager(config);
+			if (rsyncef_file_manager_ == null) {
+				rsyncef_file_manager_ = new RsyncEFFileManager(config);
 			}
 		}
-		return json_file_manager_;
+		return rsyncef_file_manager_;
 	}
 	
 	public File getFullZipFilename(String zip_filename_tail)

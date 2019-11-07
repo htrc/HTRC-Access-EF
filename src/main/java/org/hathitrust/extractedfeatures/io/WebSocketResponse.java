@@ -27,11 +27,11 @@ public class WebSocketResponse implements FlexiResponse
 	protected OutputStream os_ = null;
 	protected OutputStreamWriter osw_ = null;
 	
-	protected static RsyncEFFileManager json_file_manager_ = null;
+	protected static RsyncEFFileManager rsyncef_file_manager_ = null;
 	
-	public static void setJSONFileManager(RsyncEFFileManager json_file_manager)
+	public static void setJSONFileManager(RsyncEFFileManager rsyncef_file_manager)
 	{
-		json_file_manager_ = json_file_manager;
+		rsyncef_file_manager_ = rsyncef_file_manager;
 	}
 	
 	public WebSocketResponse(Session websocket_session)
@@ -182,7 +182,7 @@ public class WebSocketResponse implements FlexiResponse
 		// => candidate for refactoring!
 		
 		if (os_ == null) {
-			File output_file = json_file_manager_.getFullZipFilename(output_filename_);
+			File output_file = rsyncef_file_manager_.getFullZipFilename(output_filename_);
 			full_output_filename_ = output_file.getAbsolutePath(); // not currently used, delete? // ****
 
 			os_ = new FileOutputStream(output_file);

@@ -109,8 +109,8 @@ public class AccessServlet extends WebSocketServlet
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		
-		RsyncEFFileManager json_file_manager = RsyncEFFileManager.getInstance(config);
-		WebSocketResponse.setJSONFileManager(json_file_manager);
+		RsyncEFFileManager rsyncef_file_manager = RsyncEFFileManager.getInstance(config);
+		WebSocketResponse.setJSONFileManager(rsyncef_file_manager);
 		
 		ServletContext context = getServletContext();
 
