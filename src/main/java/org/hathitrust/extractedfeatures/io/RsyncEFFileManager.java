@@ -25,9 +25,9 @@ import org.apache.commons.jcs.access.CacheAccess;
 import org.hathitrust.extractedfeatures.VolumeUtils;
 
 
-public class JSONFileManager
+public class RsyncEFFileManager
 {
-	protected static Logger logger = Logger.getLogger(JSONFileManager.class.getName()); // org.hathitrust.extractedfeatures.io.
+	protected static Logger logger = Logger.getLogger(RsyncEFFileManager.class.getName()); // org.hathitrust.extractedfeatures.io.
 	
 	protected static final String rsync_base = "data.analytics.hathitrust.org::features/";
         // When there was a server outage at Illinois, the following was used as a backup for the rsyc-server
@@ -42,10 +42,10 @@ public class JSONFileManager
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
 
 	protected static CacheAccess<String, String> id_cache_ = null;
-	protected static JSONFileManager json_file_manager_ = null;
+	protected static RsyncEFFileManager json_file_manager_ = null;
 	
 	
-	private JSONFileManager(ServletConfig config)
+	private RsyncEFFileManager(ServletConfig config)
 	{	
 		if (uses_custom_tmpdir_ == null) {
 			// haven't previously checked for config parameter being set
@@ -171,12 +171,12 @@ public class JSONFileManager
 		}
 	}
 	
-	public static JSONFileManager getInstance(ServletConfig config)
+	public static RsyncEFFileManager getInstance(ServletConfig config)
 	{
-		synchronized (JSONFileManager.class)
+		synchronized (RsyncEFFileManager.class)
 		{
 			if (json_file_manager_ == null) {
-				json_file_manager_ = new JSONFileManager(config);
+				json_file_manager_ = new RsyncEFFileManager(config);
 			}
 		}
 		return json_file_manager_;

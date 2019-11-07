@@ -46,7 +46,7 @@ import org.hathitrust.extractedfeatures.action.ShoppingcartAction;
 import org.hathitrust.extractedfeatures.action.URLShortenerAction;
 import org.hathitrust.extractedfeatures.io.FlexiResponse;
 import org.hathitrust.extractedfeatures.io.HttpResponse;
-import org.hathitrust.extractedfeatures.io.JSONFileManager;
+import org.hathitrust.extractedfeatures.io.RsyncEFFileManager;
 import org.hathitrust.extractedfeatures.io.WebSocketResponse;
 
 
@@ -109,7 +109,7 @@ public class AccessServlet extends WebSocketServlet
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		
-		JSONFileManager json_file_manager = JSONFileManager.getInstance(config);
+		RsyncEFFileManager json_file_manager = RsyncEFFileManager.getInstance(config);
 		WebSocketResponse.setJSONFileManager(json_file_manager);
 		
 		ServletContext context = getServletContext();
@@ -214,7 +214,7 @@ public class AccessServlet extends WebSocketServlet
 			
 			if (valid_cgi_download_id != null) {
 				String [] valid_download_ids = new String[] {valid_cgi_download_id};
-				download_json_.outputVolume(flexi_response,valid_download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json");
+				download_json_.outputVolumes(flexi_response,valid_download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json");
 			}
 		} 
 		else if (cgi_download_ids != null) {

@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -22,11 +25,11 @@ public class WebSocketResponse implements FlexiResponse
 	protected String output_filename_ = null;
 	protected String full_output_filename_ = null;
 	protected OutputStream os_ = null;
-	protected PrintWriter pw_ = null;
+	protected OutputStreamWriter osw_ = null;
 	
-	protected static JSONFileManager json_file_manager_ = null;
+	protected static RsyncEFFileManager json_file_manager_ = null;
 	
-	public static void setJSONFileManager(JSONFileManager json_file_manager)
+	public static void setJSONFileManager(RsyncEFFileManager json_file_manager)
 	{
 		json_file_manager_ = json_file_manager;
 	}
@@ -148,9 +151,9 @@ public class WebSocketResponse implements FlexiResponse
 	public void append(String text)
 	{
 		try {
-			PrintWriter pw = getPrintWriter();
+			OutputStreamWriter osw = getOutputStreamWriter();
 			//ws_endpoint_.sendString(text);
-			pw.append(text);
+			osw.append(text);
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -188,14 +191,14 @@ public class WebSocketResponse implements FlexiResponse
 		return os_;
 	}
 	
-	public PrintWriter getPrintWriter() throws IOException
+	protected OutputStreamWriter getOutputStreamWriter() throws IOException
 	{
-		if (pw_ == null) {
+		if (osw_ == null) {
 			OutputStream os = getOutputStream();
-			pw_ = new PrintWriter(os);
+			osw_ = new OutputStreamWriter(os,StandardCharsets.UTF_8);
 		}
 		
-		return pw_;
+		return osw_;
 	}
 	
 	public String getFullOutputFilename()
