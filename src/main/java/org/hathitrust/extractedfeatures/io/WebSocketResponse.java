@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -20,6 +21,8 @@ public class WebSocketResponse implements FlexiResponse
 
 	protected String output_filename_ = null;
 	protected String full_output_filename_ = null;
+	protected OutputStream os_ = null;
+	protected PrintWriter pw_ = null;
 	
 	protected static JSONFileManager json_file_manager_ = null;
 	
@@ -145,7 +148,9 @@ public class WebSocketResponse implements FlexiResponse
 	public void append(String text)
 	{
 		try {
-			ws_endpoint_.sendString(text);
+			PrintWriter pw = getPrintWriter();
+			//ws_endpoint_.sendString(text);
+			pw.append(text);
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -154,7 +159,15 @@ public class WebSocketResponse implements FlexiResponse
 	
 	public void flush()
 	{
-		System.err.println("**** WebSocketResponse.flush(): Not implemented (No known equivalent)");
+		if (os_ != null) {
+			try {
+				System.err.println("WebSocketResponse.flush(): Flushing internal file OS stream");
+				os_.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		System.err.println("WebSocketResponse.flush(): Is it possible to flush socket stream? (not currently implemented)");
 	}
 	
 	public OutputStream getOutputStream() throws IOException
@@ -165,12 +178,24 @@ public class WebSocketResponse implements FlexiResponse
 		// method isn't the best
 		// => candidate for refactoring!
 		
-		File output_file = json_file_manager_.getFullZipFilename(output_filename_);
-		full_output_filename_ = output_file.getAbsolutePath(); // not currently used, delete? // ****
-		
-		OutputStream os = new FileOutputStream(output_file);
+		if (os_ == null) {
+			File output_file = json_file_manager_.getFullZipFilename(output_filename_);
+			full_output_filename_ = output_file.getAbsolutePath(); // not currently used, delete? // ****
 
-		return os;
+			os_ = new FileOutputStream(output_file);
+		}
+		
+		return os_;
+	}
+	
+	public PrintWriter getPrintWriter() throws IOException
+	{
+		if (pw_ == null) {
+			OutputStream os = getOutputStream();
+			pw_ = new PrintWriter(os);
+		}
+		
+		return pw_;
 	}
 	
 	public String getFullOutputFilename()
@@ -180,7 +205,16 @@ public class WebSocketResponse implements FlexiResponse
 	
 	public void close()
 	{
-		System.err.println("**** WebSocketResponse.close(): Closing WebSocket session");
+		if (os_ != null) {
+			try {
+				System.err.println("WebSocketResponse.close(): closing internal file OS stream");
+				os_.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		System.err.println("WebSocketResponse.close(): Closing WebSocket session");
 		ws_session_.close();
 		
 	}
