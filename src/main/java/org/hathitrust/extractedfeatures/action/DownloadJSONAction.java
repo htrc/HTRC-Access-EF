@@ -438,7 +438,8 @@ public class DownloadJSONAction extends URLShortenerAction
 			if (flexi_response.isAsync()) {
 				// Nothing to do => mark progress as 100
 				flexi_response.sendProgress(100.0);
-				flexi_response.close();
+				// ****
+				//flexi_response.close(); // sending 100% triggers close from client
 			}
 			else {
 				// Synchronous case => stream over file
@@ -698,8 +699,9 @@ public class DownloadJSONAction extends URLShortenerAction
 		if (input_zip_file.exists()) {
 			if (flexi_response.isAsync()) {
 				// Nothing to do => mark progress as 100
-				flexi_response.sendProgress(100.0);
-				flexi_response.close();
+				flexi_response.sendProgress(100.0); // sending 100% triggers close from client
+				//****
+				//flexi_response.close();
 			}
 			else {
 				streamExistingVolumesFile(flexi_response, input_zip_file);
