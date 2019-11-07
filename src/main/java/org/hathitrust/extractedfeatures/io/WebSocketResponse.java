@@ -135,7 +135,7 @@ public class WebSocketResponse implements FlexiResponse
 	public void sendRedirect(String location) throws IOException
 	{
 		String mess ="Redirect to location '" + location +" not currently implemented on the JS side";
-		System.err.println("WebSocketReponse.snedRedirectc(): " + mess);
+		System.err.println("WebSocketReponse.snedRedirect(): " + mess);
 	
 		JSONObject response_json = generateOKMessageTemplate("redirect");
 		response_json.put("location",location);	

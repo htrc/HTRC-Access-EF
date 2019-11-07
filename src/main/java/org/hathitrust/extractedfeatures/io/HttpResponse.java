@@ -56,8 +56,8 @@ public class HttpResponse implements FlexiResponse
 	{
 		String percentage_formatted = String.format("%.2f", percentage);
 		
-		String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted + "%";
-		System.out.println(mess);
+		//String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted + "%";
+		//System.out.println(mess);
 	}
 	
 	public void sendError(int http_status_code, String message) throws IOException
