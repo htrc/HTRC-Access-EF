@@ -30,13 +30,8 @@ public class WebSocketResponse implements FlexiResponse
 	
 	public WebSocketResponse(Session websocket_session)
 	{
-	        ws_session_ = websocket_session;
+	    ws_session_ = websocket_session;
 		ws_endpoint_ = websocket_session.getRemote();
-		
-		// UpgradeResponse upgrade_response = ws_session_.getUpgradeResponse();
-		
-	
-		
 	}
 	
 	
@@ -163,7 +158,8 @@ public class WebSocketResponse implements FlexiResponse
 		// => candidate for refactoring!
 		
 		File output_file = json_file_manager_.getFullZipFilename(output_filename_);
-
+		full_output_filename_ = output_file.getAbsolutePath(); // not currently used, delete? // ****
+		
 		OutputStream os = new FileOutputStream(output_file);
 
 		return os;

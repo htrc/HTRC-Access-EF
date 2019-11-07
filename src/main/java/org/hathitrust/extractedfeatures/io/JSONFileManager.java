@@ -189,6 +189,17 @@ public class JSONFileManager
 		return tmp_full_zip_file;
 	}
 	
+	/*
+	public String getFullFilenameStr(String zip_filename_tail)
+	{
+		File tmp_full_zip_file = getFullZipFilename(zip_filename_tail);
+		String tmp_full_zip_file_str = tmp_full_zip_file.getAbsolutePath();
+		
+		return tmp_full_zip_file_str;
+	}
+	*/
+	
+	
 	protected File doRsyncDownload(String full_json_filename) throws IOException 
 	{
 		String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
