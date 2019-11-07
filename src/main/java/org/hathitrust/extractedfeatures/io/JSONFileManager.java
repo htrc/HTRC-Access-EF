@@ -240,7 +240,7 @@ public class JSONFileManager
 			// Uncompressed version found in cache
 			// => avoid retrieving via rsync, and dump local version directly (BZIP2 compressed) 
 			// in tmp_dir as if it had been retrieved via rsync
-			System.err.println("**** Using locally cached version!");
+			//System.err.println("**** Using locally cached version!");
 			writeCompressedTextFile(tmp_full_json_file,json_content);
 		}
 		
