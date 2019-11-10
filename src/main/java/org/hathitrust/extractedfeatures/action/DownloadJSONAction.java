@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.hathitrust.extractedfeatures.VolumeUtils;
 import org.hathitrust.extractedfeatures.io.FlexiResponse;
+import org.hathitrust.extractedfeatures.io.HttpResponse;
 import org.hathitrust.extractedfeatures.io.RsyncEFFileManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -51,7 +52,7 @@ public class DownloadJSONAction extends URLShortenerAction
 							+"Optional parameter: 'output=json|zip|csv|tsv (defaults to 'json')",
 							"Returns:            Uncompressed JSON Extracted Feature file content for given id(s);\n"
 									+ "                    or a zipped up version, when output=zipfile."
-									+ "                  To return just the volume level metadata specify 'id' in the form mdp.123456789-metata"
+									+ "                  To return just the volume level metadata specify 'id' in the form mdp.123456789-metadata"
 									+ "                  To return just the page level JSON specify 'id' in the form mdp.123456789-seq-000000"
 			};
 
@@ -83,9 +84,17 @@ public class DownloadJSONAction extends URLShortenerAction
 						"subjectGenre", "subjectTopic", "subjectName", "subjectTitleInfo", "subjectTemporal",
 						"subjectGeographic", "subjectOccupation","subjectCartographics" };
 
-		public static String jsonToFieldSeparatedFileKeys(JSONObject json_obj, String sep)
+		public static String jsonToFieldSeparatedFileKeys(JSONObject json_obj_unused, String sep)
 		{
-
+			// As a patch, this method was changed to use the static 'lookup' data-field above
+			// (rather then the json_obj passed in) to ensure that all records that are output 
+			// have exactly the same metadata fields in them.
+			//
+			// Originally all the JSON-EF objects on the rsync server had the same metadata field, 
+			// but then a second batch of files was added in, and these had some additional fields added
+			// leading to the problem in this code of CSV and TSV files being generated where some
+			// of the rows of data didn't line up with the headings
+			
 			StringBuilder sb = new StringBuilder();
 
 			for (int i=0; i<volume_metadata_lookup.length; i++) {
@@ -105,8 +114,13 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		public static String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
 		{
-			// Screen more carefully in code below for chars that need escaping? // ****
-
+			// Only called if outputting CSV or TSV 
+			// Uses 'sep' == "," to detect CSV,
+			//   escapes correctly by always wrapping up items in "..."  having escaped any literal quotes in value 
+			// ****
+			// But nothing done for TSV 
+			//   => can tab turn up in values?
+		
 			StringBuilder sb = new StringBuilder();
 
 			for (int i=0; i<volume_metadata_lookup.length; i++) {
@@ -148,37 +162,6 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 	}
 
-
-	protected String getDownloadFilename(String filename_root, String opt_cgi_key, String opt_file_ext)
-	{
-		String output_filename = filename_root;
-		if (opt_cgi_key != null) {
-			output_filename += "-" + opt_cgi_key;
-		}
-
-		if (opt_file_ext != null) {
-			output_filename += opt_file_ext;
-		}
-
-		return output_filename;
-	}
-
-	/*
-    protected String getFullDownloadFilename(String filename_root, String opt_cgi_key, String opt_file_ext)
-    {
-    	String output_filename_tail = getDownloadFilenameTail(filename_root,opt_cgi_key,opt_file_ext);
-    	String full_output_file = rsyncef_file_manager_.getFullFilenameStr(output_filename_tail);
-
-    	return full_output_filename;
-    }
-	 */
-
-	protected void setHeaderDownloadFilename(FlexiResponse flexi_response, String output_filename)
-	{
-		flexi_response.setContentDispositionAttachment(output_filename);
-	}
-
-
 	protected String jsonToFieldSeparatedFileKeys(JSONObject json_obj, String sep)
 	{
 		StringBuilder sb = new StringBuilder();
@@ -199,8 +182,13 @@ public class DownloadJSONAction extends URLShortenerAction
 
 	protected String jsonToFieldSeparatedFileValues(JSONObject json_obj, String sep)
 	{
-		// Screen more carefully in code below for chars that need escaping? // ****
-
+		// Only called if outputting CSV or TSV 
+		// Uses 'sep' == "," to detect CSV,
+		//   escapes correctly by always wrapping up items in "..."  having escaped any literal quotes in value 
+		// ****
+		// But nothing done for TSV 
+		//   => can tab turn up in values?
+		
 		StringBuilder sb = new StringBuilder();
 
 		Iterator<String> key_iterator = json_obj.keys();
@@ -297,10 +285,30 @@ public class DownloadJSONAction extends URLShortenerAction
 		return json_content_str_out;
 	}
 
+
+	
+	protected String getDownloadFilename(String filename_root, String opt_cgi_key, String opt_file_ext)
+	{
+		String output_filename = filename_root;
+		if (opt_cgi_key != null) {
+			output_filename += "-" + opt_cgi_key;
+		}
+
+		if (opt_file_ext != null) {
+			output_filename += opt_file_ext;
+		}
+
+		return output_filename;
+	}
+
+	protected void setHeaderDownloadFilename(FlexiResponse flexi_response, String output_filename)
+	{
+		flexi_response.setContentDispositionAttachment(output_filename);
+	}
 	protected void streamExistingVolumesFile(FlexiResponse flexi_response, File input_zip_file)
 			throws ServletException, IOException
 	{
-		System.err.println("**** Streaming existing volumes file:" + input_zip_file.getAbsolutePath());
+		//System.err.println("**** Streaming existing volumes file:" + input_zip_file.getAbsolutePath());
 		
 		OutputStream ros = flexi_response.getOutputStream();
 		BufferedOutputStream bros = new BufferedOutputStream(ros);
@@ -368,9 +376,12 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 			}
 
-			String json_content_str = rsyncef_file_manager_.getVolumeContent(volume_id);
-
-			if (json_content_str == null) {
+			// ****
+			//String json_content_str = rsyncef_file_manager_.getVolumeContent(volume_id);
+			String pairtree_full_json_filename_bz = VolumeUtils.idToPairtreeFilename(volume_id);
+			File file_bz = rsyncef_file_manager_.fileOpen(pairtree_full_json_filename_bz); 
+			
+			if (file_bz == null) {
 				if (rsyncef_file_manager_.usingRsync()) {
 					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
 					break;
@@ -381,6 +392,8 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 			}
 			else {
+				String json_content_str = rsyncef_file_manager_.readCompressedTextFile(file_bz);
+				
 				if (has_seq_num) {
 					// consider having a page-level cache // ****
 					json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
@@ -400,6 +413,8 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 			}
 
+			rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz); 
+			
 			first_entry = false;
 		}
 
@@ -428,12 +443,8 @@ public class DownloadJSONAction extends URLShortenerAction
 		setHeaderDownloadFilename(flexi_response,output_filename);
 
 		File input_file = rsyncef_file_manager_.getTmpStoredFile(output_filename);
-		System.err.println("*** Testing for existence of: " + input_file.getAbsolutePath());
-		
-		if (flexi_response.isAsync()) {
-			
-		}
-		
+		//System.err.println("*** Testing for existence of: " + input_file.getAbsolutePath());
+				
 		if (input_file.exists()) {
 			if (flexi_response.isAsync()) {
 				// Nothing to do => mark progress as 100
@@ -449,14 +460,19 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 	}
 
-	protected void outputZippedVolumesAdaptive(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
+	protected void outputZippedVolumesAdaptive(HttpResponse http_flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
-		// **************** *****
-		// This method still needs converting to the new WebSocket aware way of doing things
-		
+		// ****
+		// This method is no longer needed by the CGI API front-end
+		// If bringing back into the front-line (through a CGI API action)
+		// then it will need to be converted to supporting WebSocketReponse
+		// For now the flexi_reponse parameter has been change to HttpResponse to refelct it
+		// is does not have the async behaviour needed by a web-socket call
+				
 		// This version adaptively works out if it can download a single file or else needs
 		// to zip things up
+		
 		int download_ids_len = download_ids.length;
 
 		ZipOutputStream zbros = null;
@@ -466,11 +482,11 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		if (output_as_zip) {
 			// Output needs to be zipped up
-			flexi_response.setContentType("application/zip");
+			http_flexi_response.setContentType("application/zip");
 			String output_zip_filename = getDownloadFilename("htrc-ef-export",opt_cgi_key,".zip");
-			setHeaderDownloadFilename(flexi_response,output_zip_filename);
+			setHeaderDownloadFilename(http_flexi_response,output_zip_filename);
 
-			OutputStream ros = flexi_response.getOutputStream();
+			OutputStream ros = http_flexi_response.getOutputStream();
 			BufferedOutputStream bros = new BufferedOutputStream(ros);
 			zbros = new ZipOutputStream(bros);
 
@@ -480,37 +496,37 @@ public class DownloadJSONAction extends URLShortenerAction
 		for (int i=0; i<download_ids_len; i++) {
 
 			double prog_perc = 100 * i / (double)download_ids_len;
-			flexi_response.sendProgress(prog_perc);
+			http_flexi_response.sendProgress(prog_perc);
 
 			String download_id = download_ids[i];
 
 			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
-			String full_json_filename = VolumeUtils.idToPairtreeFilename(download_id);
-			File file = rsyncef_file_manager_.fileOpen(full_json_filename);
+			String pairtree_full_json_filename_bz = VolumeUtils.idToPairtreeFilename(download_id);
+			File file = rsyncef_file_manager_.fileOpen(pairtree_full_json_filename_bz); 
 
 			if (file == null) {
 				if (rsyncef_file_manager_.usingRsync()) {
-					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
+					http_flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
 				}
 				else {
-					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
+					http_flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
 				}
 				break;
 			}
 			else {
 				FileInputStream fis = new FileInputStream(file);
 				BufferedInputStream bis = new BufferedInputStream(fis);
-				String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
+				String json_filename_tail = VolumeUtils.full_filename_to_tail(pairtree_full_json_filename_bz);
 
 				if (output_as_zip) {
 					ZipEntry zipentry = new ZipEntry(json_filename_tail);
 					zbros.putNextEntry(zipentry);
 				}
 				else {
-					flexi_response.setContentType("application/x-bzip2");
-					setHeaderDownloadFilename(flexi_response,json_filename_tail); 
+					http_flexi_response.setContentType("application/x-bzip2");
+					setHeaderDownloadFilename(http_flexi_response,json_filename_tail); 
 
-					OutputStream ros = flexi_response.getOutputStream();
+					OutputStream ros = http_flexi_response.getOutputStream();
 					download_os = new BufferedOutputStream(ros);
 				}		
 
@@ -532,10 +548,13 @@ public class DownloadJSONAction extends URLShortenerAction
 					download_os.close();
 				}
 
+				/*
 				if (rsyncef_file_manager_.usingRsync()) {
 					// remove file retrieved over rsync
 					file.delete(); // ****
-				}
+				}*/
+				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);
+				
 			}
 		}
 
@@ -563,8 +582,8 @@ public class DownloadJSONAction extends URLShortenerAction
 			String download_id = download_ids[i];
 
 			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
-			String full_json_filename = VolumeUtils.idToPairtreeFilename(download_id);
-			File file = rsyncef_file_manager_.fileOpen(full_json_filename);
+			String pairtree_full_json_filename_bz = VolumeUtils.idToPairtreeFilename(download_id);
+			File file = rsyncef_file_manager_.fileOpen(pairtree_full_json_filename_bz);
 
 			if (file == null) {
 				if (rsyncef_file_manager_.usingRsync()) {
@@ -578,7 +597,7 @@ public class DownloadJSONAction extends URLShortenerAction
 			else {
 				FileInputStream fis = new FileInputStream(file);
 				BufferedInputStream bis = new BufferedInputStream(fis);
-				String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
+				String json_filename_tail = VolumeUtils.full_filename_to_tail(pairtree_full_json_filename_bz);
 
 				ZipEntry zipentry = new ZipEntry(json_filename_tail);
 				zbros.putNextEntry(zipentry);
@@ -596,10 +615,8 @@ public class DownloadJSONAction extends URLShortenerAction
 				bis.close();	    
 				zbros.closeEntry();
 
-				if (rsyncef_file_manager_.usingRsync()) {
-					// remove file retrieved over rsync
-					file.delete(); // ****
-				}				
+				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);
+					
 			}
 		}
 

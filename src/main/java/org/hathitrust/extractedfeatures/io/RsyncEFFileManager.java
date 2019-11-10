@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
@@ -35,52 +37,54 @@ public class RsyncEFFileManager
 	    
 	protected static Boolean uses_custom_tmpdir_ = null;
 	
+	protected File local_pairtree_root_;
 	protected File rsync_tmp_dir_;
 	protected File zip_tmp_dir_;
-	protected File local_pairtree_root_;
 
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
 
 	protected static CacheAccess<String, String> id_cache_ = null;
 	protected static RsyncEFFileManager rsyncef_file_manager_ = null;
-	
+	protected static Map<String,Process> rsyncef_downloads_in_progress_ = null;
 	
 	private RsyncEFFileManager(ServletConfig config)
 	{	
-		if (uses_custom_tmpdir_ == null) {
-			// haven't previously checked for config parameter being set
-			String java_io_tmpdir_str = config.getInitParameter("java.io.tmpdir");
-			if ((java_io_tmpdir_str != null) && (!java_io_tmpdir_str.equals(""))) {
-				logger.info("Servlet specifies custom java.io.tmpdir: " + java_io_tmpdir_str);
-				File java_io_tmpdir = new File(java_io_tmpdir_str);
-				
-				boolean update_java_prop = true;
-				
-				if (!java_io_tmpdir.exists()) {
-					boolean made_dir = java_io_tmpdir.mkdir();
-					if (made_dir) {
-						logger.info("Successfully created directory");
+		synchronized (uses_custom_tmpdir_) {
+			if (uses_custom_tmpdir_ == null) {
+				// haven't previously checked for config parameter being set
+				String java_io_tmpdir_str = config.getInitParameter("java.io.tmpdir");
+				if ((java_io_tmpdir_str != null) && (!java_io_tmpdir_str.equals(""))) {
+					logger.info("Servlet specifies custom java.io.tmpdir: " + java_io_tmpdir_str);
+					File java_io_tmpdir = new File(java_io_tmpdir_str);
+
+					boolean update_java_prop = true;
+
+					if (!java_io_tmpdir.exists()) {
+						boolean made_dir = java_io_tmpdir.mkdir();
+						if (made_dir) {
+							logger.info("Successfully created directory");
+						}
+						else {
+							update_java_prop = false;
+						}
 					}
 					else {
-						update_java_prop = false;
+						logger.info("Checking directory: existsD");
+
 					}
-				}
-				else {
-					logger.info("Checking directory: existsD");
-					
-				}
-				
-				if (update_java_prop) {
-					logger.info("Updated Java property java.io.tmpdir to: " + java_io_tmpdir_str);
-					System.setProperty("java.io.tmpdir", java_io_tmpdir_str);
-					uses_custom_tmpdir_ = true;
+
+					if (update_java_prop) {
+						logger.info("Updated Java property java.io.tmpdir to: " + java_io_tmpdir_str);
+						System.setProperty("java.io.tmpdir", java_io_tmpdir_str);
+						uses_custom_tmpdir_ = true;
+					}
+					else {
+						uses_custom_tmpdir_ = false;
+					}
 				}
 				else {
 					uses_custom_tmpdir_ = false;
 				}
-			}
-			else {
-				uses_custom_tmpdir_ = false;
 			}
 		}
 		
@@ -104,18 +108,44 @@ public class RsyncEFFileManager
 			}
 		}
 
-		if (id_cache_ == null) {
-			try {
-				id_cache_ = JCS.getInstance( "idCache" );
+		synchronized (id_cache_) {
+			if (id_cache_ == null) {
+				try {
+					id_cache_ = JCS.getInstance( "idCache" );
+				}
+				catch ( CacheException e )
+				{
+					String message = String.format( "Problem initializing cache: %s", e.getMessage());
+					System.err.println(message);
+				}
 			}
-			catch ( CacheException e )
-			{
-				String message = String.format( "Problem initializing cache: %s", e.getMessage());
-				System.err.println(message);
+		}
+		
+		synchronized (rsyncef_downloads_in_progress_) {
+			if (rsyncef_downloads_in_progress_ == null) {
+				rsyncef_downloads_in_progress_ = new HashMap<String,Process>();
 			}
 		}
 	}
 
+	public static RsyncEFFileManager getInstance(ServletConfig config)
+	{
+		synchronized (RsyncEFFileManager.class)
+		{
+			if (rsyncef_file_manager_ == null) {
+				rsyncef_file_manager_ = new RsyncEFFileManager(config);
+			}
+		}
+		
+		return rsyncef_file_manager_;
+	}
+	
+	public boolean usingRsync()
+	{
+		return local_pairtree_root_ == null;
+	}
+
+	
 	protected BufferedReader getBufferedReaderForCompressedFile(BufferedInputStream bis) 
 			throws IOException, CompressorException 
 	{
@@ -142,6 +172,7 @@ public class RsyncEFFileManager
 			
 			BufferedReader br = getBufferedReaderForCompressedFile(bis);
 
+			// **** !!!! ****
 			int cp;
 			while ((cp = br.read()) != -1) {
 			    sb.append((char) cp);
@@ -171,17 +202,6 @@ public class RsyncEFFileManager
 		}
 	}
 	
-	public static RsyncEFFileManager getInstance(ServletConfig config)
-	{
-		synchronized (RsyncEFFileManager.class)
-		{
-			if (rsyncef_file_manager_ == null) {
-				rsyncef_file_manager_ = new RsyncEFFileManager(config);
-			}
-		}
-		return rsyncef_file_manager_;
-	}
-	
 	public File getTmpStoredFile(String filename_tail)
 	{
 		File tmp_stored_file = new File(zip_tmp_dir_, filename_tail);
@@ -189,50 +209,52 @@ public class RsyncEFFileManager
 		return tmp_stored_file;
 	}
 	
-	/*
-	public String getFullFilenameStr(String zip_filename_tail)
-	{
-		File tmp_full_zip_file = getFullZipFilename(zip_filename_tail);
-		String tmp_full_zip_file_str = tmp_full_zip_file.getAbsolutePath();
-		
-		return tmp_full_zip_file_str;
-	}
-	*/
 	
-	
-	protected File doRsyncDownload(String full_json_filename) throws IOException 
+	protected File doRsyncDownload(String pairtree_full_json_filename_bz) throws IOException
 	{
-		String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
-		File tmp_full_json_file = new File(rsync_tmp_dir_, json_filename_tail);
+		String json_filename_tail_bz = VolumeUtils.full_filename_to_tail(pairtree_full_json_filename_bz);
+		File tmp_full_json_file_bz = new File(rsync_tmp_dir_, json_filename_tail_bz);
 
-		String json_content = id_cache_.get("json-id-" + json_filename_tail);
+		String json_content = id_cache_.get("json-id-" + json_filename_tail_bz);
 		
 		if (json_content == null) {
 			// Not in cache
 
-		    logger.info("Did not find '" + json_filename_tail + "' in cache"); 
+		    logger.info("Did not find '" + json_filename_tail_bz + "' in cache"); 
 
 			// Usage of HTRC rsync server:
 			//   rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
 			
 			Runtime runtime = Runtime.getRuntime();
-			String[] rsync_command = {"rsync", "-av", rsync_base + full_json_filename, rsync_tmp_dir_.getPath()};
+			String[] rsync_command = {"rsync", "-av", rsync_base + pairtree_full_json_filename_bz, rsync_tmp_dir_.getPath()};
 
 			try {
-				Process proc = runtime.exec(rsync_command);
-				int retCode = proc.waitFor();
-
-				if (retCode != 0) {
-					throw new Exception("rsync command failed with code " + retCode);
+				Process proc = null;
+				
+				synchronized(rsyncef_downloads_in_progress_) {
+					proc = runtime.exec(rsync_command);
+					rsyncef_downloads_in_progress_.put(pairtree_full_json_filename_bz, proc);
 				}
 
-				json_content = readCompressedTextFile(tmp_full_json_file);
-				logger.info("doRsyncDownload() Storing '" + json_filename_tail + "' in cache"); 
-
-				id_cache_.put("json-id-" + json_filename_tail, json_content);
+				int retCode = proc.waitFor();
+				
+				synchronized(rsyncef_downloads_in_progress_) {
+					rsyncef_downloads_in_progress_.remove(pairtree_full_json_filename_bz);
+				}
+				
+				if (retCode != 0) {
+					throw new IOException("rsync command to retrieve " + pairtree_full_json_filename_bz + " failed with code " + retCode);
+					
+				}
+				
+				json_content = readCompressedTextFile(tmp_full_json_file_bz);
+				
+				logger.info("doRsyncDownload() Storing '" + json_filename_tail_bz + "' in cache"); 
+				id_cache_.put("json-id-" + json_filename_tail_bz, json_content);
 
 				
-			} catch (Exception e) {
+			} catch (InterruptedException e) {
+				System.err.println("Rsync process interrupted");
 				throw new IOException(e);
 			}	
 		}
@@ -241,23 +263,44 @@ public class RsyncEFFileManager
 			// => avoid retrieving via rsync, and dump local version directly (BZIP2 compressed) 
 			// in tmp_dir as if it had been retrieved via rsync
 			//System.err.println("**** Using locally cached version!");
-			writeCompressedTextFile(tmp_full_json_file,json_content);
+			writeCompressedTextFile(tmp_full_json_file_bz,json_content);
 		}
 		
-		return tmp_full_json_file;
+		return tmp_full_json_file_bz;
 	}
 
 
-	public File fileOpen(String full_json_filename)
+	public File fileOpen(String pairtree_full_json_filename_bz)
 	{
 		File file = null;
 		if (local_pairtree_root_ != null) {
 			// Access the file locally
-			file = new File(local_pairtree_root_, full_json_filename);
+			file = new File(local_pairtree_root_, pairtree_full_json_filename_bz);
 		} else {
+			Process proc = null;
+			synchronized(rsyncef_downloads_in_progress_) {
+				proc = rsyncef_downloads_in_progress_.get(pairtree_full_json_filename_bz);
+			}
+			if (proc != null) {
+				try {
+					int ret_code = proc.waitFor();
+					// If ret_code == 0, then there will be a version of the file waiting for us
+					// is the cache when doRsyncDownload() is called
+
+					if (ret_code != 0) {
+						System.err.println("Previously initiated rsync command for " + pairtree_full_json_filename_bz + " failed");
+						System.err.println("Trying new invocation of rsync");
+					}
+				} 
+				catch (InterruptedException e) {
+					// No need to print any error message here, as this will have been
+					// done by the call to doRsyncDownload() that initiated the rsync command
+				}
+			}
+
 			// Work through the rsync server
 			try {
-				file = doRsyncDownload(full_json_filename);
+				file = doRsyncDownload(pairtree_full_json_filename_bz);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -265,11 +308,21 @@ public class RsyncEFFileManager
 
 		return file;
 	}
-
+	
+	public void fileClose(String full_json_filename)
+	{
+		if (local_pairtree_root_ == null) {
+			// remove the file retrieved over rsync
+			File file = new File(full_json_filename);
+			file.delete(); 	
+		}
+	}
+	
+	/*
 	public String getVolumeContent(String volume_id)
 	{
-		String full_json_filename = VolumeUtils.idToPairtreeFilename(volume_id);
-		String json_filename_tail = VolumeUtils.full_filename_to_tail(full_json_filename);
+		String pairtree_full_json_filename = VolumeUtils.idToPairtreeFilename(volume_id);
+		String json_filename_tail = VolumeUtils.full_filename_to_tail(pairtree_full_json_filename);
 		
 		// Check cache first
 		String json_content = id_cache_.get("json-id-" + json_filename_tail);
@@ -279,7 +332,7 @@ public class RsyncEFFileManager
 			// Not in cache => work out if file is available locally, or need to go through rsync
 			if (local_pairtree_root_ != null) {
 				// Access the file locally
-				File file = new File(local_pairtree_root_, full_json_filename);
+				File file = new File(local_pairtree_root_, pairtree_full_json_filename);
 				json_content = readCompressedTextFile(file);
 			}
 			else {
@@ -289,7 +342,7 @@ public class RsyncEFFileManager
 				//   rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
 				
 				Runtime runtime = Runtime.getRuntime();
-				String[] rsync_command = {"rsync", "-av", rsync_base + full_json_filename, rsync_tmp_dir_.getPath()};
+				String[] rsync_command = {"rsync", "-av", rsync_base + pairtree_full_json_filename, rsync_tmp_dir_.getPath()};
 
 				try {
 					Process proc = runtime.exec(rsync_command);
@@ -315,16 +368,12 @@ public class RsyncEFFileManager
 			logger.info("Storing '" + json_filename_tail + "' in cache"); 
 			id_cache_.put("json-id-" + json_filename_tail, json_content);
 		}
-		else {
-			logger.info("Retrieving '" + json_filename_tail + "' from cache"); 
-		}
+//		else {
+//			logger.info("Retrieving '" + json_filename_tail + "' from cache"); 
+//		}
+		
 		return json_content;
 	}
-	
-	public boolean usingRsync()
-	{
-		return local_pairtree_root_ == null;
-	}
-
+*/
 	
 }
