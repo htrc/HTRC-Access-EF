@@ -387,6 +387,7 @@ public class DownloadJSONAction extends URLShortenerAction
 			File file_bz = rsyncef_file_manager_.fileOpen(pairtree_full_json_filename_bz); 
 			
 			if (file_bz == null) {
+				System.err.println("****!!!! FAILED TO READ BZ FILE :::: Rsync error!!!!!!!!");
 				if (rsyncef_file_manager_.usingRsync()) {
 					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
 					break;
