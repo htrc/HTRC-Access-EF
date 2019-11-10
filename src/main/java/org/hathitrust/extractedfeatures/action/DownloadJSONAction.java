@@ -408,6 +408,9 @@ public class DownloadJSONAction extends URLShortenerAction
 					// consider having a metadata cache // ****
 					json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
 				}
+				
+				System.err.println("***** amount of JSON data to be appended = " + json_content_str.length());
+				
 				// Otherwise, leave full volume JSON content alone
 				flexi_response.append(json_content_str);
 
@@ -452,7 +455,8 @@ public class DownloadJSONAction extends URLShortenerAction
 				
 		if (input_file.exists()) {
 			if (flexi_response.isAsync()) {
-				// Nothing to do => mark progress as 100% => triggers close from client
+				// Nothing to do => mark progress as 100% 
+				// This triggers WS close from client, and then client initiates browser download action
 				flexi_response.sendProgress(100,100);
 			}
 			else {
@@ -462,6 +466,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 		else {
 			concatAndStreamVolumes(flexi_response, download_ids, output_format);
+			flexi_response.flush();
 		}
 	}
 
