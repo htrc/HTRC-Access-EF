@@ -438,8 +438,6 @@ public class DownloadJSONAction extends URLShortenerAction
 			if (flexi_response.isAsync()) {
 				// Nothing to do => mark progress as 100
 				flexi_response.sendProgress(100.0);
-				// ****
-				//flexi_response.close(); // sending 100% triggers close from client
 			}
 			else {
 				// Synchronous case => stream over file
@@ -449,92 +447,14 @@ public class DownloadJSONAction extends URLShortenerAction
 		else {
 			concatAndStreamVolumes(flexi_response, download_ids, output_format);
 		}
-
-		/*
-        	int download_ids_len = download_ids.length;
-        	if (download_ids_len > 1) {
-        		if (output_format == OutputFormat.JSON) {
-        			flexi_response.append("[");
-        		}
-        	}
-
-        	boolean first_entry = true;
-
-        	for (int i=0; i<download_ids_len; i++) {
-
-        		double prog_perc = 100 * i / (double)download_ids_len;
-    			flexi_response.sendProgress(prog_perc);
-
-        		String download_id = download_ids[i];
-
-        		String volume_id = download_id;
-        		boolean has_seq_num = false;
-        		boolean has_metadata = false;
-
-        		String seq_num_str = null;
-        		int seq_num = 0;
-
-        		Matcher seq_matcher = IdentiferRegExp.SeqPattern.matcher(download_id);
-        		if (seq_matcher.matches()) {
-        			has_seq_num = true;
-        			volume_id = seq_matcher.group(1);
-        			seq_num_str = seq_matcher.group(2);
-        			seq_num = Integer.parseInt(seq_num_str);
-        		}
-        		else {
-        			Matcher md_matcher = IdentiferRegExp.MetadataPattern.matcher(download_id);
-        			if (md_matcher.matches()) {
-        				volume_id = md_matcher.group(1);
-        				has_metadata = true;
-        			}
-        		}
-
-        		String json_content_str = rsyncef_file_manager_.getVolumeContent(volume_id);
-
-        		if (json_content_str == null) {
-        			if (rsyncef_file_manager_.usingRsync()) {
-        				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
-        				break;
-        			}
-        			else {
-        				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
-        				break;
-        			}
-        		}
-        		else {
-        			if (has_seq_num) {
-        				// consider having a page-level cache // ****
-        				json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
-
-        			}			
-        			else if (has_metadata) {
-        				// consider having a metadata cache // ****
-        				json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
-        			}
-        			// Otherwise, leave full volume JSON content alone
-        			flexi_response.append(json_content_str);
-
-        			if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
-        				if (output_format == OutputFormat.JSON) {
-        					flexi_response.append(",");
-        				}
-        			}
-        		}
-
-        		first_entry = false;
-        	}
-
-        	if (download_ids_len > 1) {
-        		if (output_format == OutputFormat.JSON)  {
-        			flexi_response.append("]");
-        		}
-        	}
-		 */
 	}
 
 	protected void outputZippedVolumesAdaptive(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
+		// **************** *****
+		// This method still needs converting to the new WebSocket aware way of doing things
+		
 		// This version adaptively works out if it can download a single file or else needs
 		// to zip things up
 		int download_ids_len = download_ids.length;
@@ -700,8 +620,6 @@ public class DownloadJSONAction extends URLShortenerAction
 			if (flexi_response.isAsync()) {
 				// Nothing to do => mark progress as 100
 				flexi_response.sendProgress(100.0); // sending 100% triggers close from client
-				//****
-				//flexi_response.close();
 			}
 			else {
 				streamExistingVolumesFile(flexi_response, input_zip_file);
