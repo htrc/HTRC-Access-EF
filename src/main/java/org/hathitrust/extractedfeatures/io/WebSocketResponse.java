@@ -141,6 +141,7 @@ public class WebSocketResponse implements FlexiResponse
 		
 		JSONObject response_json = generateOKMessageTemplate("progress");
 		response_json.put("percentage",percentage);	
+		response_json.put("percentage-formatted",percentage_formatted);	
 		response_json.put("message",mess);	
 		
 		sendMessage(response_json);
