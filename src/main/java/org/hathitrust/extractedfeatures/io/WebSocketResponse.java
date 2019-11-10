@@ -228,6 +228,7 @@ public class WebSocketResponse implements FlexiResponse
 			try {
 				System.err.println("WebSocketResponse.close(): closing internal file OS stream");
 				os_.close();
+				os_ = null;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

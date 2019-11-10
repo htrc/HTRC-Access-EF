@@ -351,7 +351,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 			System.err.println("**** concatAndStreamVolumes() " + i + "/" + download_ids_len);
-			flexi_response.sendProgress(i,download_ids_len);
+			flexi_response.sendProgress(i+1,download_ids_len);
 
 			String download_id = download_ids[i];
 
@@ -506,7 +506,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 
-			http_flexi_response.sendProgress(i,download_ids_len);
+			http_flexi_response.sendProgress(i+1,download_ids_len);
 
 			String download_id = download_ids[i];
 
@@ -586,7 +586,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 
-			flexi_response.sendProgress(i,download_ids_len);
+			flexi_response.sendProgress(i+1,download_ids_len);
 
 			String download_id = download_ids[i];
 
