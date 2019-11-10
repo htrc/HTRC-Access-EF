@@ -13,7 +13,7 @@ public interface FlexiResponse
 	public void setHeader(String header_name, String header_value);
 	public void setContentDispositionAttachment(String filename);
 	
-	public void sendProgress(double percentage);
+	public void sendProgress(int numer, int denom);
 
 	public void sendError(int http_status_code, String message) throws IOException;
 	public void sendRedirect(String location) throws IOException;

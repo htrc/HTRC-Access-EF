@@ -63,10 +63,12 @@ public class HttpResponse implements FlexiResponse
 	}
 	
 	
-	public void sendProgress(double percentage)
+	public void sendProgress(int numer, int denom)
 	{
+		double percentage = 100 * numer / (double)denom;
 		String percentage_formatted = String.format("%.2f", percentage);
 		
+		// Print out following as debugging info?
 		//String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted + "%";
 		//System.out.println(mess);
 	}

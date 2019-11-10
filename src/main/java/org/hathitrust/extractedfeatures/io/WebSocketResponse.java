@@ -124,9 +124,18 @@ public class WebSocketResponse implements FlexiResponse
 	}
 	
 	
-	public void sendProgress(double percentage)
+	public void sendProgress(int numer, int denom)
 	{
-		String percentage_formatted = String.format("%.2f", percentage);
+		double percentage = 100 * numer / (double)denom;
+		
+		String percentage_formatted;
+		if (denom<150) {
+			// when number of items around 100, nicer to show integer rounded percentages
+			percentage_formatted = String.format("%d", Math.round(percentage));
+		}
+		else {
+			percentage_formatted = String.format("%.2f", percentage);
+		}
 		
 		String mess = "Thread: " + Thread.currentThread().getName() + ", progress " + percentage_formatted + "%";
 		

@@ -349,8 +349,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 
-			double prog_perc = 100 * i / (double)download_ids_len;
-			flexi_response.sendProgress(prog_perc);
+			flexi_response.sendProgress(i,download_ids_len);
 
 			String download_id = download_ids[i];
 
@@ -447,8 +446,8 @@ public class DownloadJSONAction extends URLShortenerAction
 				
 		if (input_file.exists()) {
 			if (flexi_response.isAsync()) {
-				// Nothing to do => mark progress as 100
-				flexi_response.sendProgress(100.0);
+				// Nothing to do => mark progress as 100% => triggers close from client
+				flexi_response.sendProgress(100,100);
 			}
 			else {
 				// Synchronous case => stream over file
@@ -495,8 +494,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 
-			double prog_perc = 100 * i / (double)download_ids_len;
-			http_flexi_response.sendProgress(prog_perc);
+			http_flexi_response.sendProgress(i,download_ids_len);
 
 			String download_id = download_ids[i];
 
@@ -576,8 +574,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 
-			double prog_perc = 100 * i / (double)download_ids_len;
-			flexi_response.sendProgress(prog_perc);
+			flexi_response.sendProgress(i,download_ids_len);
 
 			String download_id = download_ids[i];
 
@@ -635,8 +632,8 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		if (input_zip_file.exists()) {
 			if (flexi_response.isAsync()) {
-				// Nothing to do => mark progress as 100
-				flexi_response.sendProgress(100.0); // sending 100% triggers close from client
+				// Nothing to do => mark progress as 100% => triggers close from client
+				flexi_response.sendProgress(100,100);
 			}
 			else {
 				streamExistingVolumesFile(flexi_response, input_zip_file);
