@@ -218,7 +218,7 @@ public class RsyncEFFileManager
 		if (json_content == null) {
 			// Not in cache
 
-		    logger.info("Did not find '" + json_filename_tail_bz + "' in cache"); 
+		    //logger.info("Did not find '" + json_filename_tail_bz + "' in cache"); 
 
 			// Usage of HTRC rsync server:
 			//   rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .

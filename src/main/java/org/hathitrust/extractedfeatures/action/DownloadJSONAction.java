@@ -350,7 +350,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		boolean first_entry = true;
 
 		for (int i=0; i<download_ids_len; i++) {
-
+			System.err.println("**** concatAndStreamVolumes() " + i + "/" + download_ids_len);
 			flexi_response.sendProgress(i,download_ids_len);
 
 			String download_id = download_ids[i];
@@ -377,8 +377,8 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 			}
 
-			System.err.println("**** download_id: " + download_id);
-			System.err.println("**** volume_id: " + volume_id);
+			//System.err.println("**** download_id: " + download_id);
+			System.err.println("**** volume_id\t" + volume_id);
 			
 			
 			// ****
