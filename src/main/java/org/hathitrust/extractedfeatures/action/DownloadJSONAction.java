@@ -46,7 +46,7 @@ public class DownloadJSONAction extends URLShortenerAction
 	public String[] getDescription()
 	{
 		String[]  mess =
-			{ "Download HTRC Extracted Features JSON files for the given IDs.",
+			{ "Download HTRC Extracted Features JSON files for the given ID(s) or key.",
 					"Required parameter: 'id', 'ids' or 'key'\n"
 							+"Optional parameter: 'output=json|zip|csv|tsv (defaults to 'json')",
 							"Returns:            Uncompressed JSON Extracted Feature file content for given id(s);\n"
