@@ -417,6 +417,7 @@ public class AccessServlet extends WebSocketServlet
 	@OnWebSocketClose
 	public void onClose(Session session, int status, String reason) {
 		String remote_host = session.getRemoteAddress().getHostString();						    
-		System.out.println("WebSocket AccessServet.onClose() from " + remote_host);
+		System.err.println("WebSocket AccessServet.onClose() from " + remote_host);
+		ws_flexi_response_.close();
 	}
 }
