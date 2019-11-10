@@ -247,7 +247,7 @@ public class RsyncEFFileManager
 				
 				json_content = readCompressedTextFile(tmp_full_json_file_bz);
 				
-				logger.info("doRsyncDownload() Storing '" + json_filename_tail_bz + "' in cache"); 
+				//logger.info("doRsyncDownload() Storing '" + json_filename_tail_bz + "' in cache"); 
 				id_cache_.put("json-id-" + json_filename_tail_bz, json_content);
 
 				
