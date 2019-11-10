@@ -305,19 +305,19 @@ public class DownloadJSONAction extends URLShortenerAction
 	{
 		flexi_response.setContentDispositionAttachment(output_filename);
 	}
-	protected void streamExistingVolumesFile(FlexiResponse flexi_response, File input_zip_file)
+	protected void streamExistingVolumesFile(FlexiResponse flexi_response, File input_file)
 			throws ServletException, IOException
 	{
-		//System.err.println("**** Streaming existing volumes file:" + input_zip_file.getAbsolutePath());
+		//System.err.println("**** Streaming existing volumes file:" + input_file.getAbsolutePath());
 		
 		OutputStream ros = flexi_response.getOutputStream();
 		BufferedOutputStream bros = new BufferedOutputStream(ros);
 
-		FileInputStream fis = new FileInputStream(input_zip_file);
+		FileInputStream fis = new FileInputStream(input_file);
 		BufferedInputStream bis = new BufferedInputStream(fis);
 
-		int input_zip_filesize = (int) input_zip_file.length();
-		flexi_response.setContentLength(input_zip_filesize);
+		int input_filesize = (int) input_file.length();
+		flexi_response.setContentLength(input_filesize);
 
 		byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
 
@@ -339,6 +339,8 @@ public class DownloadJSONAction extends URLShortenerAction
 	{
 
 		int download_ids_len = download_ids.length;
+		System.err.println("**** concatAndStreamVolumes() download_ids.len = " + download_ids_len);
+		
 		if (download_ids_len > 1) {
 			if (output_format == OutputFormat.JSON) {
 				flexi_response.append("[");
@@ -375,6 +377,10 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 			}
 
+			System.err.println("**** download_id: " + download_id);
+			System.err.println("**** volume_id: " + volume_id);
+			
+			
 			// ****
 			//String json_content_str = rsyncef_file_manager_.getVolumeContent(volume_id);
 			String pairtree_full_json_filename_bz = VolumeUtils.idToPairtreeFilename(volume_id);
