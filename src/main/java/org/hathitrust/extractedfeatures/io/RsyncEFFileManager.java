@@ -49,7 +49,7 @@ public class RsyncEFFileManager
 	
 	private RsyncEFFileManager(ServletConfig config)
 	{	
-		synchronized (uses_custom_tmpdir_) {
+		synchronized (RsyncEFFileManager.class) {
 			if (uses_custom_tmpdir_ == null) {
 				// haven't previously checked for config parameter being set
 				String java_io_tmpdir_str = config.getInitParameter("java.io.tmpdir");
@@ -108,7 +108,7 @@ public class RsyncEFFileManager
 			}
 		}
 
-		synchronized (id_cache_) {
+		synchronized (RsyncEFFileManager.class) {
 			if (id_cache_ == null) {
 				try {
 					id_cache_ = JCS.getInstance( "idCache" );
@@ -119,9 +119,7 @@ public class RsyncEFFileManager
 					System.err.println(message);
 				}
 			}
-		}
 		
-		synchronized (rsyncef_downloads_in_progress_) {
 			if (rsyncef_downloads_in_progress_ == null) {
 				rsyncef_downloads_in_progress_ = new HashMap<String,Process>();
 			}
