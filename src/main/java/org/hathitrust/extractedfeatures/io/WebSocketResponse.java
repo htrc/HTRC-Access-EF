@@ -22,10 +22,10 @@ public class WebSocketResponse implements FlexiResponse
 	protected Session ws_session_;
 	protected RemoteEndpoint ws_endpoint_;
 
-	protected String output_filename_ = null;
+	protected String output_filename_      = null;
 	protected String full_output_filename_ = null;
-	protected OutputStream os_ = null;
-	protected OutputStreamWriter osw_ = null;
+	protected OutputStream os_             = null;
+	protected OutputStreamWriter osw_      = null;
 	
 	protected static RsyncEFFileManager rsyncef_file_manager_ = null;
 	
@@ -119,8 +119,25 @@ public class WebSocketResponse implements FlexiResponse
 	
 	public void setContentDispositionAttachment(String filename)
 	{
-		output_filename_ = filename;
-		setHeader("Content-Disposition","attachment; filename=\""+filename+"\"");
+		if (output_filename_ != null) {
+			String mess = "Error: WebSocketResponse.setContentDispositionAttachment()";
+			if (os_ == null) {
+				mess += " pre-existing file attachment already exists: " + output_filename_;
+			
+			}
+			else {
+				mess += " already streaming to output file: " + output_filename_;
+			}
+			System.err.println(mess);
+		
+			// pseudo sendError()
+			JSONObject response_json = generateErrorMessageTemplate(HttpServletResponse.SC_BAD_REQUEST,mess);		
+			sendMessage(response_json);
+		}
+		else {
+			output_filename_ = filename;
+			setHeader("Content-Disposition","attachment; filename=\""+filename+"\"");
+		}
 	}
 	
 	
@@ -168,7 +185,6 @@ public class WebSocketResponse implements FlexiResponse
 	{
 		try {
 			OutputStreamWriter osw = getOutputStreamWriter();
-			//ws_endpoint_.sendString(text);
 			osw.append(text);
 		}
 		catch (IOException e) {
@@ -178,7 +194,17 @@ public class WebSocketResponse implements FlexiResponse
 	
 	public void flush()
 	{
-		if (os_ != null) {
+		
+		if (osw_ != null) {
+			try {
+				// os_ is wrapped up inside osw_
+				System.err.println("WebSocketResponse.flush(): Flushing internal file OS stream writer");
+				osw_.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		else if (os_ != null) {
 			try {
 				System.err.println("WebSocketResponse.flush(): Flushing internal file OS stream");
 				os_.flush();
@@ -186,6 +212,7 @@ public class WebSocketResponse implements FlexiResponse
 				e.printStackTrace();
 			}
 		}
+		
 		System.err.println("WebSocketResponse.flush(): Is it possible to flush socket stream? (not currently implemented)");
 	}
 	
@@ -217,22 +244,38 @@ public class WebSocketResponse implements FlexiResponse
 		return osw_;
 	}
 	
+	/*
 	public String getFullOutputFilename()
 	{
 		return full_output_filename_;	
 	}
+	*/
 	
 	public void close()
 	{
-		if (os_ != null) {
+		if (osw_ != null) {
+			// os_ is wrapped up inside osw_
 			try {
-				System.err.println("WebSocketResponse.close(): closing internal file OS stream");
-				os_.close();
-				os_ = null;
+				System.err.println("WebSocketResponse.close(): closing internal file OS stream writer");
+				osw_.close();
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		else if (os_ != null) {
+			try {
+				System.err.println("WebSocketResponse.close(): closing internal file OS stream");
+				os_.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		os_  = null;
+		osw_ = null;
+		output_filename_      = null;
+		full_output_filename_ = null;
 		
 		System.err.println("WebSocketResponse.close(): Closing WebSocket session");
 		ws_session_.close();
