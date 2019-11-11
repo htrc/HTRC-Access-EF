@@ -282,7 +282,7 @@ public class RsyncEFFileManager
 		} else {
 			Process proc = null;
 			synchronized(rsyncef_downloads_in_progress_) {
-				System.err.println("#### fileOpen(): Testing to see if rsync process already in play for: " + pairtree_full_json_filename_bz)
+				System.err.println("#### fileOpen(): Testing to see if rsync process already in play for: " + pairtree_full_json_filename_bz);
 				proc = rsyncef_downloads_in_progress_.get(pairtree_full_json_filename_bz);
 			}
 			System.err.println("#### fileOpen(): returned proccess object = " + proc);
