@@ -339,8 +339,7 @@ public class DownloadJSONAction extends URLShortenerAction
 	{
 
 		int download_ids_len = download_ids.length;
-		System.err.println("**** concatAndStreamVolumes() download_ids.len = " + download_ids_len);
-		
+
 		if (download_ids_len > 1) {
 			if (output_format == OutputFormat.JSON) {
 				flexi_response.append("[");
@@ -350,7 +349,6 @@ public class DownloadJSONAction extends URLShortenerAction
 		boolean first_entry = true;
 
 		for (int i=0; i<download_ids_len; i++) {
-			System.err.println("**** concatAndStreamVolumes() " + i + "/" + download_ids_len);
 			flexi_response.sendProgress(i+1,download_ids_len);
 
 			String download_id = download_ids[i];
@@ -377,17 +375,13 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 			}
 
-			//System.err.println("**** download_id: " + download_id);
-			System.err.println("**** volume_id\t" + volume_id);
-			
-			
+
 			// ****
 			//String json_content_str = rsyncef_file_manager_.getVolumeContent(volume_id);
 			String pairtree_full_json_filename_bz = VolumeUtils.idToPairtreeFilename(volume_id);
 			File file_bz = rsyncef_file_manager_.fileOpen(pairtree_full_json_filename_bz); 
 			
 			if (file_bz == null) {
-				System.err.println("****!!!! FAILED TO READ BZ FILE :::: Rsync error!!!!!!!!");
 				if (rsyncef_file_manager_.usingRsync()) {
 					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
 					break;
@@ -409,8 +403,6 @@ public class DownloadJSONAction extends URLShortenerAction
 					// consider having a metadata cache // ****
 					json_content_str = this.outputExtractVolumeMetadata(json_content_str,output_format,first_entry);
 				}
-				
-				System.err.println("***** amount of JSON data to be appended = " + json_content_str.length());
 				
 				// Otherwise, leave full volume JSON content alone
 				flexi_response.append(json_content_str);
@@ -467,7 +459,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 		else {
 			concatAndStreamVolumes(flexi_response, download_ids, output_format);
-			flexi_response.flush();
+			//flexi_response.flush(); // ****
 		}
 	}
 
