@@ -230,13 +230,13 @@ public class RsyncEFFileManager
 				Process proc = null;
 				
 				synchronized(rsyncef_downloads_in_progress_) {
-					System.err.println("<***> running rsync command to get: " + pairtree_full_json_filename_bz);
+					//System.err.println("<***> running rsync command to get: " + pairtree_full_json_filename_bz);
 					proc = runtime.exec(rsync_command);
 					rsyncef_downloads_in_progress_.put(pairtree_full_json_filename_bz, proc);
 				}
 
 				int retCode = proc.waitFor();
-				System.err.println("</***> completed rsync command to get: " + pairtree_full_json_filename_bz);
+				//System.err.println("</***> completed rsync command to get: " + pairtree_full_json_filename_bz);
 				
 				synchronized(rsyncef_downloads_in_progress_) {
 					rsyncef_downloads_in_progress_.remove(pairtree_full_json_filename_bz);
@@ -282,17 +282,17 @@ public class RsyncEFFileManager
 		} else {
 			Process proc = null;
 			synchronized(rsyncef_downloads_in_progress_) {
-				System.err.println("#### fileOpen(): Testing to see if rsync process already in play for: " + pairtree_full_json_filename_bz);
+				//System.err.println("#### fileOpen(): Testing to see if rsync process already in play for: " + pairtree_full_json_filename_bz);
 				proc = rsyncef_downloads_in_progress_.get(pairtree_full_json_filename_bz);
 			}
-			System.err.println("#### fileOpen(): returned proccess object = " + proc);
+			//System.err.println("#### fileOpen(): returned proccess object = " + proc);
 			
 			if (proc != null) {
 				try {
-					System.err.println("#### fileOpen(): Away to wait for proc to complete for: " + pairtree_full_json_filename_bz);
+					//System.err.println("#### fileOpen(): Away to wait for proc to complete for: " + pairtree_full_json_filename_bz);
 					
 					int ret_code = proc.waitFor();
-					System.err.println("#### fileOpen(): Proc now completed for: " + pairtree_full_json_filename_bz);
+					//System.err.println("#### fileOpen(): Proc now completed for: " + pairtree_full_json_filename_bz);
 
 					// If ret_code == 0, then there will be a version of the file waiting for us
 					// is the cache when doRsyncDownload() is called
@@ -310,7 +310,7 @@ public class RsyncEFFileManager
 
 			// Work through the rsync server
 			try {
-				System.err.println("#### fileOpen(): Away to call doRsyncDownload, where file should now be in cache: " + pairtree_full_json_filename_bz);
+				//System.err.println("#### fileOpen(): Away to call doRsyncDownload, where (if proc != null) the file should now be in cache: " + pairtree_full_json_filename_bz);
 
 				file = doRsyncDownload(pairtree_full_json_filename_bz);
 			} catch (Exception e) {
