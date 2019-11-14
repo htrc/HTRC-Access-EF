@@ -214,7 +214,7 @@ public class AccessServlet extends WebSocketServlet
 			
 			if (valid_cgi_download_id != null) {
 				String [] valid_download_ids = new String[] {valid_cgi_download_id};
-				download_json_.outputVolumes(flexi_response,valid_download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json");
+				download_json_.outputVolumes(flexi_response,valid_download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json","htrc-metadata-export.json");
 			}
 		} 
 		else if (cgi_download_ids != null) {
@@ -223,7 +223,7 @@ public class AccessServlet extends WebSocketServlet
 			String [] valid_download_ids = check_exists_.validityCheckIDs(flexi_response, download_ids);
 					
 			if (valid_download_ids != null) {
-			    download_json_.outputZippedVolumes(flexi_response,valid_download_ids,null);
+			    download_json_.outputZippedVolumes(flexi_response,valid_download_ids,null,"htrc-ef-export.zip");
 			}
 		} 
 		else if (cgi_convert_col != null) {

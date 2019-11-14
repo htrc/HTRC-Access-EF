@@ -49,7 +49,8 @@ public class DownloadJSONAction extends URLShortenerAction
 		String[]  mess =
 			{ "Download HTRC Extracted Features JSON files for the given ID(s) or key.",
 					"Required parameter: 'id', 'ids' or 'key'\n"
-							+"Optional parameter: 'output=json|zip|csv|tsv (defaults to 'json')",
+							+"Optional parameter: 'output=json|zip|csv|tsv (defaults to 'json')"
+							+"                    'output-filename-root=<filename-root> to control the output name used for the download",
 							"Returns:            Uncompressed JSON Extracted Feature file content for given id(s);\n"
 									+ "                    or a zipped up version, when output=zipfile."
 									+ "                  To return just the volume level metadata specify 'id' in the form mdp.123456789-metadata"
@@ -427,7 +428,7 @@ public class DownloadJSONAction extends URLShortenerAction
 	}
 
 	public void outputVolumes(FlexiResponse flexi_response, String[] download_ids, OutputFormat output_format,
-			String opt_cgi_key, String cgi_output) 
+			String opt_cgi_key, String cgi_output, String output_filename) 
 					throws ServletException, IOException
 	{
 		if (output_format == OutputFormat.JSON) {
@@ -439,8 +440,6 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		flexi_response.setCharacterEncoding("UTF-8");
 
-		String file_ext = "."+cgi_output;
-		String output_filename = getDownloadFilename("htrc-metadata-export",opt_cgi_key,file_ext);
 		setHeaderDownloadFilename(flexi_response,output_filename);
 
 		File input_file = rsyncef_file_manager_.getTmpStoredFile(output_filename);
@@ -486,6 +485,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		if (output_as_zip) {
 			// Output needs to be zipped up
 			http_flexi_response.setContentType("application/zip");
+			// **** Rework this methods params to pass in the export root filename, like its outputZippedVolumes counterpart
 			String output_zip_filename = getDownloadFilename("htrc-ef-export",opt_cgi_key,".zip");
 			setHeaderDownloadFilename(http_flexi_response,output_zip_filename);
 
@@ -625,11 +625,10 @@ public class DownloadJSONAction extends URLShortenerAction
 	}
 
 
-	public void outputZippedVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
-			throws ServletException, IOException
+	public void outputZippedVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key, 
+			String output_zip_filename) throws ServletException, IOException
 	{
 		flexi_response.setContentType("application/zip");
-		String output_zip_filename = getDownloadFilename("htrc-ef-export",opt_cgi_key,".zip");
 		setHeaderDownloadFilename(flexi_response,output_zip_filename);
 
 		File input_zip_file = rsyncef_file_manager_.getTmpStoredFile(output_zip_filename);
@@ -655,6 +654,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		String cgi_download_id = getParameter(param_map,"id");
 		String cgi_download_ids = getParameter(param_map,"ids");
 		String cgi_output = getParameter(param_map,"output");
+		String cgi_output_filename_root = getParameter(param_map,"output-filename-root");
 
 		if (cgi_output == null) {
 			cgi_output = "json";
@@ -683,10 +683,19 @@ public class DownloadJSONAction extends URLShortenerAction
 
 				if (valid_download_ids.length == download_ids.length) {
 					if (cgi_output.equals("zip")) {
-						outputZippedVolumes(flexi_response,valid_download_ids,cgi_key);
+						String output_zip_filename;
+						if (cgi_output_filename_root != null) {
+							output_zip_filename = cgi_output_filename_root + ".zip";
+						}
+						else {
+							output_zip_filename = getDownloadFilename("htrc-ef-export",cgi_key,".zip");
+						}
+						
+						outputZippedVolumes(flexi_response,valid_download_ids,cgi_key,output_zip_filename);
 					}
 					else if (cgi_output.equals("json") || cgi_output.equals("csv") || cgi_output.equals("tsv")) {
 						OutputFormat output_format = null;
+		
 						if (cgi_output.equals("json") ) {
 							output_format = OutputFormat.JSON;
 						}
@@ -696,7 +705,17 @@ public class DownloadJSONAction extends URLShortenerAction
 						if (cgi_output.equals("tsv") ) {
 							output_format = OutputFormat.TSV;
 						}
-						outputVolumes(flexi_response,valid_download_ids,output_format,cgi_key,cgi_output);
+						
+						String file_ext = "."+cgi_output;
+						
+						String output_filename;
+						if (cgi_output_filename_root != null) {
+							output_filename = cgi_output_filename_root + file_ext;
+						}
+						else {
+							output_filename = getDownloadFilename("htrc-metadata-export",cgi_key,file_ext);
+						}
+						outputVolumes(flexi_response,valid_download_ids,output_format,cgi_key,cgi_output,output_filename);
 					}
 					else {
 						flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognized parameter value to action '" + getHandle()
