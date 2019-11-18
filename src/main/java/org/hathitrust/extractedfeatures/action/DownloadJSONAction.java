@@ -606,31 +606,50 @@ public class DownloadJSONAction extends URLShortenerAction
 				String json_filename_tail = VolumeUtils.full_filename_to_tail(pairtree_full_json_filename_bz);
 
 				ZipEntry zipentry = new ZipEntry(json_filename_tail);
-				zbros.putNextEntry(zipentry);
+				if (!flexi_response.isClosed()) {
+					zbros.putNextEntry(zipentry);
+				}
+				else {
+					// This could happen with a WebSocket, for example, when the user has navigated
+					// away from the SolrEF result-set page	
+					zip_up_interrupted = true;
+				}
+				
+				if (!zip_up_interrupted) {
+					// Fill out the zip entry
+					byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
 
-				byte[] buf = new byte[DOWNLOAD_BUFFER_SIZE];
+					while (true) {
+						int num_bytes = bis.read(buf);
+						if (num_bytes == -1) {
+							break;
+						}
 
-				while (true) {
-					int num_bytes = bis.read(buf);
-					if (num_bytes == -1) {
-						break;
-					}
-					
-					if (!flexi_response.isClosed()) {
-						download_os.write(buf, 0, num_bytes);
-					}
-					else {
-						// This could happen with a WebSocket, for example, when the user has navigated
-						// away from the SolrEF result-set page	
-						zip_up_interrupted = true;
-						break;
+						if (!flexi_response.isClosed()) {
+							download_os.write(buf, 0, num_bytes);
+						}
+						else {
+							// as for zbros above
+							zip_up_interrupted = true;
+							break;
+						}
 					}
 				}
-
+				
 				bis.close();	    
-				zbros.closeEntry();
-
-				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);	
+				
+				if (!flexi_response.isClosed()) {
+					zbros.closeEntry();
+				}
+				else {
+					zip_up_interrupted = true;
+				}
+				
+				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);
+					
+				if (zip_up_interrupted) {
+					break;
+				}
 			}
 		}
 		
