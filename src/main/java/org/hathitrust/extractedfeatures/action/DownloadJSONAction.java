@@ -653,14 +653,7 @@ public class DownloadJSONAction extends URLShortenerAction
 			}
 		}
 		
-		if ((zip_up_interrupted) && (flexi_response.isAsync())) {
-			// The server-side file being built up for download is incomplete
-			// => remove it
-			flexi_response.removeOutputStreamFile();
-		}
-		else {
-			// Things finished as expected
-			// => close the download output stream
+		if (!zip_up_interrupted) {
 			download_os.close();
 		}
 	}

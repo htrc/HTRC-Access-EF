@@ -344,7 +344,7 @@ public class AccessServlet extends WebSocketServlet
         // https://stackoverflow.com/questions/27671162/accessing-httpsession-inside-an-annotated-websocket-class-on-embedded-jetty-9
     
 	private WebSocketResponse ws_flexi_response_ = null;
-	private boolean for_download_complete_ = false;
+	private boolean for_download_inprogress_ = false;
 	
 	@OnWebSocketConnect
 	public void onConnect(Session session) throws IOException {
@@ -379,18 +379,19 @@ public class AccessServlet extends WebSocketServlet
 			if (command.equals("start-download")) {
 				try {
 					synchronized (this) {
-						for_download_complete_ = false;
+						for_download_inprogress_ = true;
 					}
 					
 					doFlexiGet(param_map, ws_flexi_response_);
 							
 					if (!ws_flexi_response_.isClosed()) {
+						// Have successfully prepared the file for download
+						synchronized (this) {
+							for_download_inprogress_ = false;
+						}
+						
 						JSONObject json_response = ws_flexi_response_.generateOKMessageTemplate("download-complete");
 						ws_flexi_response_.sendMessage(json_response);
-					
-						synchronized (this) {
-							for_download_complete_ = true;
-						}
 					}
 				}
 				catch (Exception e) {
@@ -413,8 +414,9 @@ public class AccessServlet extends WebSocketServlet
 		System.err.println("WebSocket AccessServet.onClose() from " + remote_host);
 		
 		synchronized (this) {
-			if (!for_download_complete_) {			
-				// need to signal stop to a download writing process
+			if (for_download_inprogress_) {		
+				// Something went wrong, such as the user browsing away from the SolrEF result-set page
+				ws_flexi_response_.removeOutputStreamFile();
 			}
 		}
 		ws_flexi_response_.close();
