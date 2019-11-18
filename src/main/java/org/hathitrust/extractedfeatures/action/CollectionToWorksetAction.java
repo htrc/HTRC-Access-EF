@@ -118,8 +118,10 @@ public class CollectionToWorksetAction extends IdMongoDBAction
 						+ "as they are not in the HTRC Extracted Feature dataset\n");
 				flexi_response.append(workset_unfriendly_sb.toString());
 			}
+			
 			flexi_response.flush();
-		} catch (Exception e) {
+		} 
+		catch (Exception e) {
 			e.printStackTrace();
 			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST,
 					"Failed to convert HT collection to HTRC workset");

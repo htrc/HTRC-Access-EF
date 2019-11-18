@@ -19,12 +19,12 @@ public interface FlexiResponse
 	public void sendRedirect(String location) throws IOException;
 		
 	public void append(String text);
-	public void flush();
+	public void flush(); // Currently used in CollectionToWorksetAction, but not clear if flush() actually needed now
 
 	public OutputStream getOutputStream() throws IOException;
-	public boolean removeOutputStreamFile(); // ****
-	
-	public void close();
+
 	public boolean isClosed();
+	public void close();
+
 	
 }

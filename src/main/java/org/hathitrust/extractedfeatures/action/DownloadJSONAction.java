@@ -338,19 +338,26 @@ public class DownloadJSONAction extends URLShortenerAction
 	public void concatAndStreamVolumes(FlexiResponse flexi_response, String[] download_ids, OutputFormat output_format) 
 			throws ServletException, IOException
 	{
-
+		boolean concat_up_interrupted = false;
+		
 		int download_ids_len = download_ids.length;
 
 		if (download_ids_len > 1) {
 			if (output_format == OutputFormat.JSON) {
-				flexi_response.append("[");
+				if (!flexi_response.isClosed()) {
+					flexi_response.append("[");
+				}
+				else {
+					System.err.println("DownloadJSONAction::concatAndStreamVolumes() Failed to output any data");
+					return;
+				}
 			}
 		}
 
 		boolean first_entry = true;
 
 		for (int i=0; i<download_ids_len; i++) {
-			flexi_response.sendProgress(i+1,download_ids_len);
+			flexi_response.sendProgress(i,download_ids_len);
 
 			String download_id = download_ids[i];
 
@@ -385,11 +392,16 @@ public class DownloadJSONAction extends URLShortenerAction
 			if (file_bz == null) {
 				if (rsyncef_file_manager_.usingRsync()) {
 					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Rsync failed");
-					break;
 				}
 				else {
 					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
-					break;
+				}
+				
+				if (i > 0) {
+					System.err.println("Error occurred partway through generating JSON files.  Concatenated content will be incomplete");
+					if (flexi_response.isAsync()) {
+						concat_up_interrupted = true;
+					}
 				}
 			}
 			else {
@@ -406,25 +418,47 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 				
 				// Otherwise, leave full volume JSON content alone
-				flexi_response.append(json_content_str);
-
+				
+				if (!flexi_response.isClosed()) {
+					flexi_response.append(json_content_str);
+				}
+				else {
+					concat_up_interrupted = true;
+				}
+				
 				if ((download_ids_len > 1) && ((i+1) < download_ids_len)) {
 					if (output_format == OutputFormat.JSON) {
-						flexi_response.append(",");
+						if (!flexi_response.isClosed()) {
+							flexi_response.append(",");
+						}
+						else {
+							concat_up_interrupted = true;
+						}
 					}
 				}
 			}
 
 			rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz); 
 			
+			if (concat_up_interrupted) {
+				break;
+			}
+			
 			first_entry = false;
 		}
 
 		if (download_ids_len > 1) {
 			if (output_format == OutputFormat.JSON)  {
-				flexi_response.append("]");
+				if (!flexi_response.isClosed()) {
+					flexi_response.append("]");
+				}
 			}
-		}	  
+		}
+		
+		if (!concat_up_interrupted) {
+			// Everything completed satisfactorily
+			flexi_response.sendProgress(download_ids_len,download_ids_len); // 100 %
+		}
 	}
 
 	public void outputVolumes(FlexiResponse flexi_response, String[] download_ids, OutputFormat output_format,
@@ -461,6 +495,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 	}
 
+	/*
 	protected void outputZippedVolumesAdaptive(HttpResponse http_flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
@@ -558,7 +593,8 @@ public class DownloadJSONAction extends URLShortenerAction
 			download_os.close();
 		}
 	}
-
+*/
+	
 
 	public void zipUpAndStreamVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
@@ -574,7 +610,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		for (int i=0; i<download_ids_len; i++) {
 
-			flexi_response.sendProgress(i+1,download_ids_len);
+			flexi_response.sendProgress(i,download_ids_len);
 
 			String download_id = download_ids[i];
 
@@ -655,6 +691,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		
 		if (!zip_up_interrupted) {
 			download_os.close();
+			flexi_response.sendProgress(download_ids_len,download_ids_len);
 		}
 	}
 

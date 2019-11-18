@@ -413,12 +413,16 @@ public class AccessServlet extends WebSocketServlet
 		String remote_host = session.getRemoteAddress().getHostString();						    
 		System.err.println("WebSocket AccessServet.onClose() from " + remote_host);
 		
+		ws_flexi_response_.close();
+		
 		synchronized (this) {
 			if (for_download_inprogress_) {		
-				// Something went wrong, such as the user browsing away from the SolrEF result-set page
-				ws_flexi_response_.removeOutputStreamFile();
+				// Something -- such as the user browsing away from the SolrEF result-set page -- has occurred
+				// requiring the WebSocket to close before preparing the file to download has finished 
+				
+				ws_flexi_response_.cleanupPartialForDownloadFile();
+				for_download_inprogress_ = false;
 			}
 		}
-		ws_flexi_response_.close();
 	}
 }

@@ -95,6 +95,8 @@ public class HttpResponse implements FlexiResponse
 		}
 	}
 	
+	
+	/* Currently used in CollectionToWorksetAction, but not clear if flush() actually needed now */
 	public void flush()
 	{
 		try {
@@ -107,6 +109,7 @@ public class HttpResponse implements FlexiResponse
 	}
 	
 	
+	
 	public OutputStream getOutputStream() throws IOException
 	{
 		 OutputStream ros = http_response_.getOutputStream();
@@ -114,11 +117,6 @@ public class HttpResponse implements FlexiResponse
 		 return ros;
 	}
 
-	public boolean removeOutputStreamFile()
-	{
-		// In the HttpResponse condition, there is no file to delete
-		return false;
-	}
 	
 	synchronized public boolean isClosed()
 	{

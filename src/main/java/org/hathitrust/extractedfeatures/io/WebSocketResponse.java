@@ -22,8 +22,10 @@ public class WebSocketResponse implements FlexiResponse
 	protected Session ws_session_;
 	protected RemoteEndpoint ws_endpoint_;
 
-	protected String output_filename_      = null;
-	protected String full_output_filename_ = null;
+	protected String output_filename_             = null;
+	protected File   output_file_                 = null;
+	protected File   generated_for_download_file_ = null;
+	
 	protected OutputStream os_             = null;
 	protected OutputStreamWriter osw_      = null;
 	
@@ -193,9 +195,10 @@ public class WebSocketResponse implements FlexiResponse
 		}
 	}
 	
+	
+	/* Currently used in CollectionToWorksetAction, but not clear if flush() actually needed now */
 	public void flush()
-	{
-		
+	{	
 		if (osw_ != null) {
 			try {
 				// os_ is wrapped up inside osw_
@@ -217,6 +220,7 @@ public class WebSocketResponse implements FlexiResponse
 		System.err.println("WebSocketResponse.flush(): Is it possible to flush socket stream? (not currently implemented)");
 	}
 	
+	
 	public OutputStream getOutputStream() throws IOException
 	{
 		// **** As a result of this requirement, the file_manager is no longer
@@ -226,10 +230,9 @@ public class WebSocketResponse implements FlexiResponse
 		// => candidate for refactoring!
 		
 		if (os_ == null) {
-			File output_file = rsyncef_file_manager_.getForDownloadFile(output_filename_);
-			full_output_filename_ = output_file.getAbsolutePath(); // not currently used, delete? // ****
+			output_file_ = rsyncef_file_manager_.getForDownloadFile(output_filename_);
 
-			os_ = new FileOutputStream(output_file);
+			os_ = new FileOutputStream(output_file_);
 		}
 		
 		return os_;
@@ -243,21 +246,6 @@ public class WebSocketResponse implements FlexiResponse
 		}
 		
 		return osw_;
-	}
-	
-	public boolean removeOutputStreamFile()
-	{
-		boolean removed_file = false;
-		
-		if (full_output_filename_ != null) {
-			File full_output_file = new File(full_output_filename_);
-			removed_file = full_output_file.delete();
-		}
-		else {
-			System.err.println("Warning: specified file to delete in WebSocketResponse::removeOutputStreamFile() is null");
-		}
-		
-		return removed_file;
 	}
 	
 	synchronized public boolean isClosed()
@@ -288,8 +276,13 @@ public class WebSocketResponse implements FlexiResponse
 		
 		os_  = null;
 		osw_ = null;
-		output_filename_      = null;
-		full_output_filename_ = null;
+		
+		// store the name of the file prepared for download for later use,
+		// such as if it needs to delete it, if the preparation was exited early
+		// by the user browsing to a different page
+		generated_for_download_file_ = output_file_;
+		output_filename_ = null;
+		output_file_     = null;
 		
 		System.err.println("WebSocketResponse.close(): Closing WebSocket session");
 		ws_session_.close();
@@ -298,5 +291,22 @@ public class WebSocketResponse implements FlexiResponse
 		
 	}
 	
+	synchronized public void cleanupPartialForDownloadFile() 
+	{	
+		if (generated_for_download_file_ != null) {
+			String full_output_filename_ = generated_for_download_file_.getAbsolutePath(); 
+			
+			if (generated_for_download_file_.exists()) {
+				boolean removed_file = generated_for_download_file_.delete();
+				if (!removed_file) {
+					System.err.println("Error: failed to remove for-download file " + full_output_filename_ + " in WebSocketResponse::cleanupPartialForDownloadFile");
+				}
+			}
+			generated_for_download_file_ = null;
+		}
+		else {
+			System.err.println("Warning: specified file to delete in WebSocketResponse::cleanupPartialForDownloadFile() is null");
+		}
+	}
 }
 
