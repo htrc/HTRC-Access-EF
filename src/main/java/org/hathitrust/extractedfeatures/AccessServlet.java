@@ -383,12 +383,14 @@ public class AccessServlet extends WebSocketServlet
 					}
 					
 					doFlexiGet(param_map, ws_flexi_response_);
-												
-					JSONObject json_response = ws_flexi_response_.generateOKMessageTemplate("download-complete");
-					ws_flexi_response_.sendMessage(json_response);
+							
+					if (!ws_flexi_response_.isClosed()) {
+						JSONObject json_response = ws_flexi_response_.generateOKMessageTemplate("download-complete");
+						ws_flexi_response_.sendMessage(json_response);
 					
-					synchronized (this) {
-						for_download_complete_ = true;
+						synchronized (this) {
+							for_download_complete_ = true;
+						}
 					}
 				}
 				catch (Exception e) {
