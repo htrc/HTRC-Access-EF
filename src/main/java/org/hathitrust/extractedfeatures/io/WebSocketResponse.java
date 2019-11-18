@@ -299,7 +299,7 @@ public class WebSocketResponse implements FlexiResponse
 			if (generated_for_download_file_.exists()) {
 				boolean removed_file = generated_for_download_file_.delete();
 				if (!removed_file) {
-					System.err.println("Error: failed to remove for-download file " + full_output_filename_ + " in WebSocketResponse::cleanupPartialForDownloadFile");
+					System.err.println("Error: failed to remove for-download file " + full_output_filename_ + " in WebSocketResponse::cleanupPartialForDownloadFile()");
 				}
 			}
 			generated_for_download_file_ = null;
