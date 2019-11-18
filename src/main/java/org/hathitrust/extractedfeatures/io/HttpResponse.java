@@ -114,7 +114,18 @@ public class HttpResponse implements FlexiResponse
 		 return ros;
 	}
 
-	public void close()
+	public boolean removeOutputStreamFile()
+	{
+		// In the HttpResponse condition, there is no file to delete
+		return false;
+	}
+	
+	synchronized public boolean isClosed()
+	{
+		return http_response_ == null;
+	}
+	
+	synchronized public void close()
 	{
 		try {
 			PrintWriter pw = http_response_.getWriter();
@@ -122,6 +133,9 @@ public class HttpResponse implements FlexiResponse
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+		}
+		finally {
+			http_response_ = null;
 		}
 	}
 	

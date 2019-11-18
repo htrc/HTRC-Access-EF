@@ -71,7 +71,8 @@ public class WebSocketResponse implements FlexiResponse
 		String response_json_str = response_json.toString();
 
 		try {
-			ws_endpoint_.sendString(response_json_str);
+			ws_endpoint_.sendString(response_json_str); // java.io.IOException: Connection output is closed
+
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -225,7 +226,7 @@ public class WebSocketResponse implements FlexiResponse
 		// => candidate for refactoring!
 		
 		if (os_ == null) {
-			File output_file = rsyncef_file_manager_.getTmpStoredFile(output_filename_);
+			File output_file = rsyncef_file_manager_.getForDownloadFile(output_filename_);
 			full_output_filename_ = output_file.getAbsolutePath(); // not currently used, delete? // ****
 
 			os_ = new FileOutputStream(output_file);
@@ -244,14 +245,27 @@ public class WebSocketResponse implements FlexiResponse
 		return osw_;
 	}
 	
-	/*
-	public String getFullOutputFilename()
+	public boolean removeOutputStreamFile()
 	{
-		return full_output_filename_;	
+		boolean removed_file = false;
+		
+		if (full_output_filename_ != null) {
+			File full_output_file = new File(full_output_filename_);
+			removed_file = full_output_file.delete();
+		}
+		else {
+			System.err.println("Warning: specified file to delete in WebSocketResponse::removeOutputStreamFile() is null");
+		}
+		
+		return removed_file;
 	}
-	*/
 	
-	public void close()
+	synchronized public boolean isClosed()
+	{
+		return ws_session_ == null;
+	}
+	
+	synchronized public void close()
 	{
 		if (osw_ != null) {
 			// os_ is wrapped up inside osw_
@@ -279,6 +293,8 @@ public class WebSocketResponse implements FlexiResponse
 		
 		System.err.println("WebSocketResponse.close(): Closing WebSocket session");
 		ws_session_.close();
+		
+		ws_session_ = null;
 		
 	}
 	

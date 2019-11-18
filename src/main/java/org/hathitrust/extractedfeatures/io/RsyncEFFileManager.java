@@ -29,17 +29,17 @@ import org.hathitrust.extractedfeatures.VolumeUtils;
 
 public class RsyncEFFileManager
 {
-	protected static Logger logger = Logger.getLogger(RsyncEFFileManager.class.getName()); // org.hathitrust.extractedfeatures.io.
+	protected static Logger logger = Logger.getLogger(RsyncEFFileManager.class.getName());
 	
 	protected static final String rsync_base = "data.analytics.hathitrust.org::features/";
-        // When there was a server outage at Illinois, the following was used as a backup for the rsyc-server
-        //protected static final String rsync_base = "magnolia.soic.indiana.edu::features/";
+    // When there was a server outage at Illinois, the following was used as a backup for the rsync-server
+    // protected static final String rsync_base = "magnolia.soic.indiana.edu::features/";
 	    
 	protected static Boolean uses_custom_tmpdir_ = null;
 	
 	protected File local_pairtree_root_;
 	protected File rsync_tmp_dir_;
-	protected File zip_tmp_dir_;
+	protected File for_download_tmp_dir_;
 
 	protected final int DOWNLOAD_BUFFER_SIZE = 1024;
 
@@ -92,8 +92,8 @@ public class RsyncEFFileManager
 			rsync_tmp_dir_ = Files.createTempDirectory("rsync").toFile();
 			logger.info("Created temporary directory for rsynced JSON files: " + rsync_tmp_dir_.getAbsolutePath());
 			
-			zip_tmp_dir_ = Files.createTempDirectory("zip").toFile();
-			logger.info("Created temporary directory for zipped files: " + zip_tmp_dir_.getAbsolutePath());
+			for_download_tmp_dir_ = Files.createTempDirectory("for-download").toFile();
+			logger.info("Created temporary directory for download files: " + for_download_tmp_dir_.getAbsolutePath());
 			
 		} catch (IOException e) {
 			String message = String.format("Error creating temporary directcory: %s", e.getMessage());
@@ -200,9 +200,10 @@ public class RsyncEFFileManager
 		}
 	}
 	
-	public File getTmpStoredFile(String filename_tail)
+	public File getForDownloadFile(String filename_tail)
 	{
-		File tmp_stored_file = new File(zip_tmp_dir_, filename_tail);
+		// Got a null point exception on this line from WebSocketResponse:228 // *******
+		File tmp_stored_file = new File(for_download_tmp_dir_, filename_tail);
 		
 		return tmp_stored_file;
 	}

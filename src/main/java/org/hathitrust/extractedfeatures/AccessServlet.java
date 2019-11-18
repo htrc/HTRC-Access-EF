@@ -74,20 +74,6 @@ public class AccessServlet extends WebSocketServlet
 	public AccessServlet() {
 	}
 
-	/*
-	protected static Map<String,String[]> convertParamMapListToMapArray(Map<String,List<String>> map_list)
-	{
-		Map<String,String[]> map_array = new HashMap<String,String[]>();
-		
-		for (String key: map_list.keySet()) {
-			String [] val_array = (String[]) map_list.get(key).toArray();
-			map_array.put(key, val_array );
-		}
-	
-		return map_array;
-	}
-	*/
-	
 	protected static Map<String,List<String>> convertParamMapArrayToMapList(Map<String,String []> map_array)
 	{
 		Map<String,List<String>> map_list = new HashMap<String,List<String>>();
@@ -100,7 +86,21 @@ public class AccessServlet extends WebSocketServlet
 	
 		return map_list;
 	}
-    
+
+	/*
+	// keep around, could be useful if needing to convert Map data in the other direction
+	protected static Map<String,String[]> convertParamMapListToMapArray(Map<String,List<String>> map_list)
+	{
+		Map<String,String[]> map_array = new HashMap<String,String[]>();
+		
+		for (String key: map_list.keySet()) {
+			String [] val_array = (String[]) map_list.get(key).toArray();
+			map_array.put(key, val_array );
+		}
+	
+		return map_array;
+	}
+	*/
 	
     
 	/**
@@ -344,6 +344,7 @@ public class AccessServlet extends WebSocketServlet
         // https://stackoverflow.com/questions/27671162/accessing-httpsession-inside-an-annotated-websocket-class-on-embedded-jetty-9
     
 	private WebSocketResponse ws_flexi_response_ = null;
+	private boolean for_download_complete_ = false;
 	
 	@OnWebSocketConnect
 	public void onConnect(Session session) throws IOException {
@@ -363,7 +364,8 @@ public class AccessServlet extends WebSocketServlet
 	}
 
 	@OnWebSocketMessage
-	public void onText(Session session, String command) throws IOException {
+	public void onText(Session session, String command) throws IOException 
+	{
 		System.out.println("WebSocket AccessServet.onText() Message received:" + command);
 		//String thread_name = Thread.currentThread().getName();
 		//System.out.println("WebSocket AccessServet.onText(): thread_name = " + thread_name);
@@ -376,10 +378,18 @@ public class AccessServlet extends WebSocketServlet
 			
 			if (command.equals("start-download")) {
 				try {
+					synchronized (this) {
+						for_download_complete_ = false;
+					}
+					
 					doFlexiGet(param_map, ws_flexi_response_);
-								
+												
 					JSONObject json_response = ws_flexi_response_.generateOKMessageTemplate("download-complete");
 					ws_flexi_response_.sendMessage(json_response);
+					
+					synchronized (this) {
+						for_download_complete_ = true;
+					}
 				}
 				catch (Exception e) {
 					e.printStackTrace();
@@ -389,28 +399,9 @@ public class AccessServlet extends WebSocketServlet
 			else {
 				ws_flexi_response_.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Failed to recognize command: " + command);
 			}
-
-			
-			/*
-			String key = param_map.get("key").get(0);
-
-			// Using synchronized block, get current 'progress' value from websocket_flexi_reponse
-			
-			JSONObject response_json = new JSONObject();
-			if (command.equals("monitor-status")) {
-				response_json.put("status",200);		    
-				response_json.put("key",key);
-			}
-			else {
-				response_json.put("status",200);
-				response_json.put("message","Failed to recognize in-coming command: " + command);
-			}
-			
-			
-			String response = response_json.toString();
-			session.getRemote().sendString(response);
-			*/
-
+		}
+		else {
+			System.err.println("AccessServlet:onText() called when session was closed. ("+command+")");
 		}
 	}
 
@@ -418,6 +409,12 @@ public class AccessServlet extends WebSocketServlet
 	public void onClose(Session session, int status, String reason) {
 		String remote_host = session.getRemoteAddress().getHostString();						    
 		System.err.println("WebSocket AccessServet.onClose() from " + remote_host);
+		
+		synchronized (this) {
+			if (!for_download_complete_) {			
+				// need to signal stop to a download writing process
+			}
+		}
 		ws_flexi_response_.close();
 	}
 }

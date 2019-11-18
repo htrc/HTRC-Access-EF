@@ -22,7 +22,9 @@ public interface FlexiResponse
 	public void flush();
 
 	public OutputStream getOutputStream() throws IOException;
+	public boolean removeOutputStreamFile(); // ****
 	
 	public void close();
+	public boolean isClosed();
 	
 }

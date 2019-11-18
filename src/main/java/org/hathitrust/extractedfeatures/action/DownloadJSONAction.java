@@ -442,7 +442,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		setHeaderDownloadFilename(flexi_response,output_filename);
 
-		File input_file = rsyncef_file_manager_.getTmpStoredFile(output_filename);
+		File input_file = rsyncef_file_manager_.getForDownloadFile(output_filename);
 		//System.err.println("*** Testing for existence of: " + input_file.getAbsolutePath());
 				
 		if (input_file.exists()) {
@@ -458,7 +458,6 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 		else {
 			concatAndStreamVolumes(flexi_response, download_ids, output_format);
-			//flexi_response.flush(); // ****
 		}
 	}
 
@@ -550,11 +549,6 @@ public class DownloadJSONAction extends URLShortenerAction
 					download_os.close();
 				}
 
-				/*
-				if (rsyncef_file_manager_.usingRsync()) {
-					// remove file retrieved over rsync
-					file.delete(); // ****
-				}*/
 				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);
 				
 			}
@@ -569,6 +563,8 @@ public class DownloadJSONAction extends URLShortenerAction
 	public void zipUpAndStreamVolumes(FlexiResponse flexi_response, String[] download_ids, String opt_cgi_key) 
 			throws ServletException, IOException
 	{
+		boolean zip_up_interrupted = false;
+		
 		int download_ids_len = download_ids.length;
 
 		OutputStream ros = flexi_response.getOutputStream();
@@ -593,6 +589,15 @@ public class DownloadJSONAction extends URLShortenerAction
 				else {
 					flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST, "File failed");
 				}
+		
+				if (i > 0) {
+					System.err.println("Error occurred partway through zipping up JSON files.  Zipped up content will be incomplete");
+					if (flexi_response.isAsync()) {
+						download_os.close();
+						zip_up_interrupted = true;
+					}
+				}
+				
 				break;
 			}
 			else {
@@ -610,18 +615,35 @@ public class DownloadJSONAction extends URLShortenerAction
 					if (num_bytes == -1) {
 						break;
 					}
-					download_os.write(buf, 0, num_bytes);
+					
+					if (!flexi_response.isClosed()) {
+						download_os.write(buf, 0, num_bytes);
+					}
+					else {
+						// This could happen with a WebSocket, for example, when the user has navigated
+						// away from the SolrEF result-set page	
+						zip_up_interrupted = true;
+						break;
+					}
 				}
 
 				bis.close();	    
 				zbros.closeEntry();
 
-				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);
-					
+				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);	
 			}
 		}
-
-		download_os.close();
+		
+		if ((zip_up_interrupted) && (flexi_response.isAsync())) {
+			// The server-side file being built up for download is incomplete
+			// => remove it
+			flexi_response.removeOutputStreamFile();
+		}
+		else {
+			// Things finished as expected
+			// => close the download output stream
+			download_os.close();
+		}
 	}
 
 
@@ -631,7 +653,7 @@ public class DownloadJSONAction extends URLShortenerAction
 		flexi_response.setContentType("application/zip");
 		setHeaderDownloadFilename(flexi_response,output_zip_filename);
 
-		File input_zip_file = rsyncef_file_manager_.getTmpStoredFile(output_zip_filename);
+		File input_zip_file = rsyncef_file_manager_.getForDownloadFile(output_zip_filename);
 
 		if (input_zip_file.exists()) {
 			if (flexi_response.isAsync()) {
