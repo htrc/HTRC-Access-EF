@@ -45,7 +45,8 @@ public class RsyncEFFileManager
 
 	protected static CacheAccess<String, String> id_cache_ = null;
 	protected static RsyncEFFileManager rsyncef_file_manager_ = null;
-	protected static Map<String,Process> rsyncef_downloads_in_progress_ = null;
+	protected static Map<String,Process> rsyncef_jsonbz_downloads_in_progress_ = null;
+	protected static Map<String,Integer> rsyncef_jsonbz_downloaded_refcount_   = null;
 	
 	private RsyncEFFileManager(ServletConfig config)
 	{	
@@ -120,8 +121,11 @@ public class RsyncEFFileManager
 				}
 			}
 		
-			if (rsyncef_downloads_in_progress_ == null) {
-				rsyncef_downloads_in_progress_ = new HashMap<String,Process>();
+			if (rsyncef_jsonbz_downloads_in_progress_ == null) {
+				rsyncef_jsonbz_downloads_in_progress_ = new HashMap<String,Process>();
+			}
+			if (rsyncef_jsonbz_downloaded_refcount_ == null) {
+				rsyncef_jsonbz_downloaded_refcount_ = new HashMap<String,Integer>();				
 			}
 		}
 	}
@@ -230,17 +234,17 @@ public class RsyncEFFileManager
 			try {
 				Process proc = null;
 				
-				synchronized(rsyncef_downloads_in_progress_) {
+				synchronized(rsyncef_jsonbz_downloads_in_progress_) {
 					//System.err.println("<***> running rsync command to get: " + pairtree_full_json_filename_bz);
 					proc = runtime.exec(rsync_command);
-					rsyncef_downloads_in_progress_.put(pairtree_full_json_filename_bz, proc);
+					rsyncef_jsonbz_downloads_in_progress_.put(pairtree_full_json_filename_bz, proc);
 				}
 
 				int retCode = proc.waitFor();
 				//System.err.println("</***> completed rsync command to get: " + pairtree_full_json_filename_bz);
 				
-				synchronized(rsyncef_downloads_in_progress_) {
-					rsyncef_downloads_in_progress_.remove(pairtree_full_json_filename_bz);
+				synchronized(rsyncef_jsonbz_downloads_in_progress_) {
+					rsyncef_jsonbz_downloads_in_progress_.remove(pairtree_full_json_filename_bz);
 				}
 				
 				if (retCode != 0) {
@@ -282,9 +286,9 @@ public class RsyncEFFileManager
 			file = new File(local_pairtree_root_, pairtree_full_json_filename_bz);
 		} else {
 			Process proc = null;
-			synchronized(rsyncef_downloads_in_progress_) {
+			synchronized(rsyncef_jsonbz_downloads_in_progress_) {
 				//System.err.println("#### fileOpen(): Testing to see if rsync process already in play for: " + pairtree_full_json_filename_bz);
-				proc = rsyncef_downloads_in_progress_.get(pairtree_full_json_filename_bz);
+				proc = rsyncef_jsonbz_downloads_in_progress_.get(pairtree_full_json_filename_bz);
 			}
 			//System.err.println("#### fileOpen(): returned proccess object = " + proc);
 			
@@ -317,17 +321,48 @@ public class RsyncEFFileManager
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			
+			synchronized(rsyncef_jsonbz_downloaded_refcount_) {
+				if (rsyncef_jsonbz_downloaded_refcount_.containsKey(pairtree_full_json_filename_bz))
+				{
+					int ref_count = rsyncef_jsonbz_downloaded_refcount_.get(pairtree_full_json_filename_bz);
+					ref_count++;
+					rsyncef_jsonbz_downloaded_refcount_.put(pairtree_full_json_filename_bz,ref_count);
+				}
+				else {
+					rsyncef_jsonbz_downloaded_refcount_.put(pairtree_full_json_filename_bz,1);
+				}
+			}
 		}
 
 		return file;
 	}
 	
-	public void fileClose(String full_json_filename)
+	public void fileClose(String pairtree_full_json_filename_bz)
 	{
 		if (local_pairtree_root_ == null) {
-			// remove the file retrieved over rsync
-			File file = new File(full_json_filename);
-			file.delete(); 	
+			
+			synchronized(rsyncef_jsonbz_downloaded_refcount_) {
+				if (rsyncef_jsonbz_downloaded_refcount_.containsKey(pairtree_full_json_filename_bz))
+				{
+					int ref_count = rsyncef_jsonbz_downloaded_refcount_.get(pairtree_full_json_filename_bz);
+					ref_count--;
+					if (ref_count > 0) {
+						rsyncef_jsonbz_downloaded_refcount_.put(pairtree_full_json_filename_bz,ref_count);
+					}
+					else {
+						// remove the file retrieved over rsync
+						File file = new File(pairtree_full_json_filename_bz);
+						if (file.exists()) {
+							boolean removed_file = file.delete();
+							if (!removed_file) {
+								System.err.println("Error: failed to remove rsync downloaded file " + pairtree_full_json_filename_bz + " in WebSocketResponse::fileClose()");
+							}
+						}
+						rsyncef_jsonbz_downloaded_refcount_.remove(pairtree_full_json_filename_bz);
+					}
+				}
+			}
 		}
 	}
 	
