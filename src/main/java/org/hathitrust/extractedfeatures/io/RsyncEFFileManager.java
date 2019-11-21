@@ -364,7 +364,7 @@ public class RsyncEFFileManager
 					}
 					else {
 						// remove the file retrieved over rsync
-						File file = new File(local_pairtree_root_,pairtree_full_json_filename_bz);
+						File file = new File(rsync_tmp_dir_,pairtree_full_json_filename_bz);
 						if (file.exists()) {
 							boolean removed_file = file.delete();
 							if (!removed_file) {
