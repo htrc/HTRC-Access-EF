@@ -356,7 +356,7 @@ public class RsyncEFFileManager
 				if (rsyncef_jsonbz_downloaded_refcount_.containsKey(pairtree_full_json_filename_bz))
 				{
 					int ref_count = rsyncef_jsonbz_downloaded_refcount_.get(pairtree_full_json_filename_bz);
-					System.err.println("####  [" + thread_name + "] fileOpen(): " + pairtree_full_json_filename_bz + " ref_count before dec = " + ref_count);
+					System.err.println("####  [" + thread_name + "] fileClose(): " + pairtree_full_json_filename_bz + " ref_count before dec = " + ref_count);
 
 					ref_count--;
 					if (ref_count > 0) {
@@ -364,11 +364,11 @@ public class RsyncEFFileManager
 					}
 					else {
 						// remove the file retrieved over rsync
-						File file = new File(pairtree_full_json_filename_bz);
+						File file = new File(local_pairtree_root_,pairtree_full_json_filename_bz);
 						if (file.exists()) {
 							boolean removed_file = file.delete();
 							if (!removed_file) {
-								System.err.println("Error: failed to remove rsync downloaded file " + pairtree_full_json_filename_bz + " in WebSocketResponse::fileClose()");
+								System.err.println("Error: failed to remove rsync downloaded file " + file.getAbsolutePath() + " in WebSocketResponse::fileClose()");
 							}
 						}
 						rsyncef_jsonbz_downloaded_refcount_.remove(pairtree_full_json_filename_bz);
