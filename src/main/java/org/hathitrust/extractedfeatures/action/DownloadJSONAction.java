@@ -442,7 +442,7 @@ public class DownloadJSONAction extends URLShortenerAction
 					}
 				}
 			}
-
+			
 			rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz); 
 			
 			if (concat_up_interrupted) {
@@ -638,7 +638,8 @@ public class DownloadJSONAction extends URLShortenerAction
 						zip_up_interrupted = true;
 					}
 				}
-				
+
+				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);
 				break;
 			}
 			else {
