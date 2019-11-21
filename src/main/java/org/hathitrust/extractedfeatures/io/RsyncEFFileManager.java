@@ -282,7 +282,7 @@ public class RsyncEFFileManager
 	public File fileOpen(String pairtree_full_json_filename_bz)
 	{
 		String thread_name = Thread.currentThread().getName();
-		System.err.println("**** [" + thread_name + "] RsyncEFFileManager::fileOpen() called: " + pairtree_full_json_filename_bz);
+		//System.err.println("**** [" + thread_name + "] RsyncEFFileManager::fileOpen() called: " + pairtree_full_json_filename_bz);
 		
 		File file = null;
 		if (local_pairtree_root_ != null) {
@@ -294,11 +294,11 @@ public class RsyncEFFileManager
 				//System.err.println("#### fileOpen(): Testing to see if rsync process already in play for: " + pairtree_full_json_filename_bz);
 				proc = rsyncef_jsonbz_downloads_in_progress_.get(pairtree_full_json_filename_bz);
 			}
-			System.err.println("####  [" + thread_name + "] fileOpen(): returned proccess object = " + proc);
+			//System.err.println("####  [" + thread_name + "] fileOpen(): returned proccess object = " + proc);
 			
 			if (proc != null) {
 				try {
-					System.err.println("####  [" + thread_name + "] fileOpen(): Away to wait for proc to complete for: " + pairtree_full_json_filename_bz);
+					//System.err.println("####  [" + thread_name + "] fileOpen(): Away to wait for proc to complete for: " + pairtree_full_json_filename_bz);
 					
 					int ret_code = proc.waitFor();
 					//System.err.println("#### fileOpen(): Proc now completed for: " + pairtree_full_json_filename_bz);
@@ -319,7 +319,7 @@ public class RsyncEFFileManager
 
 			// Work through the rsync server
 			try {
-				System.err.println("####  [" + thread_name + "] fileOpen(): Away to call doRsyncDownload, where (if proc != null) the file should now be in cache: " + pairtree_full_json_filename_bz);
+				//System.err.println("####  [" + thread_name + "] fileOpen(): Away to call doRsyncDownload, where (if proc != null) the file should now be in cache: " + pairtree_full_json_filename_bz);
 
 				file = doRsyncDownload(pairtree_full_json_filename_bz);
 			} catch (Exception e) {
@@ -331,12 +331,12 @@ public class RsyncEFFileManager
 				{
 					int ref_count = rsyncef_jsonbz_downloaded_refcount_.get(pairtree_full_json_filename_bz);
 					ref_count++;
-					System.err.println("####  [" + thread_name + "] fileOpen(): " + pairtree_full_json_filename_bz + " ref_count now = " + ref_count);
+					//System.err.println("####  [" + thread_name + "] fileOpen(): " + pairtree_full_json_filename_bz + " ref_count now = " + ref_count);
 
 					rsyncef_jsonbz_downloaded_refcount_.put(pairtree_full_json_filename_bz,ref_count);
 				}
 				else {
-					System.err.println("####  [" + thread_name + "] fileOpen(): " + pairtree_full_json_filename_bz + " ref_count set = " + 1);
+					//System.err.println("####  [" + thread_name + "] fileOpen(): " + pairtree_full_json_filename_bz + " ref_count set = " + 1);
 
 					rsyncef_jsonbz_downloaded_refcount_.put(pairtree_full_json_filename_bz,1);
 				}
@@ -349,7 +349,7 @@ public class RsyncEFFileManager
 	public void fileClose(String pairtree_full_json_filename_bz)
 	{
 		String thread_name = Thread.currentThread().getName();
-		System.err.println("**** [" + thread_name + "] RsyncEFFileManager::fileClose() called: " + pairtree_full_json_filename_bz);
+		//System.err.println("**** [" + thread_name + "] RsyncEFFileManager::fileClose() called: " + pairtree_full_json_filename_bz);
 		
 		if (local_pairtree_root_ == null) {
 			
@@ -357,7 +357,7 @@ public class RsyncEFFileManager
 				if (rsyncef_jsonbz_downloaded_refcount_.containsKey(pairtree_full_json_filename_bz))
 				{
 					int ref_count = rsyncef_jsonbz_downloaded_refcount_.get(pairtree_full_json_filename_bz);
-					System.err.println("####  [" + thread_name + "] fileClose(): " + pairtree_full_json_filename_bz + " ref_count before dec = " + ref_count);
+					//System.err.println("####  [" + thread_name + "] fileClose(): " + pairtree_full_json_filename_bz + " ref_count before dec = " + ref_count);
 
 					ref_count--;
 					if (ref_count > 0) {
