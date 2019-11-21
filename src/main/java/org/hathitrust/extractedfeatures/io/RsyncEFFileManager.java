@@ -365,7 +365,8 @@ public class RsyncEFFileManager
 					}
 					else {
 						// remove the file retrieved over rsync
-						File file = new File(rsync_tmp_dir_,pairtree_full_json_filename_bz);
+						String json_filename_tail_bz = VolumeUtils.full_filename_to_tail(pairtree_full_json_filename_bz);
+						File file = new File(rsync_tmp_dir_,json_filename_tail_bz);
 						System.err.println("*** fileClose() looking to delete: " + file.getAbsolutePath());
 						if (file.exists()) {
 							boolean removed_file = file.delete();
