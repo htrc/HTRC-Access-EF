@@ -419,6 +419,7 @@ public class AccessServlet extends WebSocketServlet
 			if (for_download_inprogress_) {		
 				// Something -- such as the user browsing away from the SolrEF result-set page -- has occurred
 				// requiring the WebSocket to close before preparing the file to download has finished 
+				System.err.println("***** away to call cleanupPartialDownload");
 				
 				ws_flexi_response_.cleanupPartialForDownloadFile();
 				for_download_inprogress_ = false;
