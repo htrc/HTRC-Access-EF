@@ -183,6 +183,7 @@ public class RsyncEFFileManager
 	        br.close();
 		} 
 		catch (Exception e) {
+			sb.setLength(0);
 			e.printStackTrace();
 		}
 		
@@ -365,6 +366,7 @@ public class RsyncEFFileManager
 					else {
 						// remove the file retrieved over rsync
 						File file = new File(rsync_tmp_dir_,pairtree_full_json_filename_bz);
+						System.err.println("*** fileClose() looking to delete: " + file.getAbsolutePath());
 						if (file.exists()) {
 							boolean removed_file = file.delete();
 							if (!removed_file) {

@@ -407,6 +407,11 @@ public class DownloadJSONAction extends URLShortenerAction
 			else {
 				String json_content_str = rsyncef_file_manager_.readCompressedTextFile(file_bz);
 				
+				if (json_content_str.equals("")) {
+					rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz); 
+					throw new IOException("Error: Reading compressed file: " + file_bz.getAbsolutePath() + " returned empty string");
+				}
+				
 				if (has_seq_num) {
 					// consider having a page-level cache // ****
 					json_content_str = outputExtractPage(json_content_str, seq_num, output_format, first_entry);
