@@ -112,6 +112,14 @@ public class AccessServlet extends WebSocketServlet
 		RsyncEFFileManager rsyncef_file_manager = RsyncEFFileManager.getInstance(config);
 		WebSocketResponse.setJSONFileManager(rsyncef_file_manager);
 		
+		String ef_rsync_format = config.getInitParameter("ef.rsync.format");
+		if ((ef_rsync_format == null) || (ef_rsync_format.equals("stubby"))) {
+			VolumeUtils.RsyncFormat = VolumeUtils.EFRsyncFormat.stubby;
+		}
+		else {
+			VolumeUtils.RsyncFormat = VolumeUtils.EFRsyncFormat.pairtree;
+		}
+			
 		ServletContext context = getServletContext();
 
 		if (check_exists_ == null) {	

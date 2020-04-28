@@ -386,8 +386,8 @@ public class DownloadJSONAction extends URLShortenerAction
 
 			// ****
 			//String json_content_str = rsyncef_file_manager_.getVolumeContent(volume_id);
-			String pairtree_full_json_filename_bz = VolumeUtils.idToPairtreeFilename(volume_id);
-			File file_bz = rsyncef_file_manager_.fileOpen(pairtree_full_json_filename_bz); 
+			String pairtree_or_stubby_full_json_filename_bz = VolumeUtils.idToRsyncFilename(volume_id);
+			File file_bz = rsyncef_file_manager_.fileOpen(pairtree_or_stubby_full_json_filename_bz); 
 			
 			if (file_bz == null) {
 				if (rsyncef_file_manager_.usingRsync()) {
@@ -408,7 +408,7 @@ public class DownloadJSONAction extends URLShortenerAction
 				String json_content_str = rsyncef_file_manager_.readCompressedTextFile(file_bz);
 				
 				if (json_content_str.equals("")) {
-					rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz); 
+					rsyncef_file_manager_.fileClose(pairtree_or_stubby_full_json_filename_bz); 
 					throw new IOException("Error: Reading compressed file: " + file_bz.getAbsolutePath() + " returned empty string");
 				}
 				
@@ -443,7 +443,7 @@ public class DownloadJSONAction extends URLShortenerAction
 				}
 			}
 			
-			rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz); 
+			rsyncef_file_manager_.fileClose(pairtree_or_stubby_full_json_filename_bz); 
 			
 			if (concat_up_interrupted) {
 				break;
@@ -620,8 +620,8 @@ public class DownloadJSONAction extends URLShortenerAction
 			String download_id = download_ids[i];
 
 			// rsync -av data.analytics.hathitrust.org::features/{PATH-TO-FILE} .
-			String pairtree_full_json_filename_bz = VolumeUtils.idToPairtreeFilename(download_id);
-			File file = rsyncef_file_manager_.fileOpen(pairtree_full_json_filename_bz);
+			String pairtree_or_stubby_full_json_filename_bz = VolumeUtils.idToRsyncFilename(download_id);
+			File file = rsyncef_file_manager_.fileOpen(pairtree_or_stubby_full_json_filename_bz);
 
 			if (file == null) {
 				if (rsyncef_file_manager_.usingRsync()) {
@@ -639,13 +639,13 @@ public class DownloadJSONAction extends URLShortenerAction
 					}
 				}
 
-				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);
+				rsyncef_file_manager_.fileClose(pairtree_or_stubby_full_json_filename_bz);
 				break;
 			}
 			else {
 				FileInputStream fis = new FileInputStream(file);
 				BufferedInputStream bis = new BufferedInputStream(fis);
-				String json_filename_tail = VolumeUtils.full_filename_to_tail(pairtree_full_json_filename_bz);
+				String json_filename_tail = VolumeUtils.full_filename_to_tail(pairtree_or_stubby_full_json_filename_bz);
 
 				ZipEntry zipentry = new ZipEntry(json_filename_tail);
 				if (!flexi_response.isClosed()) {
@@ -687,7 +687,7 @@ public class DownloadJSONAction extends URLShortenerAction
 					zip_up_interrupted = true;
 				}
 				
-				rsyncef_file_manager_.fileClose(pairtree_full_json_filename_bz);
+				rsyncef_file_manager_.fileClose(pairtree_or_stubby_full_json_filename_bz);
 					
 				if (zip_up_interrupted) {
 					break;
