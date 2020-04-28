@@ -91,7 +91,7 @@ public class VolumeUtils
 
 		StringBuffer every_third = new StringBuffer();
 		
-		for (int i=0; i<id_tail_safe.length(); i++) {
+		for (int i=0; i<id_tail_safe.length(); i+=3) {
 			every_third.append(id_tail_safe.charAt(i));
 		}
 		
