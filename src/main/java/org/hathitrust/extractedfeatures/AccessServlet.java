@@ -112,14 +112,22 @@ public class AccessServlet extends WebSocketServlet
 		RsyncEFFileManager rsyncef_file_manager = RsyncEFFileManager.getInstance(config);
 		WebSocketResponse.setJSONFileManager(rsyncef_file_manager);
 		
-		String ef_rsync_format = config.getInitParameter("ef.rsync.format");
-		if ((ef_rsync_format == null) || (ef_rsync_format.equals("stubby"))) {
-			VolumeUtils.RsyncFormat = VolumeUtils.EFRsyncFormat.stubby;
+		String ef_file_version = config.getInitParameter("ef.file.version");
+		if ((ef_file_version == null) || (ef_file_version.equals("EF20"))) {
+			IdMongoDBAction.EFVersion = IdMongoDBAction.EFVersionEnum.EF20;
 		}
 		else {
-			VolumeUtils.RsyncFormat = VolumeUtils.EFRsyncFormat.pairtree;
+			IdMongoDBAction.EFVersion = IdMongoDBAction.EFVersionEnum.EF15;
 		}
 			
+		String ef_rsync_format = config.getInitParameter("ef.rsync.format");
+		if ((ef_rsync_format == null) || (ef_rsync_format.equals("stubby"))) {
+			VolumeUtils.EFRsyncFormat = VolumeUtils.EFRsyncFormatEnum.stubby;
+		}
+		else {
+			VolumeUtils.EFRsyncFormat = VolumeUtils.EFRsyncFormatEnum.pairtree;
+		}
+		
 		ServletContext context = getServletContext();
 
 		if (check_exists_ == null) {	

@@ -4,11 +4,11 @@ import java.util.ArrayList;
 
 public class VolumeUtils 
 {
-	public enum EFRsyncFormat { pairtree, stubby }
+	public enum EFRsyncFormatEnum { pairtree, stubby }
 	
 	protected static final String file_ext = ".json.bz2";
 
-	public static EFRsyncFormat RsyncFormat = null;
+	public static EFRsyncFormatEnum EFRsyncFormat = null;
 	
 	private VolumeUtils() {
 	}
@@ -106,7 +106,7 @@ public class VolumeUtils
 	{
 		String rsync_filename = null;
 		
-		if (RsyncFormat == EFRsyncFormat.pairtree) {
+		if (EFRsyncFormat == EFRsyncFormatEnum.pairtree) {
 			rsync_filename = idToPairtreeFilename(id);
 		}
 		else {

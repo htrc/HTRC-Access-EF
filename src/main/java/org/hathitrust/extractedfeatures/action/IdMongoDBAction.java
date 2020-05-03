@@ -27,7 +27,16 @@ public abstract class IdMongoDBAction extends BaseAction
 {
 	protected static Logger logger = Logger.getLogger(IdMongoDBAction.class.getName());
 	
-	private final String IdListTextResource = "/WEB-INF/classes/htrc-ef-all-files.txt";
+	public enum EFVersionEnum { EF15, EF20 }
+	public static EFVersionEnum EFVersion = EFVersionEnum.EF20;
+	
+	private final String EF15IdListTextResource = "/WEB-INF/classes/htrc-ef-all-files.txt";
+	private final String EF20IdListTextResource = "/WEB-INF/classes/htrc-ef20-all-files.txt";
+	protected String id_list_text_resource_ = null;
+	
+	private static final String EF20ExistsColName = "ef20IdExists";
+	private static final String EF15ExistsColName = "idExists";
+	protected String exists_col_name_ = null;
 	
 	//protected static OperationMode CheckIDMode_ = OperationMode.OnlyHashmap;
 	//protected static OperationMode CheckIDMode_ = OperationMode.HashmapTransition;
@@ -50,7 +59,7 @@ public abstract class IdMongoDBAction extends BaseAction
 		
 		StoreAccessOperationMode resulting_mode = StoreAccessOperationMode.MongoDB;;
 				
-		InputStream is = servletContext.getResourceAsStream(IdListTextResource);
+		InputStream is = servletContext.getResourceAsStream(id_list_text_resource_);
 		BufferedInputStream bis = new BufferedInputStream(is);
 		
 		try {
@@ -62,12 +71,12 @@ public abstract class IdMongoDBAction extends BaseAction
 				resulting_mode = StoreAccessOperationMode.HashmapTransition;
 			}
 			else  if (num_txt_lines < num_mongo_exists_lines) {
-				logger.warning("The ID List Text Resource '"+IdListTextResource+"' has fewer entries than in the MongoDB");
+				logger.warning("The ID List Text Resource '"+id_list_text_resource_+"' has fewer entries than in the MongoDB");
 			}
 		}
 		catch (IOException ioe) {
 			// No text file to base comparison, so soldier on in MongoDB mode
-			logger.info("Web resource text file '" + IdListTextResource + "' not present. Assuming MongoDB is up to date");
+			logger.info("Web resource text file '" + id_list_text_resource_ + "' not present. Assuming MongoDB is up to date");
 			CheckIdMode_ = StoreAccessOperationMode.MongoDB;
 		}
 		
@@ -79,10 +88,10 @@ public abstract class IdMongoDBAction extends BaseAction
 		if (id_check_ == null) {
 			id_check_ = new HashMap<String, Boolean>(HASHMAP_INIT_SIZE);
 
-			InputStream is = context.getResourceAsStream(IdListTextResource);
+			InputStream is = context.getResourceAsStream(id_list_text_resource_);
 
 			try {
-				System.err.println("INFO: Loading in web resource volume IDS: " + IdListTextResource);
+				System.err.println("INFO: Loading in web resource volume IDS: " + id_list_text_resource_);
 
 				InputStreamReader isr = new InputStreamReader(is, "UTF-8");
 				BufferedReader br = new BufferedReader(isr);
@@ -99,13 +108,22 @@ public abstract class IdMongoDBAction extends BaseAction
 	{
 		super(context,config);
 		
+		if ( EFVersion == EFVersionEnum.EF20) {
+			id_list_text_resource_ = EF20IdListTextResource;
+			exists_col_name_ = EF20ExistsColName;
+		}
+		else {
+			id_list_text_resource_ = EF15IdListTextResource;
+			exists_col_name_ = EF15ExistsColName;
+		}
+		
 		if (CheckIdMode_ == null) {
 			CheckIdMode_ = getConfigCheckIDMode(config,"checkIDMode");
 		}
 		
 		// Need a mongoDB connection regardless of 'mode' we are in, as various actions rely on it
 		if (mongo_state_ != MongoDBState.FailedStartup) {
-			mongo_exists_col_ = connectToMongoDB(config,mongo_exists_col_,"idExists");
+			mongo_exists_col_ = connectToMongoDB(config,mongo_exists_col_,exists_col_name_);
 			
 			if (mongo_exists_col_ == null) {
 				// Failed to connect file collection for some reason
