@@ -85,9 +85,9 @@
 			</init-param>
 			<init-param>
 			        <param-name>java.io.tmpdir</param-name>
-				<param-value>/tmp/htrc-access-ef</param-value>
+				<param-value>/tmp/htrc-access-ef2</param-value>
 <!--			
-				<param-value>/disk10/htrc-access-ef</param-value>
+				<param-value>/disk11/htrc-access-ef2</param-value>
 -->
 			</init-param>
 	</servlet>
