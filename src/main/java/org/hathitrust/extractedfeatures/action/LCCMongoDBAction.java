@@ -32,6 +32,8 @@ import com.mongodb.client.model.Filters;
 
 public abstract class LCCMongoDBAction extends BaseAction
 {
+    protected static int VERBOSITY = 1;
+    
 	protected static Logger logger = Logger.getLogger(LCCMongoDBAction.class.getName());
 	
 	private final String LCCTreeMapJSONResource = "/WEB-INF/classes/lcc-outline-treemap.json";
@@ -243,13 +245,15 @@ public abstract class LCCMongoDBAction extends BaseAction
 	
 	protected void orderedNodeTraversePrint(LCCOutlineHashRec ordered_node_rec) 
 	{
-		System.err.print(ordered_node_rec.prefix);
-		System.err.print(" [" + String.format("%s", ordered_node_rec.start_str) 
+	        if (VERBOSITY >=2) {
+		    System.err.print(ordered_node_rec.prefix);
+		    System.err.print(" [" + String.format("%s", ordered_node_rec.start_str) 
 						+ "," + String.format("%s", ordered_node_rec.stop_str) + "]");
-		if (ordered_node_rec != null) {
+		    if (ordered_node_rec != null) {
 			System.err.print(" Subject: " + ordered_node_rec.subject);
+		    }
+		    System.err.println();
 		}
-		System.err.println();
 		
 		if (ordered_node_rec.child_ids_ordered==null) { 
 			// Hit a leaf node
