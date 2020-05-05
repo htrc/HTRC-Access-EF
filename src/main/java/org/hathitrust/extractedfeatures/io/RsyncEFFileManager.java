@@ -112,7 +112,7 @@ public class RsyncEFFileManager
 		else {
 			// Using an rsync server
 			
-			String rsync_serverset = config.getInitParameter("rsync.serverset");
+			String rsync_serverset = config.getInitParameter("ef.rsync.serverset");
 			
 			if (rsync_serverset == null) {
 				//rsync_base = "data.analytics.hathitrust.org::features/";
