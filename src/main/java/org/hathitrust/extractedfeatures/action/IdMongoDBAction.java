@@ -38,6 +38,7 @@ public abstract class IdMongoDBAction extends BaseAction
 	private static final String EF15ExistsColName = "idExists";
 	protected String exists_col_name_ = null;
 	
+	/* Comment in/out from the following to change how the servlet stores the IDs to check */
 	//protected static OperationMode CheckIDMode_ = OperationMode.OnlyHashmap;
 	//protected static OperationMode CheckIDMode_ = OperationMode.HashmapTransition;
 	//protected static CheckIDOperationMode CheckIDMode_ = CheckIDOperationMode.MongoDB;
