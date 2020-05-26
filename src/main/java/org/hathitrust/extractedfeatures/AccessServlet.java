@@ -115,9 +115,11 @@ public class AccessServlet extends WebSocketServlet
 		String ef_file_version = config.getInitParameter("ef.file.version");
 		if ((ef_file_version == null) || (ef_file_version.equals("EF20"))) {
 			IdMongoDBAction.EFVersion = IdMongoDBAction.EFVersionEnum.EF20;
+			DownloadJSONAction.EXPORT_FILENAME_ROOT = "export20";
 		}
 		else {
 			IdMongoDBAction.EFVersion = IdMongoDBAction.EFVersionEnum.EF15;
+			DownloadJSONAction.EXPORT_FILENAME_ROOT = "export15";
 		}
 			
 		String ef_rsync_format = config.getInitParameter("ef.rsync.format");
@@ -230,7 +232,8 @@ public class AccessServlet extends WebSocketServlet
 			
 			if (valid_cgi_download_id != null) {
 				String [] valid_download_ids = new String[] {valid_cgi_download_id};
-				download_json_.outputVolumes(flexi_response,valid_download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json","htrc-metadata-export.json");
+				download_json_.outputVolumes(flexi_response,valid_download_ids,DownloadJSONAction.OutputFormat.JSON,null,"json",
+						"htrc-metadata-"+DownloadJSONAction.EXPORT_FILENAME_ROOT+".json");
 			}
 		} 
 		else if (cgi_download_ids != null) {
@@ -239,7 +242,8 @@ public class AccessServlet extends WebSocketServlet
 			String [] valid_download_ids = check_exists_.validityCheckIDs(flexi_response, download_ids);
 					
 			if (valid_download_ids != null) {
-			    download_json_.outputZippedVolumes(flexi_response,valid_download_ids,null,"htrc-ef-export.zip");
+			    download_json_.outputZippedVolumes(flexi_response,valid_download_ids,null,
+			    		"htrc-ef-"+DownloadJSONAction.EXPORT_FILENAME_ROOT+".zip");
 			}
 		} 
 		else if (cgi_convert_col != null) {

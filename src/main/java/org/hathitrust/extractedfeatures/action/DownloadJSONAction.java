@@ -30,6 +30,8 @@ import org.json.JSONObject;
  */
 public class DownloadJSONAction extends URLShortenerAction
 {
+	public static String EXPORT_FILENAME_ROOT = "export";
+	
 	public enum OutputFormat { JSON, ZIP, CSV, TSV };
 	protected static String[] OutputFormatFieldSeparator_ = new String[] { null, null, ",", "\t" };
 
@@ -765,7 +767,7 @@ public class DownloadJSONAction extends URLShortenerAction
 							output_zip_filename = cgi_output_filename_root + ".zip";
 						}
 						else {
-							output_zip_filename = getDownloadFilename("htrc-ef-export",cgi_key,".zip");
+							output_zip_filename = getDownloadFilename("htrc-ef-"+EXPORT_FILENAME_ROOT,cgi_key,".zip");
 						}
 						
 						outputZippedVolumes(flexi_response,valid_download_ids,cgi_key,output_zip_filename);
@@ -790,7 +792,7 @@ public class DownloadJSONAction extends URLShortenerAction
 							output_filename = cgi_output_filename_root + file_ext;
 						}
 						else {
-							output_filename = getDownloadFilename("htrc-metadata-export",cgi_key,file_ext);
+							output_filename = getDownloadFilename("htrc-metadata-"+EXPORT_FILENAME_ROOT,cgi_key,file_ext);
 						}
 						outputVolumes(flexi_response,valid_download_ids,output_format,cgi_key,cgi_output,output_filename);
 					}
