@@ -527,7 +527,7 @@ public class DownloadJSONAction extends URLShortenerAction
 			// Output needs to be zipped up
 			http_flexi_response.setContentType("application/zip");
 			// **** Rework this methods params to pass in the export root filename, like its outputZippedVolumes counterpart
-			String output_zip_filename = getDownloadFilename("htrc-ef-export",opt_cgi_key,".zip");
+			String output_zip_filename = getDownloadFilename("htrc-ef-"+EXPORT_FILENAME_ROOT,opt_cgi_key,".zip");
 			setHeaderDownloadFilename(http_flexi_response,output_zip_filename);
 
 			OutputStream ros = http_flexi_response.getOutputStream();
@@ -735,6 +735,11 @@ public class DownloadJSONAction extends URLShortenerAction
 		String cgi_output = getParameter(param_map,"output");
 		String cgi_output_filename_root = getParameter(param_map,"output-filename-root");
 
+		String tolerant = getParameter(param_map,"tolerant-of-missing-ids");
+		if (tolerant == null) {
+			tolerant = "false";
+		}
+		
 		if (cgi_output == null) {
 			cgi_output = "json";
 		}
@@ -756,7 +761,13 @@ public class DownloadJSONAction extends URLShortenerAction
 		}
 
 		if (download_ids != null) {
-			String [] valid_download_ids = validityCheckIDs(flexi_response, download_ids);
+			String [] valid_download_ids;
+			if (tolerant.equals("true")) {
+				valid_download_ids = validityCheckIDs(null, download_ids);
+			}
+			else {
+				valid_download_ids = validityCheckIDs(flexi_response, download_ids);
+			}
 
 			if (valid_download_ids != null) {
 

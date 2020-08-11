@@ -275,8 +275,10 @@ public abstract class IdMongoDBAction extends BaseAction
 		}
 		
 		if (!exists) {
-			// Error
-			flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested id '" + id + "' does not exist.");
+			// Only generate an error message if 'flexi_response' is not null
+			if (flexi_response != null) {
+				flexi_response.sendError(HttpServletResponse.SC_BAD_REQUEST,"The requested id '" + id + "' does not exist.");
+			}
 		}
 		
 		return opt_trans_id; // null if none of the IDs variations tried out existed
