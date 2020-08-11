@@ -735,9 +735,10 @@ public class DownloadJSONAction extends URLShortenerAction
 		String cgi_output = getParameter(param_map,"output");
 		String cgi_output_filename_root = getParameter(param_map,"output-filename-root");
 
-		String tolerant = getParameter(param_map,"tolerant-of-missing-ids");
-		if (tolerant == null) {
-			tolerant = "false";
+		boolean missing_id_tolerant = false;
+		String tolerant_str = getParameter(param_map,"tolerant-of-missing-ids");
+		if (tolerant_str != null) {
+			missing_id_tolerant = Boolean.parseBoolean(tolerant_str);
 		}
 		
 		if (cgi_output == null) {
@@ -762,7 +763,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		if (download_ids != null) {
 			String [] valid_download_ids;
-			if (tolerant.equals("true")) {
+			if (missing_id_tolerant) {
 				valid_download_ids = validityCheckIDs(null, download_ids);
 			}
 			else {
@@ -771,7 +772,13 @@ public class DownloadJSONAction extends URLShortenerAction
 
 			if (valid_download_ids != null) {
 
-				if (valid_download_ids.length == download_ids.length) {
+				boolean proceed_with_download = (valid_download_ids.length == download_ids.length);
+				if (missing_id_tolerant) {
+					// override and always proceed
+					proceed_with_download = true;
+				}
+				
+				if (proceed_with_download) {
 					if (cgi_output.equals("zip")) {
 						String output_zip_filename;
 						if (cgi_output_filename_root != null) {
