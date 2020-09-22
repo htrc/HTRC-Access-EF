@@ -41,6 +41,8 @@ public class DownloadJSONAction extends URLShortenerAction
 
 	protected RsyncEFFileManager rsyncef_file_manager_;
 
+	protected static String[] volume_metadata_lookup = null; 
+	
 	public String getHandle() 
 	{
 		return "download-ids";
@@ -65,6 +67,14 @@ public class DownloadJSONAction extends URLShortenerAction
 	public DownloadJSONAction(ServletContext context, ServletConfig config)
 	{	
 		super(context,config);
+		
+		if (EFVersion == EFVersionEnum.EF20) {
+			volume_metadata_lookup = VolumeMetadataByLookup.volume_metadata_lookup20;
+		}
+		else {
+			volume_metadata_lookup = VolumeMetadataByLookup.volume_metadata_lookup15;
+		}
+
 		rsyncef_file_manager_ = RsyncEFFileManager.getInstance(config);
 	}
 
@@ -78,7 +88,7 @@ public class DownloadJSONAction extends URLShortenerAction
 
 		// **Both types of files are in the archive **
 		// Next 2 methods make use of the following list of metadata names
-		protected static final String[] volume_metadata_lookup = new String[]
+		protected static final String[] volume_metadata_lookup15 = new String[]
 				{ "htBibUrl", "schemaVersion", "volumeIdentifier", "rightsAttributes", "title", "genre",
 						"pubDate", "pubPlace", "typeOfResource", "bibliographicFormat", "language",
 						"dateCreated", "lastUpdateDate", "imprint", "isbn", "issn", "oclc", "lccn", "classification", 
@@ -86,6 +96,32 @@ public class DownloadJSONAction extends URLShortenerAction
 						"accessProfile", "enumerationChronology", "governmentDocument", "names", "issuance", 
 						"subjectGenre", "subjectTopic", "subjectName", "subjectTitleInfo", "subjectTemporal",
 						"subjectGeographic", "subjectOccupation","subjectCartographics" };
+
+		
+		
+		protected static final String [] volume_metadata_lookup20 = new String[] {
+				"accessProfile",
+				"accessRights", 	        
+				"id",    	            	
+				"title",
+				// int ...
+				"dateCreated",              
+				"lastRightsUpdateDate",     
+				"pubDate",			    
+				// uri ...
+				"schemaVersion",		    
+				"typeOfResource",		
+				// multi-string
+				"language",					
+				"oclc"	,				
+				// multi-uri
+				"genre",  			
+				// multi-id+name+type
+				"contributor",				
+				"publisher",				
+				"pubPlace"					
+		};
+		
 
 		public static String jsonToFieldSeparatedFileKeys(JSONObject json_obj_unused, String sep)
 		{
