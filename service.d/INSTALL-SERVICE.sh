@@ -42,6 +42,12 @@ if [ -d "/etc/systemd/system/" ] ; then
     echo ""
     echo "  To enable this service to be run at boot-up time, run:"
     echo "    sudo systemctl enable htrc-accessef2"
+    echo ""    
+    echo "MongoDB:"
+    echo "  The servlet that Jetty runs talks to mongoDB.  There are various ways that this"
+    echo "  can be installed and run.  For this service installation, it is assumed that"
+    echo "  mongoDB was installed through a package managed (e.g., apt-get or yum) and so"
+    echo "  is already a system service that is started at boot time"
     echo "----"
     
 else
