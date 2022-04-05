@@ -19,7 +19,7 @@ if [ -d "/etc/systemd/system/" ] ; then
     echo "****"
     cat htrc-accessef2.service.in \
 	| sed "s%@HTRC_ACCESSEF2_HOME@%$HTRC_ACCESSEF2_HOME%g" \
-	| sed "s%@HTRC_ACCESSEF2_SERVICE_USERNAME@%$htrc_acessef2_service_username%g" \
+	| sed "s%@HTRC_ACCESSEF2_SERVICE_USERNAME@%$htrc_accessef2_service_username%g" \
 	      > htrc-accessef2.service
      
     echo "****"
@@ -29,6 +29,13 @@ if [ -d "/etc/systemd/system/" ] ; then
 
     echo ""
     echo "----"
+    echo "Supporting Jar downloads for maven:"
+    echo "  To be able to run the maven-based Jetty service (ultimately through mvn jetty:run)"
+    echo "  Maven needs to be able to download load (as that user) the jar packages needed to"
+    echo "  support this.  By default it does this as the 'www-data' user, and so needs the following:"
+    echo "    sudo mkdir /var/www/.m2"
+    echo "    sudo chown www-data /var/www/.m2"
+    echo ""    
     echo "General info:"
     echo "  In the event of the service being updated, you will most likely need to run:"
     echo "    sudo systemctl daemon-reload"
