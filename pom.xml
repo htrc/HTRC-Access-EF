@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.hathitrust.extractedfeatures</groupId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<artifactId>htrc-access-ef</artifactId>
 	<name>htrc-access-ef</name>
 	<packaging>war</packaging>
@@ -12,7 +12,8 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jettyVersion>9.4.43.v20210629</jettyVersion>
+		<!-- <jettyVersion>9.4.43.v20210629</jettyVersion> -->
+		<jettyVersion>9.4.52</jettyVersion>
 	</properties>
 
 	<dependencies>
