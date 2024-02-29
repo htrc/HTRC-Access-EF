@@ -52,7 +52,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
-			<version>1.21</version>
+			<version>1.26.0</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
@@ -65,7 +65,7 @@
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20170516</version>
+			<version>20231013</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-analyzers-icu -->
@@ -95,10 +95,10 @@
 				<version>${jettyVersion}</version>
 				<configuration>
 				  <stopKey>htrcaccess</stopKey>
-				  <stopPort>8079</stopPort>
+				  <stopPort>9079</stopPort>
 				  <httpConnector>
 					<host>127.0.0.1</host>
-					<port>8080</port>
+					<port>9080</port>
 				  </httpConnector>
 				</configuration>
 			</plugin>
